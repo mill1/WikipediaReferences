@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,8 +28,15 @@ namespace WikipediaReferences
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped< IWikipediaService, WikipediaService>();
+            string webApiConnectionString = Configuration.GetConnectionString("WikipediaReferencesDBConnection");
 
+            Action<DbContextOptionsBuilder> optionActionCreator(string connectionString)
+            {
+                return options => options.UseSqlServer(connectionString);
+            }
+
+            services.AddDbContext<Data.WikipediaReferencesContext>(optionActionCreator(webApiConnectionString));
+            services.AddScoped< IWikipediaService, WikipediaService>();
             services.AddControllers();
         }
 
