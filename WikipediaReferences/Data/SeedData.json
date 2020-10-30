@@ -1,0 +1,16 @@
+﻿{
+    "sources": [
+		{
+			"Code": "GUARD",
+			"Name": "The Guardian"
+		},
+		{
+			"Code": "INDY",
+			"Name": "The Independent"
+		},
+		{
+			"Code": "NYT",
+			"Name": "The New York Times"
+		}
+	]
+}
