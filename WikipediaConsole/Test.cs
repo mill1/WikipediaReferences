@@ -24,14 +24,5 @@ namespace WikipediaConsole
 
             Console.WriteLine($"Count: {entries.Count()}");
         }
-
-        private void TestWeatherForecastService()
-        {
-            IWeatherForecastService weatherForecast = new WeatherForecastService();
-
-            var list = weatherForecast.GetWeatherForecasts();
-
-            Console.WriteLine($"Count: {list.Count()}");
-        }
     }
 }
