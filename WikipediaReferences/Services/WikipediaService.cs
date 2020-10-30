@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using WikipediaReferences.Interfaces;
-using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Services
 {
@@ -14,7 +13,7 @@ namespace WikipediaReferences.Services
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title="; // title=Deaths_in_May_2005
         private const string EntryDelimiter = "*[[";
 
-        public IEnumerable<Entry> GetEntries(DateTime deathDate)
+        public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
             string text;
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
@@ -28,10 +27,10 @@ namespace WikipediaReferences.Services
             text = TrimWikiText(text, month, deathDate.Year);
             text = GetDaySection(text, deathDate.Day, false);
 
-            IEnumerable<string> rawEntries = GetRawEntries(text);
-            IEnumerable<Entry> entries = rawEntries.Select(e => ParseEntry(e, deathDate));
+            IEnumerable<string> rawDeceased = GetRawDeceased(text);
+            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
 
-            return entries;
+            return deceased;
         }
 
         private Entry ParseEntry(string rawEntry, DateTime deathDate)
@@ -87,13 +86,13 @@ namespace WikipediaReferences.Services
             }
         }
 
-        private IEnumerable<string> GetRawEntries(string daySection)
+        private IEnumerable<string> GetRawDeceased(string daySection)
         {
             string[] array = daySection.Split(EntryDelimiter);
 
-            IEnumerable<string> rawEntries = array.Select( e => "[[" +  e);
+            IEnumerable<string> rawDeceased = array.Select( e => "[[" +  e);
 
-            return rawEntries.Skip(1);
+            return rawDeceased.Skip(1);
         }
 
         private string GetDaySection(string wikiText, int day, bool trimHeader)

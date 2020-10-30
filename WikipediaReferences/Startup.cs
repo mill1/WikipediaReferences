@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WikipediaReferences.Interfaces;
-using WikipediaReferences.Models;
 using WikipediaReferences.Services;
 
 namespace WikipediaReferences

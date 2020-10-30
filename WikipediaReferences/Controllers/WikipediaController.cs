@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using WikipediaReferences.Interfaces;
-using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Controllers
 {
@@ -24,15 +23,15 @@ namespace WikipediaReferences.Controllers
         }
 
         [HttpGet("{date}")]
-        public IActionResult GetEntriesByDate(DateTime date)
+        public IActionResult GetDeceasedByDate(DateTime date)
         {
             try
             {
-                return Ok(wikipediaService.GetEntries(date));
+                return Ok(wikipediaService.GetDeceased(date));
             }
             catch (Exception e)
             {
-                string message = $"Getting the entries by date failed. Requested date of death: {date.ToShortDateString()}.";
+                string message = $"Getting the deceased by date failed. Requested date of death: {date.ToShortDateString()}.";
                 logger.LogError($"{message} Exception:\r\n{e}", e);
                 return BadRequest(message);
             }
