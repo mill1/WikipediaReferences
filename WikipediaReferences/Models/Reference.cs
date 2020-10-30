@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace WikipediaReferences.Models
 {
-    public class Attribute
+    public class Reference
     {
         public int Id { get; set; }
         public string Name { get; set; }
