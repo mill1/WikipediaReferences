@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 
 namespace WikipediaReferences.Models
 {
-    public class DataType
+    public class Source
     {
-        public DataType()
+        public Source()
         {
-            Attributes = new List<Attribute>();
+            References = new List<Reference>();
         }
 
         public string Code { get; set; }
         public string Name { get; set; }
 
-        public virtual ICollection<Attribute> Attributes { get; set; }
+        public virtual ICollection<Reference> References { get; set; }
     }
 }
