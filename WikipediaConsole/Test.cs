@@ -20,7 +20,7 @@ namespace WikipediaConsole
 
             DateTime deathDate = new DateTime(2005, 5, 12);
 
-            var entries = wikipediaService.GetEntries(deathDate);
+            var entries = wikipediaService.GetDeceased(deathDate);
 
             Console.WriteLine($"Count: {entries.Count()}");
         }
