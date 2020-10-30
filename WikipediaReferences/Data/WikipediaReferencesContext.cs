@@ -21,7 +21,7 @@ namespace WikipediaReferences.Data
         {
             modelBuilder.Entity<Reference>(entity =>
             {
-                entity.Property(e => e.DataTypeCode)
+                entity.Property(e => e.SourceCode)
                     .IsRequired()
                     .HasMaxLength(35);
 
