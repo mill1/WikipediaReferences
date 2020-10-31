@@ -224,8 +224,6 @@ namespace WikipediaReferences.Services
         {
             string[] parts = articleTitle.Split(" ");
 
-            // Tony Thomas (film historian)
-
             int i;
             for (i = parts.Length - 1; i > 0; i--)
             {
@@ -279,12 +277,6 @@ namespace WikipediaReferences.Services
 
             // Do not use 'death' as once of the regex expressions. Not utilized in obits +:
             // https://www.nytimes.com/2018/03/27/obituaries/delores-taylor-85-dies-writer-and-star-in-billy-jack-films.html
-            // Delores Taylor, whose empathy for Native Americans informed the 1971 surprise action - film hit “Billy Jack,” which she wrote and starred in with her husband, Tom Laughlin, 
-            // died on Friday in Woodland Hills, Calif.She was 85.
-            // Her daughter, Teresa Laughlin, who announced the 
-            // death on Monday night, said her mother had dementia.
-
-            //https://www.google.com/search?q=site%3Anytimes.com+%22%22+died+on+Aug%22%22
             // - do not look in doc.snippet: is identical to doc.abstract or is empty.
 
             DateTime dateOfDeath = DateTime.MinValue;

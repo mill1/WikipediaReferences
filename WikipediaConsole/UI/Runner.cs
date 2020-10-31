@@ -111,7 +111,7 @@ namespace WikipediaConsole.UI
 
         private void TestConfigSetting()
         {
-            System.Console.WriteLine(configuration.GetValue<string>("NYTime Archive API key"));
+            System.Console.WriteLine(configuration.GetValue<string>("NYTimes Archive API key"));
         }
 
         private void TestGetDeceasedPerDay()
