@@ -4,6 +4,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using WikipediaReferences.Interfaces;
 
@@ -36,44 +38,47 @@ namespace WikipediaReferences.Services
 
         public string GetArticleTitle(string nameVersion, int year, int monthId)
         {
-            string biography = nameVersion;
-            string rawText = GetRawArticleText(ref biography, true);
+            string articleTitle = nameVersion;
+            string rawText = GetRawArticleText(ref articleTitle, true);
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
-                // TODO refactor
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"{biography}: SUCCESS");
-                Console.ResetColor();
-                return biography;
+                DisplaySuccess(articleTitle);
+                return articleTitle;
             }
             else
             {
                 // Category Human name disambiguation pages?
                 if (IsHumaneNameDisambiguationPage(rawText))
-                    return CheckDisambiguationPage(year, monthId, biography, rawText);
+                    return CheckDisambiguationPage(year, monthId, articleTitle, rawText);
                 else
                     return null;
             }
         }
 
-        private string CheckDisambiguationPage(int year, int monthId, string biography, string rawText)
+        private void DisplaySuccess(string articleTitle)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"{articleTitle}: SUCCESS");
+            Console.ResetColor();
+        }
+
+        private string CheckDisambiguationPage(int year, int monthId, string articleTitle, string rawText)
         {
             // Do not use regex; error: too many ')'
             string[] searchValues = new string[] { $"–{year})", $"-{year})", $"&ndash;{year})", $"died {year})" };
 
-            string disambiguationEntry = GetDisambiguationEntry(biography, rawText, searchValues);
+            string disambiguationEntry = GetDisambiguationEntry(articleTitle, rawText, searchValues);
 
             if (disambiguationEntry == null)
             {
                 if (monthId <= 2)
                 {
                     searchValues = new string[] { $"–{year - 1})", $"-{year - 1})", $"&ndash;{year - 1})", $"died {year - 1})" };
-                    disambiguationEntry = GetDisambiguationEntry(biography, rawText, searchValues);
+                    disambiguationEntry = GetDisambiguationEntry(articleTitle, rawText, searchValues);
                 }
-                return disambiguationEntry;
             }
-            return null;
+            return disambiguationEntry;
         }
 
         private bool ContainsValidDeathCategory(string rawText, int year, int monthId)
@@ -89,21 +94,21 @@ namespace WikipediaReferences.Services
             return valid;
         }
 
-        private string GetDisambiguationEntry(string biography, string rawText, string[] searchValues)
+        private string GetDisambiguationEntry(string articleTitle, string rawText, string[] searchValues)
         {
+            string disambiguationEntry = null;
+
             foreach (string searchValue in searchValues)
             {
-                string disambiguationEntry = InspectDisambiguationPage(rawText, biography, searchValue);
+                disambiguationEntry = InspectDisambiguationPage(rawText, articleTitle, searchValue);
 
                 if (disambiguationEntry != null)
                 {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
-                    Console.ResetColor();
-                    return disambiguationEntry;
+                    DisplaySuccess(disambiguationEntry);
+                    break;
                 }
             }
-            return null;
+            return disambiguationEntry;
         }
 
         public string GetAuthorsArticle(string author, string source)
@@ -305,14 +310,14 @@ namespace WikipediaReferences.Services
 
         private string GetArticleText(string article, bool printNotFound)
         {
-            string address;
+            string uri;
             article = article.Replace(" ", "_");
 
-            address = @"https://en.wikipedia.org/w/index.php?action=raw&title=" + article;
+            uri = @"https://en.wikipedia.org/w/index.php?action=raw&title=" + article;
 
             try
             {
-                return GetTextFromUrl(address);
+                return GetTextFromUrl(uri);
             }
             catch (WebException)
             {
@@ -331,11 +336,9 @@ namespace WikipediaReferences.Services
             }
         }
 
-        // TODO centraliseren
-        private string GetTextFromUrl(string address)
+        private string GetTextFromUrl(string uri)
         {
-            HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(address);
-            //HttpWebRequest httpWebRequest = WebRequest.CreateHttp(address);
+            HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
             httpWebRequest.Method = "GET";
             httpWebRequest.Headers.Add("User-Agent", "PostmanRuntime / 7.26.1");
 

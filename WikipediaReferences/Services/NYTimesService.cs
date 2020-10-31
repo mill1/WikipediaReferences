@@ -26,7 +26,7 @@ namespace WikipediaReferences.Services
 
         public void AddNYTimesObituaryReferences(int year, int monthId, string apiKey)
         {
-            string json = GetJSONFromUrlSync(year, monthId, apiKey);
+            string json = GetJSONFromUrl(year, monthId, apiKey);
 
             NYTimesArchive archive = JsonConvert.DeserializeObject<NYTimesArchive>(json);
 
@@ -487,14 +487,8 @@ namespace WikipediaReferences.Services
 
             var dayNames = CultureInfo.GetCultureInfo("en-US").DateTimeFormat.DayNames.ToList();
 
-            // died on Monday
-            // died last Sunday
-            // died Friday
-            // died at his home here on Monday
-            // died in Quebec on Thursday
             // died of undisclosed causes in a clinic outside Paris on Friday
             // was declared dead on arrival on Saturday
-            // was found dead on Tuesday
             // was killed in a traffic accident in Japan on Saturday
             foreach (var dayName in dayNames)
             {
@@ -505,11 +499,10 @@ namespace WikipediaReferences.Services
                 if (matches.Success)
                     return dayName;
             }
-
             return null;
         }
 
-        private string GetJSONFromUrlSync(int year, int monthId, string apiKey)
+        private string GetJSONFromUrl(int year, int monthId, string apiKey)
         {
             using var client = new HttpClient();
 
@@ -521,7 +514,7 @@ namespace WikipediaReferences.Services
 
             string uri = @"https://api.nytimes.com/svc/archive/v1/" +  @$"{year}/{monthId}.json?api-key={apiKey}";
 
-            Console.WriteLine("Retrieving JSON from the NYTime Archive. Please wait...r\n");
+            Console.WriteLine("Retrieving JSON from the NYTime Archive. Please wait...\r\n");
             // by calling .Result you are synchronously reading the result
             var response = client.GetAsync(uri).Result;
 
