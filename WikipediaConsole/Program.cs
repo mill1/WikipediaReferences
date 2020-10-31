@@ -15,7 +15,7 @@ namespace WikipediaConsole
         // If not found check for db reference on another day of the month (/ year?). If so investigate mismatch dates
         // STEP 4: Generate the new version of the list article including the added/replaced references
 
-        public static async System.Threading.Tasks.Task Main(string[] args)
+        public static void Main()
         {
             IServiceCollection services = new ServiceCollection();
             new Startup().ConfigureServices(services);
@@ -23,6 +23,6 @@ namespace WikipediaConsole
 
             var runner = serviceProvider.GetService<Runner>();
             runner.Run();
-        }  
+        }
     }
 }

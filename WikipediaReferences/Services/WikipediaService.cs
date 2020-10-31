@@ -34,14 +34,14 @@ namespace WikipediaReferences.Services
             return deceased;
         }
 
-        public string GetArticleTitle(string nameVersion, int year)
+        public string GetArticleTitle(string nameVersion, int year, int monthId)
         {
             string biography = nameVersion;
             string rawText = GetRawArticleText(ref biography, true);
 
-            // TODO: in januari ook year 1996
-            if (rawText.Contains($"[[Category:{year} deaths", StringComparison.OrdinalIgnoreCase))
+            if (ContainsValidDeathCategory(rawText, year, monthId))
             {
+                // TODO refactor
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"{biography}: SUCCESS");
                 Console.ResetColor();
@@ -51,52 +51,79 @@ namespace WikipediaReferences.Services
             {
                 // Category Human name disambiguation pages?
                 if (IsHumaneNameDisambiguationPage(rawText))
-                {
-                    // Do not use regex; error: too many ')'
-                    string[] searchValues = new string[] { $"–{year})", $"-{year})", $"&ndash;{year})", $"died {year})" };
-
-                    foreach (string searchValue in searchValues)
-                    {
-                        string disambiguationEntry = InspectDisambiguationPage(rawText, biography, searchValue);
-
-                        if (disambiguationEntry != null)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
-                            Console.ResetColor();
-                            return disambiguationEntry;
-                        }
-                    }
-                    return null;
-                }
+                    return CheckDisambiguationPage(year, monthId, biography, rawText);
                 else
                     return null;
             }
         }
 
-        public string GetAuthorsArticle(string author)
+        private string CheckDisambiguationPage(int year, int monthId, string biography, string rawText)
         {
-            // TODO
-            const string NYT = "The New York Times";
+            // Do not use regex; error: too many ')'
+            string[] searchValues = new string[] { $"–{year})", $"-{year})", $"&ndash;{year})", $"died {year})" };
 
+            string disambiguationEntry = GetDisambiguationEntry(biography, rawText, searchValues);
+
+            if (disambiguationEntry == null)
+            {
+                if (monthId <= 2)
+                {
+                    searchValues = new string[] { $"–{year - 1})", $"-{year - 1})", $"&ndash;{year - 1})", $"died {year - 1})" };
+                    disambiguationEntry = GetDisambiguationEntry(biography, rawText, searchValues);
+                }
+                return disambiguationEntry;
+            }
+            return null;
+        }
+
+        private bool ContainsValidDeathCategory(string rawText, int year, int monthId)
+        {
+            bool valid;
+
+            valid = rawText.Contains($"[[Category:{year} deaths", StringComparison.OrdinalIgnoreCase);
+
+            if (!valid)
+                if (monthId <= 2)
+                    valid = rawText.Contains($"[[Category:{year - 1} deaths", StringComparison.OrdinalIgnoreCase);
+
+            return valid;
+        }
+
+        private string GetDisambiguationEntry(string biography, string rawText, string[] searchValues)
+        {
+            foreach (string searchValue in searchValues)
+            {
+                string disambiguationEntry = InspectDisambiguationPage(rawText, biography, searchValue);
+
+                if (disambiguationEntry != null)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
+                    Console.ResetColor();
+                    return disambiguationEntry;
+                }
+            }
+            return null;
+        }
+
+        public string GetAuthorsArticle(string author, string source)
+        {
             string authorsArticle = author;
             string rawText = GetRawArticleText(ref authorsArticle, false);
 
-            if (!rawText.Contains(NYT))
+            if (!rawText.Contains(source))
                 return null;
 
             if (IsHumaneNameDisambiguationPage(rawText))
             {
-                authorsArticle = InspectDisambiguationPage(rawText, authorsArticle, NYT);
+                authorsArticle = InspectDisambiguationPage(rawText, authorsArticle, source);
 
                 if (authorsArticle == null)
                     return null;
             }
 
-            if (rawText.Contains("journalist") ||
-                rawText.Contains("columnist") ||
-                rawText.Contains("critic") ||
-                rawText.Contains("editor"))
+            if (rawText.Contains("journalist") || rawText.Contains("columnist") ||
+                rawText.Contains("critic") ||  rawText.Contains("editor"))
             {
                 return authorsArticle;
             }
@@ -287,7 +314,7 @@ namespace WikipediaReferences.Services
             {
                 return GetTextFromUrl(address);
             }
-            catch (WebException e)
+            catch (WebException)
             {
                 // article does not exist in Wikipedia
                 if (printNotFound)

@@ -35,13 +35,15 @@ namespace WikipediaReferences.Services
             // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)"))); 
             var obituaryDocs = articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
 
-            IEnumerable<Article> articles = GetArticles(monthId, year, obituaryDocs);
-            articles = articles.OrderBy(a => a.deathdate).ThenBy(a => a.lastname);
+            IEnumerable<Reference> references = GetReferences(monthId, year, obituaryDocs);
+            references = references.OrderBy(a => a.Deathdate).ThenBy(a => a.Lastname);
+
+            Console.WriteLine($"\r\n\r\nnr of refs: {references.Count()}!");
         }
 
-        private IEnumerable<Article> GetArticles(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
+        private IEnumerable<Reference> GetReferences(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
         {
-            List<Article> articles = new List<Article>();
+            List<Reference> articles = new List<Reference>();
 
             foreach (Doc obituaryDoc in obituaryDocs)
             {
@@ -54,28 +56,15 @@ namespace WikipediaReferences.Services
 
                 foreach (var nameVersion in nameVersions)
                 {
-                    articleTitle = wikipediaService.GetArticleTitle(nameVersion, year);
+                    articleTitle = wikipediaService.GetArticleTitle(nameVersion, year, monthId);
 
                     if (articleTitle != null)
                     {
-                        articles.Add(CreateArticle(monthId, year, obituaryDoc, articleTitle));
+                        articles.Add(CreateReference(monthId, year, obituaryDoc, articleTitle));
                         break;
                     }
                 }
-
-                bool dummy = false;
-                if (dummy)
-                {
-                    if (articleTitle == null) // could not find an article in Wikipedia. Check manually (sandbox2): UPDATE; none found manually
-                    {
-                        Keyword person = obituaryDoc.keywords.Where(k => k.name == "persons").FirstOrDefault();
-
-                        if (person != null)
-                            articles.Add(CreateArticle(monthId, year, obituaryDoc, person.value));
-                    }
-                }
             }
-
             return articles;
         }
 
@@ -87,11 +76,10 @@ namespace WikipediaReferences.Services
 
             if (person == null)
             {
-                // Zie email aan Hubert Mandeville <hubert.mandeville@nytimes.com> op Za 22-8-2020 18:22.
                 int pos = doc.headline.main.IndexOf(',');
 
                 if (pos < 0)
-                    return null; // Zie feb 1997, article 17c07f7b-b7b9-5c7b-ad28-3e4649d82a08 ; A Whirl Beyond the White House for Stephanopoulos
+                    return null; // See feb 1997, article 17c07f7b-b7b9-5c7b-ad28-3e4649d82a08 ; A Whirl Beyond the White House for Stephanopoulos
 
                 deceased = doc.headline.main.Substring(0, pos);
             }
@@ -164,7 +152,7 @@ namespace WikipediaReferences.Services
                 case " Jr":
                 case " Sr":
                     suffix = tail.Substring(1) + ".";
-                    return firstnames.Substring(0, firstnames.Length - 3);
+                    return firstnames[0..^3];
                 default:
                     return firstnames;
             }
@@ -210,25 +198,25 @@ namespace WikipediaReferences.Services
             return false;
         }
 
-        private Article CreateArticle(int monthId, int year, Doc obituaryDoc, string articleTitle)
+        private Reference CreateReference(int monthId, int year, Doc obituaryDoc, string articleTitle)
         {
-            return new Article()
+            return new Reference()
             {
-                articleTitle = articleTitle,
-                type = "Obituary",
-                lastname = GetLastName(articleTitle),
+                ArticleTitle = articleTitle,
+                Type = "Obituary",
+                Lastname = GetLastName(articleTitle),
                 //reference = CreateReference(obituaryDoc),
-                author1 = GetAuthor(obituaryDoc, false),
-                authorlink1 = GetAuthor(obituaryDoc, true),
-                title = obituaryDoc.headline.main,
-                url = obituaryDoc.web_url,
-                urlaccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
-                work = "[[The New York Times]]",
-                accessdate = DateTime.Now.Date,
-                date = obituaryDoc.pub_date.Date,
-                page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
+                Author1 = GetAuthor(obituaryDoc, false),
+                Authorlink1 = GetAuthor(obituaryDoc, true),
+                Title = obituaryDoc.headline.main,
+                Url = obituaryDoc.web_url,
+                Urlaccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
+                Work = "[[The New York Times]]",
+                Accessdate = DateTime.Now.Date,
+                Date = obituaryDoc.pub_date.Date,
+                Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
 
-                deathdate = GetDateOfDeath(obituaryDoc, monthId, year)
+                Deathdate = GetDateOfDeath(obituaryDoc, monthId, year)
             };
         }
 
@@ -238,7 +226,7 @@ namespace WikipediaReferences.Services
 
             // Tony Thomas (film historian)
 
-            int i = 0;
+            int i;
             for (i = parts.Length - 1; i > 0; i--)
             {
                 if (parts[i].StartsWith("("))
@@ -246,7 +234,7 @@ namespace WikipediaReferences.Services
             }
 
             if (i == 0)
-                return parts[parts.Length - 1];
+                return parts[^1];
             else
                 return parts[i - 1];
         }
@@ -268,7 +256,7 @@ namespace WikipediaReferences.Services
                         author += ".";
 
                     if (authorlink)
-                        return wikipediaService.GetAuthorsArticle(author);
+                        return wikipediaService.GetAuthorsArticle(author, "The New York Times");
                     else
                         return author;
                 }
@@ -319,7 +307,7 @@ namespace WikipediaReferences.Services
                 string dayName = GetDayOfDeath(excerpt);
 
                 if (dayName != null)
-                    return GetDateOfDeathFromDay(excerpt, obituaryDoc.pub_date.Date, dayName); // .Date: loose hours
+                    return GetDateOfDeathFromDay(obituaryDoc.pub_date.Date, dayName); // .Date: loose hours
             }
 
             dateOfDeath = GetDateOfDeathFromDayExpressions(obituaryDoc);
@@ -335,8 +323,6 @@ namespace WikipediaReferences.Services
         {
             // Create regex for handling people who died yesterday, today, this morning etc.:
             // died yesterday, died early yesterday, died in his sleep yesterday
-            // died of leukemia in Dallas yesterday
-            // was found dead yesterday            
             // *** BTW never present: "died the day before yesterday" ***
             // died today, died at a clinic here today
             // was killed in a car crash early this morning                                    
@@ -377,7 +363,6 @@ namespace WikipediaReferences.Services
                             throw new ArgumentException($"Expression not implemented: {dayExpression}");
                     }
                 }
-
             }
             return DateTime.MinValue;
         }
@@ -411,7 +396,7 @@ namespace WikipediaReferences.Services
             return value.Replace(".", string.Empty);
         }
 
-        private DateTime GetDateOfDeathFromDay(string excerpt, DateTime publicationDate, string dayName)
+        private DateTime GetDateOfDeathFromDay(DateTime publicationDate, string dayName)
         {
             DateTime dateOfDeath = publicationDate.AddDays(-1); // [[Jan Šejna]]: 'died...on Saturday' means 'last Saterday' (like [[John Kendrew]]).
             int i = 0;
@@ -442,28 +427,40 @@ namespace WikipediaReferences.Services
             if (excerpt == null)
                 return null;
 
-            var monthNames = GetMonthNames(true);
+            var monthArray = GetMonthsArray(monthId);
 
             // month name (abbrevation) will be followed by the day (f.i.: died on Oct. 4)
-            // TODO  Januari: 1, 12, 11 Februari?: 2, 1, 12
-            for (int i = monthId - 1; i >= 0; i--)
+            for (int i = 0; i < 3; i++)
             {
                 // died Aug. 8
                 // died at his home in Fort Lauderdale, Fla., on Oct. 23
                 // was found dead on July 9 near Llangollen            
-                Regex rgMonth = new Regex(" (?:died|dead|killed) .{0,60}" + monthNames.ElementAt(i));
+                Regex rgMonth = new Regex(" (?:died|dead|killed) .{0,60}" + monthArray.ElementAt(i));
 
                 var matches = rgMonth.Match(excerpt);
 
                 if (matches.Success)
                 {
                     search = matches.Value;
-                    //Console.WriteLine(search);
-                    return monthNames.ElementAt(i);
+                    return monthArray.ElementAt(i);
                 }
             }
-
             return null;
+        }
+
+        private List<string> GetMonthsArray(int monthId)
+        {
+            var monthNames = GetMonthNames(true);
+
+            switch (monthId)
+            {
+                case 1:
+                    return new List<string> { monthNames.ElementAt(0), monthNames.ElementAt(11), monthNames.ElementAt(10) };
+                case 2:
+                    return new List<string> { monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11) };
+                default:
+                    return new List<string> { monthNames.ElementAt(monthId), monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2) };
+            }
         }
 
         private List<string> GetMonthNames(bool abbreviated)
@@ -524,6 +521,7 @@ namespace WikipediaReferences.Services
 
             string uri = @"https://api.nytimes.com/svc/archive/v1/" +  @$"{year}/{monthId}.json?api-key={apiKey}";
 
+            Console.WriteLine("Retrieving JSON from the NYTime Archive. Please wait...r\n");
             // by calling .Result you are synchronously reading the result
             var response = client.GetAsync(uri).Result;
 

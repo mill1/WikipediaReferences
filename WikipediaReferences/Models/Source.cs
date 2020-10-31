@@ -9,12 +9,12 @@ namespace WikipediaReferences.Models
     {
         public Source()
         {
-            References = new List<Article>();
+            References = new List<Reference>();
         }
 
         public string Code { get; set; }
         public string Name { get; set; }
 
-        public virtual ICollection<Article> References { get; set; }
+        public virtual ICollection<Reference> References { get; set; }
     }
 }
