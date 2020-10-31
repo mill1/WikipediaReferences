@@ -22,7 +22,7 @@ namespace WikipediaReferences.Controllers
             this.logger = logger;
         }
 
-        [HttpGet("{date}")]
+        [HttpGet("deceased/{date}")]
         public IActionResult GetDeceasedByDate(DateTime date)
         {
             try
