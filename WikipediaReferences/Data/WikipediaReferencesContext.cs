@@ -10,7 +10,7 @@ namespace WikipediaReferences.Data
 {
     public class WikipediaReferencesContext : DbContext
     {
-        public virtual DbSet<Reference> References { get; set; }
+        public virtual DbSet<Article> References { get; set; }
         public virtual DbSet<Source> Sources { get; set; }
 
         public WikipediaReferencesContext(DbContextOptions<WikipediaReferencesContext> options) : base(options)
@@ -19,14 +19,15 @@ namespace WikipediaReferences.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Reference>(entity =>
+            modelBuilder.Entity<Article>(entity =>
             {
-                entity.Property(e => e.SourceCode)
+                entity.Property(e => e.type)
                     .IsRequired()
                     .HasMaxLength(35);
 
-                entity.Property(e => e.Name)
-                    .HasMaxLength(255);
+                entity.Property(e => e.SourceCode)
+                    .IsRequired()
+                    .HasMaxLength(35);
             });
 
             modelBuilder.Entity<Source>(entity =>

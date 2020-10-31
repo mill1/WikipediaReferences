@@ -37,6 +37,7 @@ namespace WikipediaReferences
 
             services.AddDbContext<Data.WikipediaReferencesContext>(optionActionCreator(webApiConnectionString));
             services.AddScoped< IWikipediaService, WikipediaService>();
+            services.AddScoped<INYTimesService, NYTimesService>();
             services.AddControllers();
         }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -31,6 +32,76 @@ namespace WikipediaReferences.Services
             IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
 
             return deceased;
+        }
+
+        public string GetArticleTitle(string nameVersion, int year)
+        {
+            string biography = nameVersion;
+            string rawText = GetRawArticleText(ref biography, true);
+
+            // TODO: in januari ook year 1996
+            if (rawText.Contains($"[[Category:{year} deaths", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"{biography}: SUCCESS");
+                Console.ResetColor();
+                return biography;
+            }
+            else
+            {
+                // Category Human name disambiguation pages?
+                if (IsHumaneNameDisambiguationPage(rawText))
+                {
+                    // Do not use regex; error: too many ')'
+                    string[] searchValues = new string[] { $"–{year})", $"-{year})", $"&ndash;{year})", $"died {year})" };
+
+                    foreach (string searchValue in searchValues)
+                    {
+                        string disambiguationEntry = InspectDisambiguationPage(rawText, biography, searchValue);
+
+                        if (disambiguationEntry != null)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
+                            Console.ResetColor();
+                            return disambiguationEntry;
+                        }
+                    }
+                    return null;
+                }
+                else
+                    return null;
+            }
+        }
+
+        public string GetAuthorsArticle(string author)
+        {
+            // TODO
+            const string NYT = "The New York Times";
+
+            string authorsArticle = author;
+            string rawText = GetRawArticleText(ref authorsArticle, false);
+
+            if (!rawText.Contains(NYT))
+                return null;
+
+            if (IsHumaneNameDisambiguationPage(rawText))
+            {
+                authorsArticle = InspectDisambiguationPage(rawText, authorsArticle, NYT);
+
+                if (authorsArticle == null)
+                    return null;
+            }
+
+            if (rawText.Contains("journalist") ||
+                rawText.Contains("columnist") ||
+                rawText.Contains("critic") ||
+                rawText.Contains("editor"))
+            {
+                return authorsArticle;
+            }
+            else
+                return null;
         }
 
         private Entry ParseEntry(string rawEntry, DateTime deathDate)
@@ -133,6 +204,132 @@ namespace WikipediaReferences.Services
             trimmedText = trimmedText.Replace("\n", "");
 
             return trimmedText;
+        }
+
+        private bool IsHumaneNameDisambiguationPage(string rawText)
+        {
+            return rawText.Contains("{{hndis|") ||
+                   rawText.Contains("|hndis}}") ||
+                   rawText.Contains("[[Category: Human name disambiguation pages", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string InspectDisambiguationPage(string rawText, string nameVersion, string searchValue)
+        {
+            // TODO https://en.wikipedia.org/wiki/Roger_Brown : three entries '-1997)'
+
+            int pos = rawText.IndexOf(searchValue);
+
+            if (pos == -1)
+                return null;
+
+            string article = rawText.Substring(0, pos + searchValue.Length);
+
+            // look for [[ (reverse)
+            pos = article.LastIndexOf("[[") + 2;
+            article = article.Substring(pos);
+
+            // Then look for the first | or ]]
+            pos = article.IndexOf("]]");
+            int posPipe = article.IndexOf("|") == -1 ? pos++ : article.IndexOf("|");  // probably not necessary..
+            pos = Math.Min(pos, posPipe);
+
+            if (pos == -1)    // searchValue within sought article: [[Richard Mason (novelist, 1919–1997)]] 
+                return null;
+
+            article = article.Substring(0, pos);
+
+            return CompareArticleWithNameVersion(article, nameVersion);
+        }
+
+        private string CompareArticleWithNameVersion(string article, string nameVersion)
+        {
+            if (article.Contains(nameVersion, StringComparison.OrdinalIgnoreCase))
+                return article;
+            else
+            {
+                // If article consists of three parts; loose the 2nd part and compare again.
+                // Number of occurrences do not warrant application of fuzzy string comparisons.
+                string[] parts = article.Split(" ");
+
+                if (parts.Length != 3)
+                    return null;
+                else
+                {
+                    if ($"{parts[0]} {parts[2]}".Contains(nameVersion, StringComparison.OrdinalIgnoreCase))
+                        return article;
+                    else
+                        return null;
+                }
+            }
+        }
+
+        private string GetRawArticleText(ref string article, bool printNotFound)
+        {
+            string rawText = GetArticleText(article, printNotFound);
+
+            if (rawText.Contains("#REDIRECT"))
+            {
+                article = GetRedirectPage(rawText);
+                rawText = GetArticleText(article, printNotFound);
+            }
+
+            return rawText;
+        }
+
+        private string GetArticleText(string article, bool printNotFound)
+        {
+            string address;
+            article = article.Replace(" ", "_");
+
+            address = @"https://en.wikipedia.org/w/index.php?action=raw&title=" + article;
+
+            try
+            {
+                return GetTextFromUrl(address);
+            }
+            catch (WebException e)
+            {
+                // article does not exist in Wikipedia
+                if (printNotFound)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"{article.Replace("_", " ")}: FAIL (no such article)");
+                    Console.ResetColor();
+                }
+                return string.Empty;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        // TODO centraliseren
+        private string GetTextFromUrl(string address)
+        {
+            HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(address);
+            //HttpWebRequest httpWebRequest = WebRequest.CreateHttp(address);
+            httpWebRequest.Method = "GET";
+            httpWebRequest.Headers.Add("User-Agent", "PostmanRuntime / 7.26.1");
+
+            using (WebResponse response = httpWebRequest.GetResponse())
+            {
+                HttpWebResponse httpResponse = response as HttpWebResponse;
+                using (StreamReader reader = new StreamReader(httpResponse.GetResponseStream()))
+                {
+                    return reader.ReadToEnd();
+                }
+            }
+        }
+
+        private string GetRedirectPage(string rawText)
+        {
+            // #REDIRECT[[Robert McG. Thomas Jr.]]
+            int pos = rawText.IndexOf("[[");
+            string redirectPage = rawText.Substring(pos + 2);
+            pos = redirectPage.IndexOf("]]");
+
+            return redirectPage.Substring(0, pos);
         }
     }
 }
