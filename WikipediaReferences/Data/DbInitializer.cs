@@ -8,7 +8,7 @@ namespace WikipediaReferences.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(WikipediaReferencesContext context)
+        public static void Initialize(WRContext context)
         {
             SeedData seedData;
 

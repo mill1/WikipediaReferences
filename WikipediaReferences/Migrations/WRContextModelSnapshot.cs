@@ -8,8 +8,8 @@ using WikipediaReferences.Data;
 
 namespace WikipediaReferences.Migrations
 {
-    [DbContext(typeof(WikipediaReferencesContext))]
-    partial class WikipediaReferencesContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(WRContext))]
+    partial class WRContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
@@ -27,6 +27,9 @@ namespace WikipediaReferences.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("AccessDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ArchiveDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ArticleTitle")

@@ -7,12 +7,12 @@ using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Data
 {
-    public class WikipediaReferencesContext : DbContext
+    public class WRContext : DbContext
     {
         public virtual DbSet<Reference> References { get; set; }
         public virtual DbSet<Source> Sources { get; set; }
 
-        public WikipediaReferencesContext(DbContextOptions<WikipediaReferencesContext> options) : base(options)
+        public WRContext(DbContextOptions<WRContext> options) : base(options)
         {
         }
 
@@ -31,6 +31,11 @@ namespace WikipediaReferences.Data
                 entity.Property(e => e.ArticleTitle)
                     .IsRequired()
                     .HasMaxLength(255);
+
+                entity.Property(e => e.AccessDate).HasColumnType("datetime2");
+                entity.Property(e => e.Date).HasColumnType("datetime2");
+                entity.Property(e => e.DeathDate).HasColumnType("datetime2");
+                entity.Property(e => e.ArchiveDate).HasColumnType("datetime2");
             });
 
             modelBuilder.Entity<Source>(entity =>

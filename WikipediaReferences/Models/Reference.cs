@@ -23,6 +23,7 @@ namespace WikipediaReferences.Models
         public DateTime Date { get; set; }
         public string Page { get; set; }
         public DateTime DeathDate { get; set; }
+        public DateTime ArchiveDate { get; set; }
 
         public string GetNewsReference()
         {

@@ -9,8 +9,8 @@ using WikipediaReferences.Data;
 
 namespace WikipediaReferences.Migrations
 {
-    [DbContext(typeof(WikipediaReferencesContext))]
-    [Migration("20201101002302_InitialCreate")]
+    [DbContext(typeof(WRContext))]
+    [Migration("20201101134001_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,6 +29,9 @@ namespace WikipediaReferences.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("AccessDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ArchiveDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ArticleTitle")

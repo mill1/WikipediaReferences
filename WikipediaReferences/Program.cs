@@ -22,7 +22,7 @@ namespace WikipediaReferences
                 var services = scope.ServiceProvider;
                 try
                 {
-                    var context = services.GetRequiredService<WikipediaReferencesContext>();
+                    var context = services.GetRequiredService<WRContext>();
                     DbInitializer.Initialize(context);
                 }
                 catch (Exception ex)

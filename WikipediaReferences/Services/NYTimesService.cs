@@ -14,20 +14,19 @@ using WikipediaReferences.Sources;
 
 namespace WikipediaReferences.Services
 {
-    // TODO alleen via controller te benaderen
     public class NYTimesService : INYTimesService
     {
-        private readonly WikipediaReferencesContext context;
+        private readonly WRContext context;
         private readonly IWikipediaService wikipediaService;
         private readonly DateTime DateOfDeathNotFoundInObituary = DateTime.MaxValue;
 
-        public NYTimesService(WikipediaReferencesContext context, IWikipediaService wikipediaService)
+        public NYTimesService(WRContext context, IWikipediaService wikipediaService)
         {
             this.context = context;
             this.wikipediaService = wikipediaService;
         }
 
-        public void AddNYTimesObituaryReferences(int year, int monthId, string apiKey)
+        public void AddObituaryReferences(int year, int monthId, string apiKey)
         {
             string json = GetJSONFromUrl(year, monthId, apiKey);
 
@@ -41,7 +40,8 @@ namespace WikipediaReferences.Services
             IEnumerable<Reference> references = GetReferences(monthId, year, obituaryDocs);
             references = references.OrderBy(a => a.DeathDate).ThenBy(a => a.LastNameSubject);
 
-
+            context.References.AddRange(references);
+            context.SaveChanges();
         }
 
         private IEnumerable<Reference> GetReferences(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
@@ -207,6 +207,7 @@ namespace WikipediaReferences.Services
             {
                 ArticleTitle = articleTitle,
                 Type = "Obituary",
+                SourceCode = "NYT",
                 LastNameSubject = GetLastName(articleTitle),
                 //reference = CreateReference(obituaryDoc),
                 Author1 = GetAuthor(obituaryDoc, false),
@@ -218,8 +219,8 @@ namespace WikipediaReferences.Services
                 AccessDate = DateTime.Now.Date,
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
-
-                DeathDate = GetDateOfDeath(obituaryDoc, monthId, year)
+                DeathDate = GetDateOfDeath(obituaryDoc, monthId, year),
+                ArchiveDate = new DateTime(year, monthId, 2)
             };
         }
 

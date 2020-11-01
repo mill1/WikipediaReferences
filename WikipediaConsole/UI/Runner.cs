@@ -16,13 +16,11 @@ namespace WikipediaConsole.UI
 
         private readonly IConfiguration configuration;
         private readonly IWikipediaService wikipediaService;
-        private readonly INYTimesService nyTimesService;
 
-        public Runner(IConfiguration configuration, IWikipediaService wikipediaService, INYTimesService nyTimesService, AssemblyInfo assemblyInfo)
+        public Runner(IConfiguration configuration, IWikipediaService wikipediaService, AssemblyInfo assemblyInfo)
         {
             this.configuration = configuration;
             this.wikipediaService = wikipediaService;
-            this.nyTimesService = nyTimesService;
 
             quit = false;
 
@@ -84,29 +82,30 @@ namespace WikipediaConsole.UI
 
         private void AddNYTimesObituaryReferences()
         {
-            try
-            {
-                const string ApiKey = "NYTimes Archive API key";
+            throw new Exception("TODO");
+            //try
+            //{
+            //    const string ApiKey = "NYTimes Archive API key";
 
-                Console.WriteLine("Death year:");
-                int year = int.Parse(Console.ReadLine());
-                Console.WriteLine("Death month id: (March = 3)");
-                int monthId = int.Parse(Console.ReadLine());
+            //    Console.WriteLine("Death year:");
+            //    int year = int.Parse(Console.ReadLine());
+            //    Console.WriteLine("Death month id: (March = 3)");
+            //    int monthId = int.Parse(Console.ReadLine());
 
-                string apiKey = configuration.GetValue<string>(ApiKey);
+            //    string apiKey = configuration.GetValue<string>(ApiKey);
 
-                if (apiKey == null || apiKey == "TOSET")
-                {
-                    Console.WriteLine(ApiKey+":");
-                    apiKey = Console.ReadLine();
-                }
+            //    if (apiKey == null || apiKey == "TOSET")
+            //    {
+            //        Console.WriteLine(ApiKey+":");
+            //        apiKey = Console.ReadLine();
+            //    }
 
-                nyTimesService.AddNYTimesObituaryReferences(year, monthId, apiKey);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ConsoleColor.Red, e);
-            }
+            //    nyTimesService.AddNYTimesObituaryReferences(year, monthId, apiKey);
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine(ConsoleColor.Red, e);
+            //}
         }
 
         private void TestConfigSetting()

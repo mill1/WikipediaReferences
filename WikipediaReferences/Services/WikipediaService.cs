@@ -8,10 +8,9 @@ using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
 {
-    // TODO alleen via controller te benaderen
     public class WikipediaService : IWikipediaService
     {
-        private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title="; // lw q2 title=Deaths_in_May_2005
+        private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
         private const string EntryDelimiter = "*[[";
 
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)

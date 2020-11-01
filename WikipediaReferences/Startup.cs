@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -19,12 +18,9 @@ namespace WikipediaReferences
 {
     public class Startup
     {
-        private readonly WikipediaReferencesContext context;
-
-        public Startup(IConfiguration configuration, WikipediaReferencesContext context)
+        public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
-            this.context = context;
+            Configuration = configuration;            
         }
 
         public IConfiguration Configuration { get; }
@@ -39,7 +35,7 @@ namespace WikipediaReferences
                 return options => options.UseSqlServer(connectionString);
             }
 
-            services.AddDbContext<Data.WikipediaReferencesContext>(optionActionCreator(webApiConnectionString));
+            services.AddDbContext<WRContext>(optionActionCreator(webApiConnectionString));
             services.AddScoped< IWikipediaService, WikipediaService>();
             services.AddScoped<INYTimesService, NYTimesService>();
             services.AddControllers();
