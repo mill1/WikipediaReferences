@@ -1,5 +1,4 @@
-﻿//WikipediaReferencesContext
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,12 +7,12 @@ using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Data
 {
-    public class WikipediaReferencesContext : DbContext
+    public class WRContext : DbContext
     {
         public virtual DbSet<Reference> References { get; set; }
         public virtual DbSet<Source> Sources { get; set; }
 
-        public WikipediaReferencesContext(DbContextOptions<WikipediaReferencesContext> options) : base(options)
+        public WRContext(DbContextOptions<WRContext> options) : base(options)
         {
         }
 
@@ -21,12 +20,22 @@ namespace WikipediaReferences.Data
         {
             modelBuilder.Entity<Reference>(entity =>
             {
+                entity.Property(e => e.Type)
+                    .IsRequired()
+                    .HasMaxLength(35);
+
                 entity.Property(e => e.SourceCode)
                     .IsRequired()
                     .HasMaxLength(35);
 
-                entity.Property(e => e.Name)
+                entity.Property(e => e.ArticleTitle)
+                    .IsRequired()
                     .HasMaxLength(255);
+
+                entity.Property(e => e.AccessDate).HasColumnType("datetime2");
+                entity.Property(e => e.Date).HasColumnType("datetime2");
+                entity.Property(e => e.DeathDate).HasColumnType("datetime2");
+                entity.Property(e => e.ArchiveDate).HasColumnType("datetime2");
             });
 
             modelBuilder.Entity<Source>(entity =>

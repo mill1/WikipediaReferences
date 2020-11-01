@@ -25,7 +25,6 @@ namespace WikipediaConsole
             services.AddSingleton<Runner>();
             services.AddScoped<AssemblyInfo>();
             services.AddScoped<IWikipediaService, WikipediaService>();
-            services.AddScoped<INYTimesService, NYTimesService>();
         }
     }
 }

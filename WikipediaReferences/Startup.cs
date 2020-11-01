@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Services;
 
@@ -20,7 +20,7 @@ namespace WikipediaReferences
     {
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            Configuration = configuration;            
         }
 
         public IConfiguration Configuration { get; }
@@ -35,8 +35,9 @@ namespace WikipediaReferences
                 return options => options.UseSqlServer(connectionString);
             }
 
-            services.AddDbContext<Data.WikipediaReferencesContext>(optionActionCreator(webApiConnectionString));
+            services.AddDbContext<WRContext>(optionActionCreator(webApiConnectionString));
             services.AddScoped< IWikipediaService, WikipediaService>();
+            services.AddScoped<INYTimesService, NYTimesService>();
             services.AddControllers();
         }
 

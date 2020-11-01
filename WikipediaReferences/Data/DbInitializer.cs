@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using System.IO;
+﻿using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
 
@@ -10,7 +8,7 @@ namespace WikipediaReferences.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(WikipediaReferencesContext context)
+        public static void Initialize(WRContext context)
         {
             SeedData seedData;
 

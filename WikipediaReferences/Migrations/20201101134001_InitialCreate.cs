@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace WikipediaReferences.Migrations
 {
@@ -24,9 +25,21 @@ namespace WikipediaReferences.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(maxLength: 255, nullable: true),
+                    Type = table.Column<string>(maxLength: 35, nullable: false),
                     SourceCode = table.Column<string>(maxLength: 35, nullable: false),
-                    SomeInteger = table.Column<int>(nullable: false)
+                    ArticleTitle = table.Column<string>(maxLength: 255, nullable: false),
+                    LastNameSubject = table.Column<string>(nullable: true),
+                    Author1 = table.Column<string>(nullable: true),
+                    Authorlink1 = table.Column<string>(nullable: true),
+                    Title = table.Column<string>(nullable: true),
+                    Url = table.Column<string>(nullable: true),
+                    UrlAccess = table.Column<string>(nullable: true),
+                    Work = table.Column<string>(nullable: true),
+                    AccessDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Page = table.Column<string>(nullable: true),
+                    DeathDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ArchiveDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

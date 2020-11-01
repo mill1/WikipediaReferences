@@ -11,7 +11,8 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchUrl": "wikipedia/2005-5-12",
+      "launchBrowser": true,
+      "launchUrl": "wikipedia/deceased/1997-1-10",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

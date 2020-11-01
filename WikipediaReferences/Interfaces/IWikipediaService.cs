@@ -8,5 +8,7 @@ namespace WikipediaReferences.Interfaces
     public interface IWikipediaService
     {
         public IEnumerable<Entry> GetDeceased(DateTime date);
+        public string GetArticleTitle(string nameVersion, int year, int monthId);
+        public string GetAuthorsArticle(string author, string source);
     }
 }
