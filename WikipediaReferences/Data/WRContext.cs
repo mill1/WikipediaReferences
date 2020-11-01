@@ -32,10 +32,10 @@ namespace WikipediaReferences.Data
                     .IsRequired()
                     .HasMaxLength(255);
 
-                entity.Property(e => e.AccessDate).HasColumnType("datetime2");
-                entity.Property(e => e.Date).HasColumnType("datetime2");
-                entity.Property(e => e.DeathDate).HasColumnType("datetime2");
-                entity.Property(e => e.ArchiveDate).HasColumnType("datetime2");
+                entity.Property(e => e.AccessDate).HasColumnType("date");
+                entity.Property(e => e.Date).HasColumnType("date");
+                entity.Property(e => e.DeathDate).HasColumnType("date");
+                entity.Property(e => e.ArchiveDate).HasColumnType("date");
             });
 
             modelBuilder.Entity<Source>(entity =>

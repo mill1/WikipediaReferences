@@ -40,7 +40,7 @@ namespace WikipediaReferences.Services
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
-                DisplaySuccess(articleTitle);
+                Console.WriteLine($"{articleTitle}: SUCCESS");
                 return articleTitle;
             }
             else
@@ -51,13 +51,6 @@ namespace WikipediaReferences.Services
                 else
                     return null;
             }
-        }
-
-        private void DisplaySuccess(string articleTitle)
-        {
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"{articleTitle}: SUCCESS");
-            Console.ResetColor();
         }
 
         private string CheckDisambiguationPage(int year, int monthId, string articleTitle, string rawText)
@@ -101,7 +94,7 @@ namespace WikipediaReferences.Services
 
                 if (disambiguationEntry != null)
                 {
-                    DisplaySuccess(disambiguationEntry);
+                    Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
                     break;
                 }
             }

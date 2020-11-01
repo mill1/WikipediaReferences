@@ -35,11 +35,11 @@ namespace WikipediaReferences.Migrations
                     Url = table.Column<string>(nullable: true),
                     UrlAccess = table.Column<string>(nullable: true),
                     Work = table.Column<string>(nullable: true),
-                    AccessDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AccessDate = table.Column<DateTime>(type: "date", nullable: false),
+                    Date = table.Column<DateTime>(type: "date", nullable: false),
                     Page = table.Column<string>(nullable: true),
-                    DeathDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ArchiveDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    DeathDate = table.Column<DateTime>(type: "date", nullable: false),
+                    ArchiveDate = table.Column<DateTime>(type: "date", nullable: false)
                 },
                 constraints: table =>
                 {

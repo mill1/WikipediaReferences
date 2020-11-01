@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaConsole.UI
@@ -15,12 +17,19 @@ namespace WikipediaConsole.UI
         private bool quit;
 
         private readonly IConfiguration configuration;
+        private readonly HttpClient client;
         private readonly IWikipediaService wikipediaService;
 
-        public Runner(IConfiguration configuration, IWikipediaService wikipediaService, AssemblyInfo assemblyInfo)
+        public Runner(IConfiguration configuration, HttpClient client, IWikipediaService wikipediaService, AssemblyInfo assemblyInfo)
         {
             this.configuration = configuration;
             this.wikipediaService = wikipediaService;
+
+            this.client = client;
+            var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
+            this.client.BaseAddress = new Uri(uri);
+            this.client.DefaultRequestHeaders.Accept.Clear();
+            this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             quit = false;
 
@@ -82,30 +91,34 @@ namespace WikipediaConsole.UI
 
         private void AddNYTimesObituaryReferences()
         {
-            throw new Exception("TODO");
-            //try
-            //{
-            //    const string ApiKey = "NYTimes Archive API key";
+            try
+            {
+                const string ApiKey = "NYTimes Archive API key";
 
-            //    Console.WriteLine("Death year:");
-            //    int year = int.Parse(Console.ReadLine());
-            //    Console.WriteLine("Death month id: (March = 3)");
-            //    int monthId = int.Parse(Console.ReadLine());
+                Console.WriteLine("Death year:");
+                int year = int.Parse(Console.ReadLine());
+                Console.WriteLine("Death month id: (March = 3)");
+                int monthId = int.Parse(Console.ReadLine());
 
-            //    string apiKey = configuration.GetValue<string>(ApiKey);
+                string apiKey = configuration.GetValue<string>(ApiKey);
 
-            //    if (apiKey == null || apiKey == "TOSET")
-            //    {
-            //        Console.WriteLine(ApiKey+":");
-            //        apiKey = Console.ReadLine();
-            //    }
+                if (apiKey == null || apiKey == "TOSET")
+                {
+                    Console.WriteLine(ApiKey + ":");
+                    apiKey = Console.ReadLine();
+                }
 
-            //    nyTimesService.AddNYTimesObituaryReferences(year, monthId, apiKey);
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine(ConsoleColor.Red, e);
-            //}
+                string uri = $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+
+                Console.WriteLine("Processing request. Please wait...\r\n");
+                var response = client.GetAsync(uri);
+                response.Wait();
+                System.Console.WriteLine("Request was processed succesfully.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(ConsoleColor.Red, e);
+            }
         }
 
         private void TestConfigSetting()
