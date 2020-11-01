@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Net.Http;
 using System.Text;
 using WikipediaConsole.UI;
 using WikipediaReferences.Interfaces;
@@ -22,6 +23,7 @@ namespace WikipediaConsole
         public void ConfigureServices(IServiceCollection services)
         {           
             services.AddSingleton(Configuration);
+            services.AddSingleton<HttpClient>();
             services.AddSingleton<Runner>();
             services.AddScoped<AssemblyInfo>();
             services.AddScoped<IWikipediaService, WikipediaService>();

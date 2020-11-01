@@ -10,7 +10,7 @@ using WikipediaReferences.Data;
 namespace WikipediaReferences.Migrations
 {
     [DbContext(typeof(WRContext))]
-    [Migration("20201101134001_InitialCreate")]
+    [Migration("20201101145921_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -29,10 +29,10 @@ namespace WikipediaReferences.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("AccessDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<DateTime>("ArchiveDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<string>("ArticleTitle")
                         .IsRequired()
@@ -46,10 +46,10 @@ namespace WikipediaReferences.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<DateTime>("DeathDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<string>("LastNameSubject")
                         .HasColumnType("nvarchar(max)");

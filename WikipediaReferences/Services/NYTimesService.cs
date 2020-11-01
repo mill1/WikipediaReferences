@@ -39,9 +39,10 @@ namespace WikipediaReferences.Services
 
             IEnumerable<Reference> references = GetReferences(monthId, year, obituaryDocs);
             references = references.OrderBy(a => a.DeathDate).ThenBy(a => a.LastNameSubject);
-
+            
             context.References.AddRange(references);
             context.SaveChanges();
+            Console.WriteLine($"{references.Count()} NYTimes obituary references have been saved succesfully.");
         }
 
         private IEnumerable<Reference> GetReferences(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
@@ -89,17 +90,28 @@ namespace WikipediaReferences.Services
             else
                 deceased = person.value;
 
+            // Just one name
             int i = deceased.IndexOf(",");
 
             if (i == -1)
-                return new string[] { deceased };
+                return new string[] { Capitalize(deceased) };
 
-            string surnames = deceased.Substring(0, i);
+            string surnames = Capitalize(deceased.Substring(0, i));
 
-            string firstnames = deceased.Substring(i + 1).Trim();
+            string firstnames = Capitalize(deceased.Substring(i + 1).Trim());
             firstnames = AdjustFirstNames(firstnames, out string suffix);
 
             return GetNameVersions(firstnames, surnames, suffix);
+        }
+
+        private string Capitalize(string value)
+        {
+            string[] values = value.Split(" ");
+            string capitalized = String.Empty;
+
+            values.ToList().ForEach(v => capitalized += Char.ToUpper(v.First()) + v.Substring(1).ToLower() + " ");
+
+            return capitalized.Trim();
         }
 
         private string[] GetNameVersions(string firstnames, string surnames, string suffix)
@@ -220,7 +232,7 @@ namespace WikipediaReferences.Services
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
                 DeathDate = GetDateOfDeath(obituaryDoc, monthId, year),
-                ArchiveDate = new DateTime(year, monthId, 2)
+                ArchiveDate = new DateTime(year, monthId, 1)
             };
         }
 
@@ -510,7 +522,7 @@ namespace WikipediaReferences.Services
 
             string uri = @"https://api.nytimes.com/svc/archive/v1/" +  @$"{year}/{monthId}.json?api-key={apiKey}";
 
-            Console.WriteLine("Retrieving JSON from the NYTime Archive. Please wait...\r\n");
+            Console.WriteLine("JSON is being retrieved from the NYTime Archive.");
             // by calling .Result you are synchronously reading the result
             var response = client.GetAsync(uri).Result;
 
