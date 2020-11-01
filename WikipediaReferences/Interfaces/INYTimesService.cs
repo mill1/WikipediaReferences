@@ -7,6 +7,6 @@ namespace WikipediaReferences.Interfaces
 {
     public interface INYTimesService
     {
-        public void AddObituaryReferences(int year, int month, string apiKey);
+        public string AddObituaryReferences(int year, int month, string apiKey);
     }
 }

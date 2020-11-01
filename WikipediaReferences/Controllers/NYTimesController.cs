@@ -27,8 +27,8 @@ namespace WikipediaReferences.Controllers
         {
             try
             {
-                nyTimesService.AddObituaryReferences(year, monthId, apikey);
-                return Ok();
+                string message = nyTimesService.AddObituaryReferences(year, monthId, apikey);
+                return Ok(message);
             }
             catch (Exception e)
             {

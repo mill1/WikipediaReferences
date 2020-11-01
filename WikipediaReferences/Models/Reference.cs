@@ -18,7 +18,12 @@ namespace WikipediaReferences.Models
         public string Title { get; set; }
         public string Url { get; set; }
         public string UrlAccess { get; set; }
+        public string Quote { get; set; }
         public string Work { get; set; }
+        public string Agency { get; set; }        
+        public string Publisher { get; set; }        
+        public string Language { get; set; }        
+        public string Location { get; set; }        
         public DateTime AccessDate { get; set; }
         public DateTime Date { get; set; }
         public string Page { get; set; }
@@ -36,7 +41,7 @@ namespace WikipediaReferences.Models
                     $" |url={Url.Replace(@"\/", "/")}" + // unescape / (although never escaped)
                     $" |url-access={UrlAccess}" +
                     $" |access-date={AccessDate.ToString("d MMMM yyyy", ci)}" +
-                    $" |work={Work}" +
+                    $" |work=[[{Work}]]" +
                     $" |date={Date.ToString("d MMMM yyyy", ci)}" +
                     $" |page={Page}" +
                    "}}</ref>";

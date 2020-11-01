@@ -29,6 +29,9 @@ namespace WikipediaReferences.Migrations
                     b.Property<DateTime>("AccessDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("Agency")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("ArchiveDate")
                         .HasColumnType("date");
 
@@ -49,10 +52,22 @@ namespace WikipediaReferences.Migrations
                     b.Property<DateTime>("DeathDate")
                         .HasColumnType("date");
 
+                    b.Property<string>("Language")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("LastNameSubject")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Page")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Publisher")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Quote")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SourceCode")
