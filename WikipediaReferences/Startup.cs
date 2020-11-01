@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Services;
 
@@ -18,9 +19,12 @@ namespace WikipediaReferences
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly WikipediaReferencesContext context;
+
+        public Startup(IConfiguration configuration, WikipediaReferencesContext context)
         {
             Configuration = configuration;
+            this.context = context;
         }
 
         public IConfiguration Configuration { get; }

@@ -31,8 +31,9 @@ namespace WikipediaReferences.Controllers
             }
             catch (Exception e)
             {
-                string message = $"Getting the deceased by date failed. Requested date of death: {date.ToShortDateString()}.";
-                logger.LogError($"{message} Exception:\r\n{e}", e);
+                string message = $"Getting the deceased by date failed. Requested date of death: {date.ToShortDateString()}.\r\n" +
+                                 $"Exception:\r\n{e}";
+                logger.LogError($"{message}", e);
                 return BadRequest(message);
             }
         }

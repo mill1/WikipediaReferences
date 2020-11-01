@@ -4,16 +4,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Reflection;
-using System.Threading.Tasks;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
 {
+    // TODO alleen via controller te benaderen
     public class WikipediaService : IWikipediaService
     {
-        private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title="; // title=Deaths_in_May_2005
+        private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title="; // lw q2 title=Deaths_in_May_2005
         private const string EntryDelimiter = "*[[";
 
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)

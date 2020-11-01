@@ -1,5 +1,4 @@
-﻿//WikipediaReferencesContext
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +27,10 @@ namespace WikipediaReferences.Data
                 entity.Property(e => e.SourceCode)
                     .IsRequired()
                     .HasMaxLength(35);
+
+                entity.Property(e => e.ArticleTitle)
+                    .IsRequired()
+                    .HasMaxLength(255);
             });
 
             modelBuilder.Entity<Source>(entity =>

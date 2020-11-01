@@ -7,20 +7,23 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Models;
 using WikipediaReferences.Sources;
 
 namespace WikipediaReferences.Services
 {
+    // TODO alleen via controller te benaderen
     public class NYTimesService : INYTimesService
     {
+        private readonly WikipediaReferencesContext context;
         private readonly IWikipediaService wikipediaService;
         private readonly DateTime DateOfDeathNotFoundInObituary = DateTime.MaxValue;
 
-        public NYTimesService(IWikipediaService wikipediaService)
+        public NYTimesService(WikipediaReferencesContext context, IWikipediaService wikipediaService)
         {
+            this.context = context;
             this.wikipediaService = wikipediaService;
         }
 
@@ -36,9 +39,9 @@ namespace WikipediaReferences.Services
             var obituaryDocs = articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
 
             IEnumerable<Reference> references = GetReferences(monthId, year, obituaryDocs);
-            references = references.OrderBy(a => a.Deathdate).ThenBy(a => a.Lastname);
+            references = references.OrderBy(a => a.DeathDate).ThenBy(a => a.LastNameSubject);
 
-            Console.WriteLine($"\r\n\r\nnr of refs: {references.Count()}!");
+
         }
 
         private IEnumerable<Reference> GetReferences(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
@@ -204,19 +207,19 @@ namespace WikipediaReferences.Services
             {
                 ArticleTitle = articleTitle,
                 Type = "Obituary",
-                Lastname = GetLastName(articleTitle),
+                LastNameSubject = GetLastName(articleTitle),
                 //reference = CreateReference(obituaryDoc),
                 Author1 = GetAuthor(obituaryDoc, false),
                 Authorlink1 = GetAuthor(obituaryDoc, true),
                 Title = obituaryDoc.headline.main,
                 Url = obituaryDoc.web_url,
-                Urlaccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
+                UrlAccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
                 Work = "[[The New York Times]]",
-                Accessdate = DateTime.Now.Date,
+                AccessDate = DateTime.Now.Date,
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
 
-                Deathdate = GetDateOfDeath(obituaryDoc, monthId, year)
+                DeathDate = GetDateOfDeath(obituaryDoc, monthId, year)
             };
         }
 
