@@ -32,7 +32,7 @@ namespace WikipediaReferences.Services
             return context.References.Where(r => r.ArchiveDate == archiveDate);
         }
 
-        public void AddObituaryReferences(int year, int monthId, string apiKey)
+        public string AddObituaryReferences(int year, int monthId, string apiKey)
         {
             // Check: already added?
             IEnumerable<Reference> references = GetReferences(year, monthId);
@@ -55,7 +55,11 @@ namespace WikipediaReferences.Services
             
             context.References.AddRange(references);
             context.SaveChanges();
-            Console.WriteLine($"{references.Count()} NYTimes obituary references have been saved succesfully.");
+
+            string message = $"{references.Count()} NYTimes obituary references have been saved succesfully.";
+            Console.WriteLine(message);
+
+            return message;
         }
 
         private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
@@ -228,24 +232,30 @@ namespace WikipediaReferences.Services
 
         private Reference CreateReference(int monthId, int year, Doc obituaryDoc, string articleTitle)
         {
+            string author = obituaryDoc.byline.original;
+
             return new Reference()
             {
                 ArticleTitle = articleTitle,
                 Type = "Obituary",
                 SourceCode = "NYT",
                 LastNameSubject = GetLastName(articleTitle),
-                //reference = CreateReference(obituaryDoc),
-                Author1 = GetAuthor(obituaryDoc, false),
-                Authorlink1 = GetAuthor(obituaryDoc, true),
+                Author1 = (author == "AP") ? null : GetAuthor(author, false),    // probable some intern..
+                Authorlink1 = (author == "AP") ? null : GetAuthor(author, true),
                 Title = obituaryDoc.headline.main,
                 Url = obituaryDoc.web_url,
                 UrlAccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
-                Work = "[[The New York Times]]",
+                Quote = obituaryDoc.lead_paragraph,
+                Work = "The New York Times",
+                Agency = (author == "AP") ? "The Associated Press" : null,
+                Publisher = null,
+                Language = "en-us",
+                Location = "New York City",
                 AccessDate = DateTime.Now.Date,
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
                 DeathDate = GetDateOfDeath(obituaryDoc, monthId, year),
-                ArchiveDate = GetArchiveDate(year, monthId)
+                ArchiveDate = GetArchiveDate(year, monthId)                
             };
         }
 
@@ -271,14 +281,15 @@ namespace WikipediaReferences.Services
                 return parts[i - 1];
         }
 
-        private string GetAuthor(Doc doc, bool authorlink)
-        {
-            string author = doc.byline.original;
-
+        private string GetAuthor(string author, bool authorlink)
+        {  
             if (author == null)
                 return null;
             else
             {
+                if (author.Length < 3)
+                    return author;
+
                 if (author.Substring(0, 3).Equals("By ", StringComparison.InvariantCultureIgnoreCase))
                 {
                     author = author.Substring(3);
