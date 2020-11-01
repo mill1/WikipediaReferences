@@ -89,7 +89,7 @@ namespace WikipediaConsole.UI
             }
         }
 
-        private void AddNYTimesObituaryReferences()
+        private async void AddNYTimesObituaryReferences()
         {
             try
             {
@@ -111,9 +111,19 @@ namespace WikipediaConsole.UI
                 string uri = $"nytimes/addobits/{year}/{monthId}/{apiKey}";
 
                 Console.WriteLine("Processing request. Please wait...\r\n");
-                var response = client.GetAsync(uri);
-                response.Wait();
-                System.Console.WriteLine("Request was processed succesfully.");
+                HttpResponseMessage response = await client.GetAsync(uri);
+
+                if (response.IsSuccessStatusCode)
+                    System.Console.WriteLine("Request was processed succesfully.");
+                else
+                {
+                    string message = await response.Content.ReadAsStringAsync();
+                    throw new ArgumentException(message);
+                }
+            }
+            catch (ArgumentException e)
+            {
+                Console.WriteLine(ConsoleColor.Magenta, e);
             }
             catch (Exception e)
             {
