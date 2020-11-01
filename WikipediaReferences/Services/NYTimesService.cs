@@ -26,8 +26,21 @@ namespace WikipediaReferences.Services
             this.wikipediaService = wikipediaService;
         }
 
+        public IEnumerable<Reference> GetReferences(int year, int monthId)
+        {
+            DateTime archiveDate = GetArchiveDate(year, monthId);
+            return context.References.Where(r => r.ArchiveDate == archiveDate);
+        }
+
         public void AddObituaryReferences(int year, int monthId, string apiKey)
         {
+            // Check: already added?
+            IEnumerable<Reference> references = GetReferences(year, monthId);
+
+            if (references.Count() > 0)
+                throw new Exception($"NYT archive month has already been added; {references.Count()} refs found. " +
+                                    $"Month: {GetMonthNames(false).ElementAt(monthId-1)} {year}");
+
             string json = GetJSONFromUrl(year, monthId, apiKey);
 
             NYTimesArchive archive = JsonConvert.DeserializeObject<NYTimesArchive>(json);
@@ -37,7 +50,7 @@ namespace WikipediaReferences.Services
             // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)"))); 
             var obituaryDocs = articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
 
-            IEnumerable<Reference> references = GetReferences(monthId, year, obituaryDocs);
+            references = GetReferencesFromArchive(monthId, year, obituaryDocs);
             references = references.OrderBy(a => a.DeathDate).ThenBy(a => a.LastNameSubject);
             
             context.References.AddRange(references);
@@ -45,7 +58,7 @@ namespace WikipediaReferences.Services
             Console.WriteLine($"{references.Count()} NYTimes obituary references have been saved succesfully.");
         }
 
-        private IEnumerable<Reference> GetReferences(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
+        private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
         {
             List<Reference> articles = new List<Reference>();
 
@@ -232,8 +245,13 @@ namespace WikipediaReferences.Services
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
                 DeathDate = GetDateOfDeath(obituaryDoc, monthId, year),
-                ArchiveDate = new DateTime(year, monthId, 1)
+                ArchiveDate = GetArchiveDate(year, monthId)
             };
+        }
+
+        private DateTime GetArchiveDate(int year, int monthId)
+        {
+            return new DateTime(year, monthId, 1);
         }
 
         private string GetLastName(string articleTitle)
