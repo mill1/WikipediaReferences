@@ -120,6 +120,22 @@ namespace WikipediaConsole.UI
                     string message = await response.Content.ReadAsStringAsync();
                     throw new ArgumentException(message);
                 }
+
+                //for (int m = 1; m <= 12; m++)
+                //{
+                //    string uri = $"nytimes/addobits/{year}/{m}/{apiKey}";
+
+                //    Console.WriteLine("Processing request. Please wait...\r\n");
+                //    HttpResponseMessage response = await client.GetAsync(uri);
+
+                //    if (response.IsSuccessStatusCode)
+                //        System.Console.WriteLine($"Request was processed succesfully. month = {m}");
+                //    else
+                //    {
+                //        string message = await response.Content.ReadAsStringAsync();
+                //        throw new ArgumentException(message);
+                //    }
+                //}
             }
             catch (ArgumentException e)
             {
