@@ -120,7 +120,7 @@ namespace WikipediaConsole.UI
                 //else
                 //    throw new ArgumentException(message);
 
-                for (int m = 2; m <= 12; m++) // TODO q2
+                for (int m = 1; m <= 12; m++) 
                 {
                     string uri = $"nytimes/addobits/{year}/{m}/{apiKey}";
 

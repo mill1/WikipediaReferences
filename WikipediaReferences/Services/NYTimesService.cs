@@ -27,7 +27,12 @@ namespace WikipediaReferences.Services
             this.wikipediaService = wikipediaService;
         }
 
-        public IEnumerable<Reference> GetReferences(int year, int monthId)
+        public IEnumerable<Reference> GetReferencesPerDeathDate(DateTime deathDate)
+        {
+            return context.References.Where(r => r.DeathDate == deathDate);
+        }
+
+        public IEnumerable<Reference> GetReferencesPerArchiveMonth(int year, int monthId)
         {
             DateTime archiveDate = GetArchiveDate(year, monthId);
             return context.References.Where(r => r.ArchiveDate == archiveDate);
@@ -36,7 +41,7 @@ namespace WikipediaReferences.Services
         public string AddObituaryReferences(int year, int monthId, string apiKey)
         {
             // Check: already added?
-            IEnumerable<Reference> references = GetReferences(year, monthId);
+            IEnumerable<Reference> references = GetReferencesPerArchiveMonth(year, monthId);
 
             if (references.Count() > 0)
                 throw new Exception($"NYT archive month has already been added; {references.Count()} refs found. " +
