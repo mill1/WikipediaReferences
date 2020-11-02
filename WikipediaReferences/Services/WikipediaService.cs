@@ -40,7 +40,7 @@ namespace WikipediaReferences.Services
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
-                Console.WriteLine($"{articleTitle}: SUCCESS");
+                //TODO q2 Console.WriteLine($"{articleTitle}: SUCCESS");
                 return articleTitle;
             }
             else
@@ -315,7 +315,7 @@ namespace WikipediaReferences.Services
                 if (printNotFound)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"{article.Replace("_", " ")}: FAIL (no such article)");
+                    // TODO q2Console.WriteLine($"{article.Replace("_", " ")}: FAIL (no such article)");
                     Console.ResetColor();
                 }
                 return string.Empty;

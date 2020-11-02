@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore.Query;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -48,11 +49,38 @@ namespace WikipediaReferences.Services
             var articleDocs = archive.response.docs.GroupBy(d => d._id).Select(grp => grp.First());
 
             // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)"))); 
-            var obituaryDocs = articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
+
+            // TODO Refactor
+            // TODO Menu; Debug; Windows; Ex. settings ; Common CLR Ex ; enable System.NullReferenceException
+            IEnumerable<Doc> obituaryDocs;
+            try // Apparentle not every articleDoc has a type_of_material prop
+            {
+                obituaryDocs = articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
+            }
+            catch (Exception)
+            {
+                List<Doc> obituaryDocsEx = new List<Doc>();
+
+                foreach (var doc in articleDocs)
+                {
+                    try
+                    {
+                        if (doc.type_of_material.StartsWith("Obituary;"))
+                            obituaryDocsEx.Add(doc);
+                    }
+                    catch(Exception)
+                    {
+                        Console.WriteLine($"!!!!! Doc has no property type_of_material. Year: {year} Month: {monthId} doc Id: {doc._id}");
+                    }
+                }
+                obituaryDocsEx.OrderBy(d => d.pub_date);
+
+                obituaryDocs = obituaryDocsEx;
+            }
 
             references = GetReferencesFromArchive(monthId, year, obituaryDocs);
             references = references.OrderBy(a => a.DeathDate).ThenBy(a => a.LastNameSubject);
-            
+
             context.References.AddRange(references);
             context.SaveChanges();
 
@@ -62,7 +90,7 @@ namespace WikipediaReferences.Services
             return message;
         }
 
-        private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
+        private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IEnumerable<Doc> obituaryDocs)
         {
             List<Reference> articles = new List<Reference>();
 
@@ -123,6 +151,8 @@ namespace WikipediaReferences.Services
 
         private string Capitalize(string value)
         {
+            value = value.Replace("  ", " ");
+
             string[] values = value.Split(" ");
             string capitalized = String.Empty;
 
@@ -232,7 +262,22 @@ namespace WikipediaReferences.Services
 
         private Reference CreateReference(int monthId, int year, Doc obituaryDoc, string articleTitle)
         {
+            // TODO: refactor
             string author = obituaryDoc.byline.original;
+            string agency = null;
+
+            switch (author)
+            {
+                case "AP":
+                    author = null;
+                    agency = "The Associated Press";
+                    break;
+                case "Reuters":
+                case "New York Times Regional Newspapers":
+                    author = null;
+                    agency = author;
+                    break;
+            }
 
             return new Reference()
             {
@@ -240,14 +285,14 @@ namespace WikipediaReferences.Services
                 Type = "Obituary",
                 SourceCode = "NYT",
                 LastNameSubject = GetLastName(articleTitle),
-                Author1 = (author == "AP") ? null : GetAuthor(author, false),    // probable some intern..
-                Authorlink1 = (author == "AP") ? null : GetAuthor(author, true),
+                Author1 = GetAuthor(author, false),  
+                Authorlink1 = GetAuthor(author, true),
                 Title = obituaryDoc.headline.main,
                 Url = obituaryDoc.web_url,
                 UrlAccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
                 Quote = obituaryDoc.lead_paragraph,
                 Work = "The New York Times",
-                Agency = (author == "AP") ? "The Associated Press" : null,
+                Agency = agency,
                 Publisher = null,
                 Language = "en-us",
                 Location = "New York City",
@@ -426,8 +471,9 @@ namespace WikipediaReferences.Services
             int pos2 = text.IndexOf(separator, pos1 + 1);
 
             if (pos2 == -1)
-                throw new Exception($"pos2; value not found: '{separator}'");
-
+                // We're at the end.
+                pos2 = text.Length;
+            
             string value = text.Substring(pos1 + 1, pos2 - pos1 - 1);
 
             return value.Replace(".", string.Empty);
@@ -496,7 +542,7 @@ namespace WikipediaReferences.Services
                 case 2:
                     return new List<string> { monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11) };
                 default:
-                    return new List<string> { monthNames.ElementAt(monthId), monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2) };
+                    return new List<string> { monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2), monthNames.ElementAt(monthId - 3) };
             }
         }
 
@@ -551,7 +597,7 @@ namespace WikipediaReferences.Services
 
             string uri = @"https://api.nytimes.com/svc/archive/v1/" +  @$"{year}/{monthId}.json?api-key={apiKey}";
 
-            Console.WriteLine("JSON is being retrieved from the NYTime Archive.");
+            Console.WriteLine("####### JSON is being retrieved from the NYTimes archive. #######");
             // by calling .Result you are synchronously reading the result
             var response = client.GetAsync(uri).Result;
 

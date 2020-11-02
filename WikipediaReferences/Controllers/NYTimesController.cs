@@ -32,7 +32,7 @@ namespace WikipediaReferences.Controllers
             }
             catch (Exception e)
             {
-                string message = $"Adding the NYTimes obituary references fail. Requested month: {year} {monthId}.\r\n" +
+                string message = $"Adding the NYTimes obituary references failed. Requested month: {year} {monthId}.\r\n" +
                                  $"Exception:\r\n{e}";
                 logger.LogError($"{message}", e);
                 return BadRequest(message);
