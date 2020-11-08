@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.EntityFrameworkCore.Query;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -26,7 +27,12 @@ namespace WikipediaReferences.Services
             this.wikipediaService = wikipediaService;
         }
 
-        public IEnumerable<Reference> GetReferences(int year, int monthId)
+        public IEnumerable<Reference> GetReferencesPerDeathDate(DateTime deathDate)
+        {
+            return context.References.Where(r => r.DeathDate == deathDate);
+        }
+
+        public IEnumerable<Reference> GetReferencesPerArchiveMonth(int year, int monthId)
         {
             DateTime archiveDate = GetArchiveDate(year, monthId);
             return context.References.Where(r => r.ArchiveDate == archiveDate);
@@ -34,26 +40,20 @@ namespace WikipediaReferences.Services
 
         public string AddObituaryReferences(int year, int monthId, string apiKey)
         {
-            // Check: already added?
-            IEnumerable<Reference> references = GetReferences(year, monthId);
+            IEnumerable<Reference> references = GetReferencesPerArchiveMonth(year, monthId);
 
             if (references.Count() > 0)
                 throw new Exception($"NYT archive month has already been added; {references.Count()} refs found. " +
-                                    $"Month: {GetMonthNames(false).ElementAt(monthId-1)} {year}");
+                                    $"Month: {GetMonthNames(false).ElementAt(monthId - 1)} {year}");
 
             string json = GetJSONFromUrl(year, monthId, apiKey);
-
-            NYTimesArchive archive = JsonConvert.DeserializeObject<NYTimesArchive>(json);
-
-            var articleDocs = archive.response.docs.GroupBy(d => d._id).Select(grp => grp.First());
-
-            // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)"))); 
-            var obituaryDocs = articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
-
+            IEnumerable<Doc> articleDocs = GetArticleDocs(json);
+            IEnumerable<Doc> obituaryDocs = GetObituaryDocs(year, monthId, articleDocs);
             references = GetReferencesFromArchive(monthId, year, obituaryDocs);
             references = references.OrderBy(a => a.DeathDate).ThenBy(a => a.LastNameSubject);
-            
+
             context.References.AddRange(references);
+
             context.SaveChanges();
 
             string message = $"{references.Count()} NYTimes obituary references have been saved succesfully.";
@@ -62,7 +62,48 @@ namespace WikipediaReferences.Services
             return message;
         }
 
-        private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IOrderedEnumerable<Doc> obituaryDocs)
+        private static IEnumerable<Doc> GetArticleDocs(string json)
+        {
+            NYTimesArchive archive = JsonConvert.DeserializeObject<NYTimesArchive>(json);
+            var articleDocs = archive.response.docs.GroupBy(d => d._id).Select(grp => grp.First());
+            // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)"))); 
+            return articleDocs;
+        }
+
+        private IEnumerable<Doc> GetObituaryDocs(int year, int monthId, IEnumerable<Doc> articleDocs)
+        {
+            try
+            {
+                return articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
+            }
+            catch (Exception) // Not every articleDoc has a property type_of_material
+            {
+                return GetObituaryDocsNoLinq(year, monthId, articleDocs);
+            }
+        }
+
+        private List<Doc> GetObituaryDocsNoLinq(int year, int monthId, IEnumerable<Doc> articleDocs)
+        {
+            List<Doc> obituaryDocs = new List<Doc>();
+
+            foreach (var doc in articleDocs)
+            {
+                try
+                {
+                    if (doc.type_of_material.StartsWith("Obituary;"))
+                        obituaryDocs.Add(doc);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine($"Doc object has no property type_of_material. Year: {year} Month: {monthId} doc Id: {doc._id}");
+                }
+            }
+            obituaryDocs.OrderBy(d => d.pub_date);
+
+            return obituaryDocs;
+        }
+
+        private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IEnumerable<Doc> obituaryDocs)
         {
             List<Reference> articles = new List<Reference>();
 
@@ -91,26 +132,14 @@ namespace WikipediaReferences.Services
 
         private string[] GetDeceasedNames(Doc doc)
         {
-            string deceased;
+            string deceased = DetermineDeceasedValue(doc);
 
-            var person = doc.keywords.Where(k => k.name == "persons").FirstOrDefault();
+            if (deceased == null)
+                return null;
 
-            if (person == null)
-            {
-                int pos = doc.headline.main.IndexOf(',');
-
-                if (pos < 0)
-                    return null; // See feb 1997, article 17c07f7b-b7b9-5c7b-ad28-3e4649d82a08 ; A Whirl Beyond the White House for Stephanopoulos
-
-                deceased = doc.headline.main.Substring(0, pos);
-            }
-            else
-                deceased = person.value;
-
-            // Just one name
             int i = deceased.IndexOf(",");
 
-            if (i == -1)
+            if (i == -1) // Just one name
                 return new string[] { Capitalize(deceased) };
 
             string surnames = Capitalize(deceased.Substring(0, i));
@@ -121,8 +150,27 @@ namespace WikipediaReferences.Services
             return GetNameVersions(firstnames, surnames, suffix);
         }
 
+        private string DetermineDeceasedValue(Doc doc)
+        {
+            var person = doc.keywords.Where(k => k.name == "persons").FirstOrDefault();
+
+            if (person != null)
+                return person.value;
+            else
+            {
+                int pos = doc.headline.main.IndexOf(',');
+
+                if (pos < 0)
+                    return null; // See feb 1997, article 17c07f7b-b7b9-5c7b-ad28-3e4649d82a08 ; A Whirl Beyond the White House for Stephanopoulos
+
+                return doc.headline.main.Substring(0, pos);
+            }
+        }
+
         private string Capitalize(string value)
         {
+            value = value.Replace("  ", " ");
+
             string[] values = value.Split(" ");
             string capitalized = String.Empty;
 
@@ -135,38 +183,45 @@ namespace WikipediaReferences.Services
         {
             if (string.IsNullOrEmpty(suffix))
             {
-                if (!HasNameInitial(firstnames))
-                    return new string[] { $"{firstnames} {surnames}" };
+                if (HasNameInitial(firstnames))
+                    return GetNameVersionsInitialsNoSuffix(firstnames, surnames);
                 else
-                {
-                    return new string[]
-                    {
-                        $"{FixNameInitials(firstnames, false)} {surnames}",
-                        $"{FixNameInitials(firstnames, true)} {surnames}"
-                    };
-                }
+                    return new string[] { $"{firstnames} {surnames}" };
             }
             else
             {
-                if (!HasNameInitial(firstnames))
-                {
-                    return new string[]
-                    {
+                if (HasNameInitial(firstnames))
+                    return GetNameVersionsInitials(firstnames, surnames, suffix);
+                else
+                    return GetNameVersionsNoInitials(firstnames, surnames, suffix);
+            }
+        }
+
+        private string[] GetNameVersionsNoInitials(string firstnames, string surnames, string suffix)
+        {
+            return new string[]
+            {
                         $"{firstnames} {surnames} {suffix}",
                         $"{firstnames} {surnames}"
-                    };
-                }
-                else
-                {
-                    return new string[]
-                    {
+            };
+        }
+
+        private string[] GetNameVersionsInitials(string firstnames, string surnames, string suffix)
+        {
+            return new string[]
+            {
                         $"{FixNameInitials(firstnames, false)} {surnames} {suffix}",
                         $"{FixNameInitials(firstnames, true)} {surnames} {suffix}",
                         $"{FixNameInitials(firstnames, false)} {surnames}",
                         $"{FixNameInitials(firstnames, true)} {surnames}"
-                    };
-                }
-            }
+            };
+        }
+
+        private string[] GetNameVersionsInitialsNoSuffix(string firstnames, string surnames)
+        {
+            return new string[]{
+                $"{FixNameInitials(firstnames, false)} {surnames}",
+                $"{FixNameInitials(firstnames, true)} {surnames}" };
         }
 
         private string AdjustFirstNames(string firstnames, out string suffix)
@@ -206,7 +261,6 @@ namespace WikipediaReferences.Services
                 else
                     @fixed += $"{name} ";
             }
-
             return @fixed.Trim();
         }
 
@@ -233,6 +287,9 @@ namespace WikipediaReferences.Services
         private Reference CreateReference(int monthId, int year, Doc obituaryDoc, string articleTitle)
         {
             string author = obituaryDoc.byline.original;
+            string agency = null;
+
+            DetermineReferenceParameters(ref author, ref agency);
 
             return new Reference()
             {
@@ -240,14 +297,14 @@ namespace WikipediaReferences.Services
                 Type = "Obituary",
                 SourceCode = "NYT",
                 LastNameSubject = GetLastName(articleTitle),
-                Author1 = (author == "AP") ? null : GetAuthor(author, false),    // probable some intern..
-                Authorlink1 = (author == "AP") ? null : GetAuthor(author, true),
+                Author1 = GetAuthor(author, false),
+                Authorlink1 = GetAuthor(author, true),
                 Title = obituaryDoc.headline.main,
                 Url = obituaryDoc.web_url,
                 UrlAccess = "subscription",  // https://en.wikipedia.org/wiki/Template:Citation_Style_documentation/registration
                 Quote = obituaryDoc.lead_paragraph,
                 Work = "The New York Times",
-                Agency = (author == "AP") ? "The Associated Press" : null,
+                Agency = agency,
                 Publisher = null,
                 Language = "en-us",
                 Location = "New York City",
@@ -255,8 +312,24 @@ namespace WikipediaReferences.Services
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
                 DeathDate = GetDateOfDeath(obituaryDoc, monthId, year),
-                ArchiveDate = GetArchiveDate(year, monthId)                
+                ArchiveDate = GetArchiveDate(year, monthId)
             };
+        }
+
+        private void DetermineReferenceParameters(ref string author, ref string agency)
+        {
+            switch (author)
+            {
+                case "AP":
+                    author = null;
+                    agency = "The Associated Press";
+                    break;
+                case "Reuters":
+                case "New York Times Regional Newspapers":
+                    author = null;
+                    agency = author;
+                    break;
+            }
         }
 
         private DateTime GetArchiveDate(int year, int monthId)
@@ -317,7 +390,6 @@ namespace WikipediaReferences.Services
             // Nevermind:
             // shot to death yesterday                              [see 'death' beneath here]
             // leaped to his death from a rooftop late Saturday     [see 'death' beneath here]
-            // committed suicide on Nov. 5
             // committed suicide on Thursday
 
             // Do not use 'death' as once of the regex expressions. Not utilized in obits +:
@@ -326,6 +398,39 @@ namespace WikipediaReferences.Services
 
             DateTime dateOfDeath = DateTime.MinValue;
 
+            dateOfDeath = GetDateOfDeathFromMonthInformation(obituaryDoc, monthId, year, dateOfDeath);
+
+            if (dateOfDeath != DateTime.MinValue)
+                return dateOfDeath;
+
+            string dayName = GetDayNameOfDeath(obituaryDoc);
+
+            if (dayName != null)
+                return GetDateOfDeathFromDayName(obituaryDoc.pub_date.Date, dayName); // .Date: loose hours
+
+            dateOfDeath = GetDateOfDeathFromDayExpressions(obituaryDoc);
+
+            if (dateOfDeath != DateTime.MinValue)
+                return dateOfDeath;
+
+            // Not found
+            return DateOfDeathNotFoundInObituary;
+        }
+
+        private string GetDayNameOfDeath(Doc obituaryDoc)
+        {
+            foreach (var excerpt in new string[] { obituaryDoc.lead_paragraph, obituaryDoc.@abstract })
+            {
+                string dayName = GetDayNameOfDeathFromExcerpt(excerpt);
+
+                if (dayName != null)
+                    return dayName;
+            }
+            return null;
+        }
+
+        private DateTime GetDateOfDeathFromMonthInformation(Doc obituaryDoc, int monthId, int year, DateTime dateOfDeath)
+        {
             foreach (var excerpt in new string[] { obituaryDoc.lead_paragraph, obituaryDoc.@abstract })
             {
                 string monthName = GetMonthOfDeath(excerpt, monthId, out string search);
@@ -339,21 +444,7 @@ namespace WikipediaReferences.Services
                 }
             }
 
-            foreach (var excerpt in new string[] { obituaryDoc.lead_paragraph, obituaryDoc.@abstract })
-            {
-                string dayName = GetDayOfDeath(excerpt);
-
-                if (dayName != null)
-                    return GetDateOfDeathFromDay(obituaryDoc.pub_date.Date, dayName); // .Date: loose hours
-            }
-
-            dateOfDeath = GetDateOfDeathFromDayExpressions(obituaryDoc);
-
-            if (dateOfDeath != DateTime.MinValue)
-                return dateOfDeath;
-
-            // Not found
-            return DateOfDeathNotFoundInObituary;
+            return dateOfDeath;
         }
 
         private DateTime GetDateOfDeathFromDayExpressions(Doc obituaryDoc)
@@ -426,14 +517,15 @@ namespace WikipediaReferences.Services
             int pos2 = text.IndexOf(separator, pos1 + 1);
 
             if (pos2 == -1)
-                throw new Exception($"pos2; value not found: '{separator}'");
-
+                // We're at the end.
+                pos2 = text.Length;
+            
             string value = text.Substring(pos1 + 1, pos2 - pos1 - 1);
 
             return value.Replace(".", string.Empty);
         }
 
-        private DateTime GetDateOfDeathFromDay(DateTime publicationDate, string dayName)
+        private DateTime GetDateOfDeathFromDayName(DateTime publicationDate, string dayName)
         {
             DateTime dateOfDeath = publicationDate.AddDays(-1); // [[Jan Šejna]]: 'died...on Saturday' means 'last Saterday' (like [[John Kendrew]]).
             int i = 0;
@@ -496,7 +588,7 @@ namespace WikipediaReferences.Services
                 case 2:
                     return new List<string> { monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11) };
                 default:
-                    return new List<string> { monthNames.ElementAt(monthId), monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2) };
+                    return new List<string> { monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2), monthNames.ElementAt(monthId - 3) };
             }
         }
 
@@ -517,7 +609,7 @@ namespace WikipediaReferences.Services
             return monthNames;
         }
 
-        private string GetDayOfDeath(string excerpt)
+        private string GetDayNameOfDeathFromExcerpt(string excerpt)
         {
             if (excerpt == null)
                 return null;
@@ -551,7 +643,7 @@ namespace WikipediaReferences.Services
 
             string uri = @"https://api.nytimes.com/svc/archive/v1/" +  @$"{year}/{monthId}.json?api-key={apiKey}";
 
-            Console.WriteLine("JSON is being retrieved from the NYTime Archive.");
+            Console.WriteLine("####### JSON is being retrieved from the NYTimes archive. #######");
             // by calling .Result you are synchronously reading the result
             var response = client.GetAsync(uri).Result;
 

@@ -93,20 +93,11 @@ namespace WikipediaConsole.UI
         {
             try
             {
-                const string ApiKey = "NYTimes Archive API key";
+                // TODO refactor
+                int year, monthId;
+                string apiKey;
 
-                Console.WriteLine("Death year:");
-                int year = int.Parse(Console.ReadLine());
-                Console.WriteLine("Death month id: (March = 3)");
-                int monthId = int.Parse(Console.ReadLine());
-
-                string apiKey = configuration.GetValue<string>(ApiKey);
-
-                if (apiKey == null || apiKey == "TOSET")
-                {
-                    Console.WriteLine(ApiKey + ":");
-                    apiKey = Console.ReadLine();
-                }
+                GetArgsAddNYTObits(out year, out monthId, out apiKey);
 
                 string uri = $"nytimes/addobits/{year}/{monthId}/{apiKey}";
 
@@ -119,6 +110,7 @@ namespace WikipediaConsole.UI
                     Console.WriteLine(ConsoleColor.Green, message);
                 else
                     throw new ArgumentException(message);
+
             }
             catch (ArgumentException e)
             {
@@ -127,6 +119,23 @@ namespace WikipediaConsole.UI
             catch (Exception e)
             {
                 Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private void GetArgsAddNYTObits(out int year, out int monthId, out string apiKey)
+        {
+            const string ApiKey = "NYTimes Archive API key";
+
+            Console.WriteLine("Death year:");
+            year = int.Parse(Console.ReadLine());
+            Console.WriteLine("Death month id: (March = 3)");
+            monthId = int.Parse(Console.ReadLine());
+            apiKey = configuration.GetValue<string>(ApiKey);
+
+            if (apiKey == null || apiKey == "TOSET")
+            {
+                Console.WriteLine(ApiKey + ":");
+                apiKey = Console.ReadLine();
             }
         }
 
