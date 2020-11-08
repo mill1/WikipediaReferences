@@ -93,47 +93,24 @@ namespace WikipediaConsole.UI
         {
             try
             {
-                const string ApiKey = "NYTimes Archive API key";
+                // TODO refactor
+                int year, monthId;
+                string apiKey;
 
-                Console.WriteLine("Death year:");
-                int year = int.Parse(Console.ReadLine());
-                Console.WriteLine("Death month id: (March = 3)");
-                int monthId = int.Parse(Console.ReadLine());
+                GetArgsAddNYTObits(out year, out monthId, out apiKey);
 
-                string apiKey = configuration.GetValue<string>(ApiKey);
+                string uri = $"nytimes/addobits/{year}/{monthId}/{apiKey}";
 
-                if (apiKey == null || apiKey == "TOSET")
-                {
-                    Console.WriteLine(ApiKey + ":");
-                    apiKey = Console.ReadLine();
-                }
+                Console.WriteLine("Processing request. Please wait...\r\n");
+                HttpResponseMessage response = await client.GetAsync(uri);
 
-                //string uri = $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+                string message = await response.Content.ReadAsStringAsync();
 
-                //Console.WriteLine("Processing request. Please wait...\r\n");
-                //HttpResponseMessage response = await client.GetAsync(uri);
+                if (response.IsSuccessStatusCode)
+                    Console.WriteLine(ConsoleColor.Green, message);
+                else
+                    throw new ArgumentException(message);
 
-                //string message = await response.Content.ReadAsStringAsync();
-
-                //if (response.IsSuccessStatusCode)
-                //    Console.WriteLine(ConsoleColor.Green, message);
-                //else
-                //    throw new ArgumentException(message);
-
-                for (int m = 1; m <= 12; m++) 
-                {
-                    string uri = $"nytimes/addobits/{year}/{m}/{apiKey}";
-
-                    Console.WriteLine($"{year} {m}: processing request. Please wait...\r\n");
-                    HttpResponseMessage response = await client.GetAsync(uri);
-
-                    string message = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                        Console.WriteLine(ConsoleColor.Green, message);
-                    else
-                        throw new ArgumentException(message);
-                }
             }
             catch (ArgumentException e)
             {
@@ -142,6 +119,23 @@ namespace WikipediaConsole.UI
             catch (Exception e)
             {
                 Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private void GetArgsAddNYTObits(out int year, out int monthId, out string apiKey)
+        {
+            const string ApiKey = "NYTimes Archive API key";
+
+            Console.WriteLine("Death year:");
+            year = int.Parse(Console.ReadLine());
+            Console.WriteLine("Death month id: (March = 3)");
+            monthId = int.Parse(Console.ReadLine());
+            apiKey = configuration.GetValue<string>(ApiKey);
+
+            if (apiKey == null || apiKey == "TOSET")
+            {
+                Console.WriteLine(ApiKey + ":");
+                apiKey = Console.ReadLine();
             }
         }
 

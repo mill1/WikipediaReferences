@@ -13,6 +13,7 @@ namespace WikipediaReferences.Services
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
         private const string EntryDelimiter = "*[[";
 
+        // TODO refacor
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
             string text;
@@ -40,7 +41,7 @@ namespace WikipediaReferences.Services
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
-                //TODO q2 Console.WriteLine($"{articleTitle}: SUCCESS");
+                Console.WriteLine($"{articleTitle}: SUCCESS");
                 return articleTitle;
             }
             else
@@ -101,6 +102,7 @@ namespace WikipediaReferences.Services
             return disambiguationEntry;
         }
 
+        // TODO refacor
         public string GetAuthorsArticle(string author, string source)
         {
             string authorsArticle = author;
@@ -235,6 +237,7 @@ namespace WikipediaReferences.Services
                    rawText.Contains("[[Category: Human name disambiguation pages", StringComparison.OrdinalIgnoreCase);
         }
 
+        // TODO refacor
         private string InspectDisambiguationPage(string rawText, string nameVersion, string searchValue)
         {
             // TODO https://en.wikipedia.org/wiki/Roger_Brown : three entries '-1997)'
@@ -298,6 +301,7 @@ namespace WikipediaReferences.Services
             return rawText;
         }
 
+        // TODO refacor
         private string GetArticleText(string article, bool printNotFound)
         {
             string uri;
@@ -315,7 +319,7 @@ namespace WikipediaReferences.Services
                 if (printNotFound)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    // TODO q2Console.WriteLine($"{article.Replace("_", " ")}: FAIL (no such article)");
+                    Console.WriteLine($"{article.Replace("_", " ")}: FAIL (no such article)");
                     Console.ResetColor();
                 }
                 return string.Empty;
