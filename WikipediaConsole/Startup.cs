@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
-using System.Text;
 using WikipediaConsole.UI;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Services;
