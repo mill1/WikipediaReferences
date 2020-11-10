@@ -74,8 +74,8 @@ namespace WikipediaConsole.UI
             switch (answer)
             {
                 case Test:
-                    //TestGetDeceasedPerDay();
-                    TestConfigSetting();
+                    TestGetDeceasedPerDay();
+                    //TestConfigSetting();
                     break;
                 case AddNYTObitRefs:
                     AddNYTimesObituaryReferences();
@@ -142,12 +142,18 @@ namespace WikipediaConsole.UI
 
         private void TestGetDeceasedPerDay()
         {
-            //TODO: per month
-            DateTime deathDate = new DateTime(2005, 5, 12);
+            //var entries = wikipediaService.GetDeceased(new DateTime(2005, 5, 12));
 
-            var entries = wikipediaService.GetDeceased(deathDate);
+            var entries = wikipediaService.GetDeceased(1997, 3);
+            var refs = entries.Where(x => x.Reference != null);
+            
+            int maxLength = entries.Max(x => x.Information.Length);
+            WikipediaReferences.Entry entry = entries.Where(x => x.Information.Length == maxLength).First();
 
-            Console.WriteLine($"Count: {entries.Count()}");
+            Console.WriteLine($"Nr of entries: {entries.Count()}");
+            Console.WriteLine($"Nr of entries with references: {refs.Count()}");
+            Console.WriteLine($"Longest entry (excl. ref):  {entry.Name}");
+            Console.WriteLine($"Longest entry value:\r\n{entry}");
         }
     }
 }
