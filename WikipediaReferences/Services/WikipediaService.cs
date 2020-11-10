@@ -26,6 +26,38 @@ namespace WikipediaReferences.Services
             return deceased;
         }
 
+        public IEnumerable<Entry> GetDeceased(int year, int month)
+        {
+            DateTime deathDate = new DateTime(year, month, 1);
+            List<Entry> deceased = new List<Entry>();
+
+            string deathsPerMonthText = GetRawTextDeathsPerMonthList(deathDate);
+
+            for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
+            {
+                string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
+
+                IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
+                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, deathDate));
+
+                deceased.AddRange(deceasedPerDay);
+            }
+
+            return deceased;
+        }
+
+        private Entry ParseEntry(string rawEntry, DateTime deathDate)
+        {
+            return new Entry
+            {
+                LinkedName = GetNameFromRawEntry(rawEntry, true),
+                Name = GetNameFromRawEntry(rawEntry, false),
+                Information = GetInformationFromRawEntry(rawEntry),
+                Reference = GetReferenceFromRawEntry(rawEntry),
+                DeathDate = deathDate
+            };
+        }
+
         private string GetRawTextDeathsPerMonthList(DateTime deathDate)
         {
             string text;
@@ -34,7 +66,7 @@ namespace WikipediaReferences.Services
             using (WebClient client = new WebClient())
                 text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
 
-            if (text.Contains("* [[")) // We only want '*[[' (without the space); edit article in that case
+            if (text.Contains("* [[")) // We only want '*[[' (without the space); edit article in that case.
                 throw new Exception("Invalid markup style found: * [[");
 
             text = TrimWikiText(text, month, deathDate.Year);
@@ -129,18 +161,6 @@ namespace WikipediaReferences.Services
                 return authorsArticle;
             else
                 return null;
-        }
-
-        private Entry ParseEntry(string rawEntry, DateTime deathDate)
-        {
-            return new Entry
-            {
-                LinkedName = GetNameFromRawEntry(rawEntry, true),
-                Name = GetNameFromRawEntry(rawEntry, false),
-                Information = GetInformationFromRawEntry(rawEntry),
-                Reference = GetReferenceFromRawEntry(rawEntry),
-                DeathDate = deathDate                
-            };
         }
 
         private string GetInformationFromRawEntry(string rawEntry)
