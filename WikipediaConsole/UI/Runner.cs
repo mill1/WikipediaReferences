@@ -142,7 +142,7 @@ namespace WikipediaConsole.UI
 
         private void TestGetDeceasedPerDay()
         {
-            //var entries = wikipediaService.GetDeceased(new DateTime(2005, 5, 12));
+            //var entries = wikipediaService.GetDeceased(new DateTime(2005, 5, 12)); // Daily
 
             var entries = wikipediaService.GetDeceased(1997, 3);
             var refs = entries.Where(x => x.Reference != null);

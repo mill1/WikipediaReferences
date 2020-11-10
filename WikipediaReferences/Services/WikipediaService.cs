@@ -38,7 +38,7 @@ namespace WikipediaReferences.Services
                 string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
 
                 IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
-                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, deathDate));
+                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, month, day)));
 
                 deceased.AddRange(deceasedPerDay);
             }
