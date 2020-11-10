@@ -93,13 +93,7 @@ namespace WikipediaConsole.UI
         {
             try
             {
-                // TODO refactor
-                int year, monthId;
-                string apiKey;
-
-                GetArgsAddNYTObits(out year, out monthId, out apiKey);
-
-                string uri = $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+                string uri = GetAddObitsApiUri();
 
                 Console.WriteLine("Processing request. Please wait...\r\n");
                 HttpResponseMessage response = await client.GetAsync(uri);
@@ -122,21 +116,23 @@ namespace WikipediaConsole.UI
             }
         }
 
-        private void GetArgsAddNYTObits(out int year, out int monthId, out string apiKey)
+        private string GetAddObitsApiUri()
         {
             const string ApiKey = "NYTimes Archive API key";
 
             Console.WriteLine("Death year:");
-            year = int.Parse(Console.ReadLine());
+            int year = int.Parse(Console.ReadLine());
             Console.WriteLine("Death month id: (March = 3)");
-            monthId = int.Parse(Console.ReadLine());
-            apiKey = configuration.GetValue<string>(ApiKey);
+            int monthId = int.Parse(Console.ReadLine());
+            string apiKey = configuration.GetValue<string>(ApiKey);
 
             if (apiKey == null || apiKey == "TOSET")
             {
                 Console.WriteLine(ApiKey + ":");
                 apiKey = Console.ReadLine();
             }
+
+            return $"nytimes/addobits/{year}/{monthId}/{apiKey}"; ;
         }
 
         private void TestConfigSetting()

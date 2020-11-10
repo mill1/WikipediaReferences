@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
@@ -13,8 +14,19 @@ namespace WikipediaReferences.Services
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
         private const string EntryDelimiter = "*[[";
 
-        // TODO refacor
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
+        {
+            string text = GetRawTextDeathsPerMonthList(deathDate);
+
+            text = GetDaySection(text, deathDate.Day, false);
+
+            IEnumerable<string> rawDeceased = GetRawDeceased(text);
+            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
+
+            return deceased;
+        }
+
+        private string GetRawTextDeathsPerMonthList(DateTime deathDate)
         {
             string text;
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
@@ -26,12 +38,7 @@ namespace WikipediaReferences.Services
                 throw new Exception("Invalid markup style found: * [[");
 
             text = TrimWikiText(text, month, deathDate.Year);
-            text = GetDaySection(text, deathDate.Day, false);
-
-            IEnumerable<string> rawDeceased = GetRawDeceased(text);
-            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
-
-            return deceased;
+            return text;
         }
 
         public string GetArticleTitle(string nameVersion, int year, int monthId)
@@ -102,7 +109,6 @@ namespace WikipediaReferences.Services
             return disambiguationEntry;
         }
 
-        // TODO refacor
         public string GetAuthorsArticle(string author, string source)
         {
             string authorsArticle = author;
@@ -119,11 +125,8 @@ namespace WikipediaReferences.Services
                     return null;
             }
 
-            if (rawText.Contains("journalist") || rawText.Contains("columnist") ||
-                rawText.Contains("critic") ||  rawText.Contains("editor"))
-            {
+            if (rawText.Contains("journalist") || rawText.Contains("columnist") || rawText.Contains("critic") ||  rawText.Contains("editor"))
                 return authorsArticle;
-            }
             else
                 return null;
         }
@@ -237,7 +240,6 @@ namespace WikipediaReferences.Services
                    rawText.Contains("[[Category: Human name disambiguation pages", StringComparison.OrdinalIgnoreCase);
         }
 
-        // TODO refacor
         private string InspectDisambiguationPage(string rawText, string nameVersion, string searchValue)
         {
             // TODO https://en.wikipedia.org/wiki/Roger_Brown : three entries '-1997)'
@@ -247,10 +249,20 @@ namespace WikipediaReferences.Services
             if (pos == -1)
                 return null;
 
-            string article = rawText.Substring(0, pos + searchValue.Length);
+            string articleText = rawText.Substring(0, pos + searchValue.Length);
 
+            string disambiguationEntry = GetDisambiguationEntry(articleText);
+
+            if (disambiguationEntry == null)
+                return null;
+
+            return CompareArticleWithNameVersion(disambiguationEntry, nameVersion);
+        }
+
+        private string GetDisambiguationEntry(string article)
+        {
             // look for [[ (reverse)
-            pos = article.LastIndexOf("[[") + 2;
+            int pos = article.LastIndexOf("[[") + 2;
             article = article.Substring(pos);
 
             // Then look for the first | or ]]
@@ -261,9 +273,7 @@ namespace WikipediaReferences.Services
             if (pos == -1)    // searchValue within sought article: [[Richard Mason (novelist, 1919–1997)]] 
                 return null;
 
-            article = article.Substring(0, pos);
-
-            return CompareArticleWithNameVersion(article, nameVersion);
+            return article.Substring(0, pos);
         }
 
         private string CompareArticleWithNameVersion(string article, string nameVersion)
@@ -290,59 +300,36 @@ namespace WikipediaReferences.Services
 
         private string GetRawArticleText(ref string article, bool printNotFound)
         {
-            string rawText = GetArticleText(article, printNotFound);
+            string rawText = GetRawWikiPageText(article, printNotFound);
 
             if (rawText.Contains("#REDIRECT"))
             {
                 article = GetRedirectPage(rawText);
-                rawText = GetArticleText(article, printNotFound);
+                rawText = GetRawWikiPageText(article, printNotFound);
             }
 
             return rawText;
         }
 
-        // TODO refacor
-        private string GetArticleText(string article, bool printNotFound)
+        private string GetRawWikiPageText(string wikiPage, bool printNotFound)
         {
-            string uri;
-            article = article.Replace(" ", "_");
-
-            uri = @"https://en.wikipedia.org/w/index.php?action=raw&title=" + article;
+            string uri = UrlWikipediaRawBase + wikiPage.Replace(" ", "_");
 
             try
             {
-                return GetTextFromUrl(uri);
+                using WebClient client = new WebClient();
+                return client.DownloadString(uri);
             }
-            catch (WebException)
-            {
-                // article does not exist in Wikipedia
+            catch (WebException) // article does not exist in Wikipedia
+            {                
                 if (printNotFound)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"{article.Replace("_", " ")}: FAIL (no such article)");
-                    Console.ResetColor();
-                }
+                    Console.WriteLine($"{wikiPage}: FAIL (no such wiki page)");
+
                 return string.Empty;
             }
             catch (Exception)
             {
                 throw;
-            }
-        }
-
-        private string GetTextFromUrl(string uri)
-        {
-            HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
-            httpWebRequest.Method = "GET";
-            httpWebRequest.Headers.Add("User-Agent", "PostmanRuntime / 7.26.1");
-
-            using (WebResponse response = httpWebRequest.GetResponse())
-            {
-                HttpWebResponse httpResponse = response as HttpWebResponse;
-                using (StreamReader reader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    return reader.ReadToEnd();
-                }
             }
         }
 
