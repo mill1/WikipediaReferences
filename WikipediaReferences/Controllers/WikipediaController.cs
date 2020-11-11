@@ -37,5 +37,21 @@ namespace WikipediaReferences.Controllers
                 return BadRequest(message);
             }
         }
+
+        [HttpGet("deceased/{year}/{month}")]
+        public IActionResult GetDeceasedByMonth(int year, int month)
+        {
+            try
+            {
+                return Ok(wikipediaService.GetDeceased(year, month));
+            }
+            catch (Exception e)
+            {
+                string message = $"Getting the deceased by month failed. Requested month of death: {month} {year}.\r\n" +
+                                 $"Exception:\r\n{e}";
+                logger.LogError($"{message}", e);
+                return BadRequest(message);
+            }
+        }
     }
 }

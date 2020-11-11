@@ -9,7 +9,7 @@ namespace WikipediaReferences.Interfaces
     public interface INYTimesService
     {
         public IEnumerable<Reference> GetReferencesPerDeathDate(DateTime deathDate);
-        public IEnumerable<Reference> GetReferencesPerArchiveMonth(int year, int monthId);
+        public IEnumerable<Reference> GetReferencesPerMonthOfDeath(int year, int monthId);
         public string AddObituaryReferences(int year, int month, string apiKey);
     }
 }

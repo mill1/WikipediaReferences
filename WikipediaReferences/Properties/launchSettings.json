@@ -11,8 +11,7 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
-      "launchUrl": "nytimes/reference/1997-11-17",
+      "launchUrl": "wikipedia/deceased/1997/3",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
