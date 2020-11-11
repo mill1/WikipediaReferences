@@ -32,10 +32,9 @@ namespace WikipediaReferences.Services
             return context.References.Where(r => r.DeathDate == deathDate);
         }
 
-        public IEnumerable<Reference> GetReferencesPerArchiveMonth(int year, int monthId)
+        public IEnumerable<Reference> GetReferencesPerMonthOfDeath(int year, int monthId)
         {
-            DateTime archiveDate = GetArchiveDate(year, monthId);
-            return context.References.Where(r => r.ArchiveDate == archiveDate);
+            return context.References.Where(r => r.DeathDate.Year == year && r.DeathDate.Month == monthId);
         }
 
         public string AddObituaryReferences(int year, int monthId, string apiKey)
@@ -62,7 +61,13 @@ namespace WikipediaReferences.Services
             return message;
         }
 
-        private static IEnumerable<Doc> GetArticleDocs(string json)
+        private IEnumerable<Reference> GetReferencesPerArchiveMonth(int year, int monthId)
+        {
+            DateTime archiveDate = GetArchiveDate(year, monthId);
+            return context.References.Where(r => r.ArchiveDate == archiveDate);
+        }
+
+        private IEnumerable<Doc> GetArticleDocs(string json)
         {
             NYTimesArchive archive = JsonConvert.DeserializeObject<NYTimesArchive>(json);
             var articleDocs = archive.response.docs.GroupBy(d => d._id).Select(grp => grp.First());

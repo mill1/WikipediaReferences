@@ -6,13 +6,14 @@ namespace WikipediaConsole
 {
     public class Program
     {
-        // STEP 1: parse wikipedia list article as json: done
-        // STEP 2: Create a database with obituary reference info on persons that have a wiki
-        // STEP 3: Per day of a specific month per entry check for references in the database
-        // Process per entry of a day sub section:
-        // If found Check if reference already exists for an entry add it to the entry
+        // STEP 1: Parse wikipedia list article as json: done
+        // STEP 2: Create a database with obituary reference info on persons that have a wiki: done
+        // STEP 3: Per day of a specific month:
+        // Per reference find the matching entry in the day subsection of the wiki list (should be found; db only contains refs that have a wiki bio)
+        // If found check if a reference already exists for the entry
+        // No reference:  add it to the entry
         // Optional: if existing reference replace it (if it is from the NYT)
-        // If not found check for db reference on another day of the month (/ year?). If so investigate mismatch dates
+        // If no matching entry was found: investigate; check the entire month. ALL references should be accounted for.
         // STEP 4: Generate the new version of the list article including the added/replaced references
 
         public static void Main()

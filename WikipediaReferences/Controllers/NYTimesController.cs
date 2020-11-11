@@ -42,11 +42,11 @@ namespace WikipediaReferences.Controllers
         }
 
         [HttpGet("reference/{year}/{monthId}")]
-        public IActionResult GetReferencePerArchiveMonth(int year, int monthId)
+        public IActionResult GetReferencePerMonthOfDeath(int year, int monthId)
         {
             try
             {
-                IEnumerable<Reference> references = nyTimesService.GetReferencesPerArchiveMonth(year, monthId);
+                IEnumerable<Reference> references = nyTimesService.GetReferencesPerMonthOfDeath(year, monthId);
 
                 if (references.Count() == 0)
                     return NotFound($"No references were found. Requested month: {year} {monthId}");
