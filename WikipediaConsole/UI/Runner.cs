@@ -109,22 +109,24 @@ namespace WikipediaConsole.UI
                 
                 for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
                 {
-                    IEnumerable<Entry> entriesPerDay = entries.Where(e => e.DeathDate.Day == day);
                     IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
 
                     Console.WriteLine($"\r\nInspecting date {new DateTime(year, monthId, day).ToShortDateString()}");
 
                     foreach (var reference in referencesPerDay)
                     {
-                        foreach (var entry in entriesPerDay)
+                        //Get matching entry 
+                        Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
+
+                        if (entry == null)
+                            // an entry could deliberately 've be left out of the list -> show netto nr of chars article?
+                            Console.WriteLine(ConsoleColor.Red, $"{reference.ArticleTitle} not found.");
+                        else
                         {
-                            if (entry.LinkedName == reference.ArticleTitle)
-                            {
-                                if (entry.DeathDate == reference.DeathDate)
-                                    Console.WriteLine(ConsoleColor.Green, entry.LinkedName);
-                                else
-                                    Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName} death date ref.: {reference.DeathDate.ToShortDateString()}");
-                            }
+                            if (entry.DeathDate == reference.DeathDate)
+                                Console.WriteLine(ConsoleColor.Green, entry.LinkedName);
+                            else
+                                Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName} death date entry: {entry.DeathDate.ToShortDateString()}");
                         }
                     }
                 }
