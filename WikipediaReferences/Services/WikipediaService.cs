@@ -110,7 +110,38 @@ namespace WikipediaReferences.Services
 
         private string GetNettoContentRawArticleText(string rawText)
         {
-            return "jaja";
+            int firstIndex = GetFirstIndex(rawText);
+
+            return rawText.Substring(firstIndex, GetLastIndex(rawText) - firstIndex);
+        }
+
+        private int GetFirstIndex(string rawText)
+        {
+            // Look for the end of an infobox template the simple way. If you the elaborate way send me an email.
+            int indexListbox = rawText.IndexOf("infobox", StringComparison.OrdinalIgnoreCase);
+
+            if (indexListbox == -1)
+                return 0;
+
+            return rawText.IndexOf("}}", indexListbox);
+        }
+
+        private int GetLastIndex(string rawText)
+        {
+            int[] posEndList =
+           {
+                rawText.IndexOf("{{Authority control", StringComparison.OrdinalIgnoreCase),
+                rawText.IndexOf("{{DEFAULTSORT", StringComparison.OrdinalIgnoreCase),
+                rawText.IndexOf("[[Category", StringComparison.OrdinalIgnoreCase)
+            };
+
+            if (posEndList.Where(p => p == -1).Count() == 1) ; // posEndList.Length)
+                // TODO create WikipediaException
+                throw new Exception("Invalid article end. Edit Article");
+
+            int posEnd = posEndList.Min();            
+
+            return posEnd;
         }
 
         private string CheckDisambiguationPage(int year, int monthId, string articleTitle, string rawText)
