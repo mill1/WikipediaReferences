@@ -76,7 +76,7 @@ namespace WikipediaReferences.Services
         public string GetArticleTitle(string nameVersion, int year, int monthId)
         {
             string articleTitle = nameVersion;
-            string rawText = GetRawArticleText(ref articleTitle, true);
+            string rawText = GetRawArticleText(ref articleTitle, false, true);
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
@@ -92,7 +92,7 @@ namespace WikipediaReferences.Services
                     return null;
             }
         }
-        public string GetRawArticleText(ref string article, bool printNotFound)
+        public string GetRawArticleText(ref string article, bool nettoContent, bool printNotFound)
         {
             string rawText = GetRawWikiPageText(article, printNotFound);
 
@@ -102,7 +102,15 @@ namespace WikipediaReferences.Services
                 rawText = GetRawWikiPageText(article, printNotFound);
             }
 
+            if (nettoContent)
+                rawText = GetNettoContentRawArticleText(rawText);
+
             return rawText;
+        }
+
+        private string GetNettoContentRawArticleText(string rawText)
+        {
+            return "jaja";
         }
 
         private string CheckDisambiguationPage(int year, int monthId, string articleTitle, string rawText)
@@ -156,7 +164,7 @@ namespace WikipediaReferences.Services
         public string GetAuthorsArticle(string author, string source)
         {
             string authorsArticle = author;
-            string rawText = GetRawArticleText(ref authorsArticle, false);
+            string rawText = GetRawArticleText(ref authorsArticle, false, false);
 
             if (!rawText.Contains(source))
                 return null;

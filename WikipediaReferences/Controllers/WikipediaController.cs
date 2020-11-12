@@ -22,12 +22,12 @@ namespace WikipediaReferences.Controllers
             this.logger = logger;
         }
 
-        [HttpGet("articleraw/{articleTitle}")]
-        public IActionResult GetArticle(string articleTitle)
+        [HttpGet("rawarticle/{articleTitle}/netto/{nettoContent}")]
+        public IActionResult GetArticle(string articleTitle, bool nettoContent)
         {
             try
             {
-                return Ok(wikipediaService.GetRawArticleText(ref articleTitle, false));
+                return Ok(wikipediaService.GetRawArticleText(ref articleTitle, nettoContent, false));
             }
             catch (Exception e)
             {

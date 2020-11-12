@@ -145,7 +145,8 @@ namespace WikipediaConsole.UI
             // page redirects have been handled
             HttpResponseMessage response;
 
-            string uri = $"wikipedia/articleraw/{articleTitle}";
+            //string uri = $"wikipedia/articleraw/{articleTitle}/netto/1";
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
             string result = SendGetRequest(uri, out response);
 
             if (response.IsSuccessStatusCode)
