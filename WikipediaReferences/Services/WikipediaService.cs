@@ -92,6 +92,18 @@ namespace WikipediaReferences.Services
                     return null;
             }
         }
+        public string GetRawArticleText(ref string article, bool printNotFound)
+        {
+            string rawText = GetRawWikiPageText(article, printNotFound);
+
+            if (rawText.Contains("#REDIRECT"))
+            {
+                article = GetRedirectPage(rawText);
+                rawText = GetRawWikiPageText(article, printNotFound);
+            }
+
+            return rawText;
+        }
 
         private string CheckDisambiguationPage(int year, int monthId, string articleTitle, string rawText)
         {
@@ -316,20 +328,7 @@ namespace WikipediaReferences.Services
                         return null;
                 }
             }
-        }
-
-        private string GetRawArticleText(ref string article, bool printNotFound)
-        {
-            string rawText = GetRawWikiPageText(article, printNotFound);
-
-            if (rawText.Contains("#REDIRECT"))
-            {
-                article = GetRedirectPage(rawText);
-                rawText = GetRawWikiPageText(article, printNotFound);
-            }
-
-            return rawText;
-        }
+        }       
 
         private string GetRawWikiPageText(string wikiPage, bool printNotFound)
         {

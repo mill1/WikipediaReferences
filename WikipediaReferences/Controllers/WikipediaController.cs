@@ -22,6 +22,22 @@ namespace WikipediaReferences.Controllers
             this.logger = logger;
         }
 
+        [HttpGet("articleraw/{articleTitle}")]
+        public IActionResult GetArticle(string articleTitle)
+        {
+            try
+            {
+                return Ok(wikipediaService.GetRawArticleText(ref articleTitle, false));
+            }
+            catch (Exception e)
+            {
+                string message = $"Getting the raw article text. Requested article: {articleTitle}.\r\n" +
+                                 $"Exception:\r\n{e}";
+                logger.LogError($"{message}", e);
+                return BadRequest(message);
+            }
+        }
+
         [HttpGet("deceased/{date}")]
         public IActionResult GetDeceasedByDate(DateTime date)
         {

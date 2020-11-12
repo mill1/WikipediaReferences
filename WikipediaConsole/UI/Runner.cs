@@ -119,8 +119,11 @@ namespace WikipediaConsole.UI
                         Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
 
                         if (entry == null)
+                        {
                             // an entry could deliberately 've be left out of the list -> show netto nr of chars article?
-                            Console.WriteLine(ConsoleColor.Red, $"{reference.ArticleTitle} not found.");
+                            int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+                            Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
+                        }                            
                         else
                         {
                             if (entry.DeathDate == reference.DeathDate)
@@ -135,6 +138,20 @@ namespace WikipediaConsole.UI
             {
                 Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
+        {
+            // page redirects have been handled
+            HttpResponseMessage response;
+
+            string uri = $"wikipedia/articleraw/{articleTitle}";
+            string result = SendGetRequest(uri, out response);
+
+            if (response.IsSuccessStatusCode)
+                return result.Length;
+            else
+                throw new Exception(result);
         }
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
