@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -13,6 +13,14 @@ namespace WikipediaReferences.Services
     {
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
         private const string EntryDelimiter = "*[[";
+        private const int NoInfobox = -1;
+
+        private readonly ILogger logger;
+
+        public WikipediaService(ILogger<WikipediaService> logger)
+        {
+            this.logger = logger;
+    }
 
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
@@ -110,32 +118,102 @@ namespace WikipediaReferences.Services
 
         private string GetNettoContentRawArticleText(string rawText)
         {
-            int firstIndex = GetFirstIndex(rawText);
+            // Article size is an pragmatic yet arbitrary indicator regarding a biography's notability.
+            // In the end it cannot be helped that fanboys create large articles for their idols.
+            // However, the indicator can be improved by looking at the 'netto content' of the article;
+            // Articles can become quite verbose because of the use of infobox-templates and the addition of many categories.
+            // Stripping those elements from the markup text results in a more realistic article size.
+            int posContentStart = GetContentStart(rawText);
 
-            return rawText.Substring(firstIndex, GetLastIndex(rawText) - firstIndex);
+            return rawText.Substring(posContentStart, GetContentEnd(rawText) - posContentStart);
         }
 
-        private int GetFirstIndex(string rawText)
+        private int GetContentStart(string rawText)
         {
-            // Look for the end of an infobox template the simple way. If you the elaborate way send me an email.
-            int indexListbox = rawText.IndexOf("infobox", StringComparison.OrdinalIgnoreCase);
+            int posStart = GetStartPositionInfobox(rawText);
 
-            if (indexListbox == -1)
+            if (posStart == NoInfobox)
                 return 0;
 
-            return rawText.IndexOf("}}", indexListbox);
+            string infoboxText = GetInfoboxText(rawText);
+
+            return posStart + infoboxText.Length;
         }
 
-        private int GetLastIndex(string rawText)
+        private int GetStartPositionInfobox(string rawText)
+        {            
+            int pos = rawText.IndexOf("infobox", StringComparison.OrdinalIgnoreCase);
+
+            if (pos == -1)
+                return NoInfobox;
+
+            if (rawText.Contains("Please do not add an infobox", StringComparison.OrdinalIgnoreCase))
+                return NoInfobox;
+
+            // Find the opening accolades of the listbox
+            pos = rawText.LastIndexOf("{{", pos);
+
+            return pos;
+        }
+
+        private string GetInfoboxText(string rawText)
         {
-            int[] posEndList =
+            int posStart = GetStartPositionInfobox(rawText);
+
+            // Find the matching closing accolades of the listbox. This is quite tricky.
+            int count = 0;
+            int posEnd;
+
+            for (posEnd = posStart; posEnd < rawText.Length; posEnd++)
+            {
+                if (ClosingAccoladesFound(rawText, ref count, posEnd))
+                    break;
+            }
+
+            return rawText.Substring(posStart, posEnd - posStart + "}}".Length);
+        }
+
+        private  bool ClosingAccoladesFound(string rawText, ref int count, int posEnd)
+        {
+            if (rawText.Substring(posEnd, 2) == "}}")
+            {
+                if (rawText.Substring(posEnd, 3) == "}}}" && rawText.Substring(posEnd - 1, 3) == "}}}")
+                {
+                    if (rawText.Substring(posEnd, 4) == "}}}}" && rawText.Substring(posEnd - 2, 4) == "}}}}")
+                        count--;
+                    //else: centre 2 of 4 consecutive accolades: native_name={{nobold|{{my|Boem}}}}
+                }
+                else
+                    count--;
+            }
+
+            if (rawText.Substring(posEnd, 2) == "{{")
+            {
+                if (rawText.Substring(posEnd, 3) == "{{{" && rawText.Substring(posEnd - 1, 3) == "{{{")
+                    //centre 2 of 4 consecutive accolades: you never know..
+                    logger.LogDebug($"accolades exception:{rawText.Substring(posEnd, 40)}");
+                else
+                    count++;
+            }
+
+            if (count == 0)
+                return true;
+
+            return false;
+        }
+
+        private int GetContentEnd(string rawText)
+        {
+           List<int> posEndList = new List<int>
            {
                 rawText.IndexOf("{{Authority control", StringComparison.OrdinalIgnoreCase),
                 rawText.IndexOf("{{DEFAULTSORT", StringComparison.OrdinalIgnoreCase),
                 rawText.IndexOf("[[Category", StringComparison.OrdinalIgnoreCase)
             };
 
-            if (posEndList.Where(p => p == -1).Count() == 1) ; // posEndList.Length)
+            posEndList = posEndList.Where(pos => pos != -1).ToList();
+
+            if (posEndList.Count() == 0)
                 // TODO create WikipediaException
                 throw new Exception("Invalid article end. Edit Article");
 
