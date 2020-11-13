@@ -119,8 +119,11 @@ namespace WikipediaConsole.UI
                         Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
 
                         if (entry == null)
+                        {
                             // an entry could deliberately 've be left out of the list -> show netto nr of chars article?
-                            Console.WriteLine(ConsoleColor.Red, $"{reference.ArticleTitle} not found.");
+                            int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+                            Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
+                        }                            
                         else
                         {
                             if (entry.DeathDate == reference.DeathDate)
@@ -135,6 +138,21 @@ namespace WikipediaConsole.UI
             {
                 Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
+        {
+            // page redirects have been handled
+            HttpResponseMessage response;
+
+            //string uri = $"wikipedia/articleraw/{articleTitle}/netto/1";
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
+            string result = SendGetRequest(uri, out response);
+
+            if (response.IsSuccessStatusCode)
+                return result.Length;
+            else
+                throw new Exception(result);
         }
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
@@ -216,7 +234,7 @@ namespace WikipediaConsole.UI
 
         private string SendGetRequest(string uri, out HttpResponseMessage response)
         {
-            Console.WriteLine("Processing request. Please wait...\r\n");
+            Console.WriteLine("Processing request. Please wait...");
             response = client.GetAsync(uri).Result;
 
             return response.Content.ReadAsStringAsync().Result;
