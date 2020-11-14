@@ -104,9 +104,7 @@ namespace WikipediaConsole
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
             }
             else
-            {
                 HandleExistingEntry(entry, reference);
-            }
         }
 
         private void HandleExistingEntry(Entry entry, Reference reference)
@@ -120,9 +118,7 @@ namespace WikipediaConsole
                 UI.Console.WriteLine(consoleColor, $"{entry.LinkedName}: {refInfo}");
             }
             else
-            {
                 PrintMismatchDateOfDeaths(reference, entry);
-            }
         }
 
         private string HandleMatchingDatesOfDeath(Entry entry, Reference reference,  out ConsoleColor consoleColor)
@@ -180,7 +176,10 @@ namespace WikipediaConsole
 
             try
             {
-                int posEnd = Math.Min(entryReference.IndexOf("|", posStart), entryReference.IndexOf("}}", posStart));
+                int posEnd = entryReference.IndexOf("|", posStart);
+
+                if (posEnd == -1)
+                    posEnd = entryReference.IndexOf("}}", posStart);
 
                 string accessdate = entryReference.Substring(posStart, posEnd - posStart).Trim();
 
