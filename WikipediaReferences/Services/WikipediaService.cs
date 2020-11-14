@@ -334,8 +334,7 @@ namespace WikipediaReferences.Services
         {
             string namePart = rawEntry.Substring("[[".Length, rawEntry.IndexOf("]]") - "]]".Length);
             int pos = namePart.IndexOf('|');
-            string name;
-            bool isRedirect;
+            string name;            
 
             if (pos < 0)
                 name = namePart;
@@ -347,17 +346,25 @@ namespace WikipediaReferences.Services
                     name = namePart.Substring(pos + "|".Length);
             }
 
+            // TODO lw name = CheckRedirection(linkedName, name);
+
+            return name;
+        }
+
+        private string CheckRedirection(bool linkedName, string name)
+        {
+            bool isRedirect;
+
             //if linked name make sure it is not a redirect.
             if (linkedName)
             {
                 string originalName = name;
                 GetRawArticleMarkup(ref name, out isRedirect, false);
 
-                string redirectInfo = isRedirect ? $" Corrected for REDIRECT '{originalName}'" : string.Empty;
+                string redirectInfo = isRedirect ? $" Corrected REDIRECT '{originalName}'" : string.Empty;
 
                 Console.WriteLine($"Entry: {name}.{redirectInfo}");
             }
-
             return name;
         }
 

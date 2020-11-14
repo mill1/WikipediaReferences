@@ -13,7 +13,10 @@ namespace WikipediaConsole.UI
 {    
     public class Runner
     {
+        private const int MinimumNrOfNettoCharsBiography = 2000;
+
         private const string WikiListCheck = "w";
+        private const string DayCheck = "d";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
         private const string Quit = "q";
@@ -65,6 +68,7 @@ namespace WikipediaConsole.UI
             return new List<string>
             {
                 $"{WikiListCheck}:\tWiki list: check NYT references",
+                $"{DayCheck}:\tDay name of date",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
                 $"{Quit}:\tQuit application"
@@ -77,6 +81,9 @@ namespace WikipediaConsole.UI
             {
                 case WikiListCheck:
                     CheckListArticle();
+                    break;
+                case DayCheck:
+                    GetDaynameFromDate();
                     break;
                 case Test:
                     TestGetDeceasedFromWikipedia();
@@ -93,6 +100,14 @@ namespace WikipediaConsole.UI
             }
         }
 
+        private void GetDaynameFromDate()
+        {
+            Console.WriteLine("Date: (yyyy-M-d)");
+            DateTime date = DateTime.Parse(Console.ReadLine());
+
+            Console.WriteLine(ConsoleColor.Blue, date.DayOfWeek.ToString());
+        }
+
         private void CheckListArticle()
         {
             try
@@ -103,6 +118,7 @@ namespace WikipediaConsole.UI
                 Console.WriteLine("Death month id: (March = 3)");
                 int monthId = int.Parse(Console.ReadLine());
 
+                Console.WriteLine("Getting things ready. This may take a minute..");
                 IEnumerable<Entry> entries;
                 entries = GetEntriesPermonth(year, monthId);
 
@@ -124,7 +140,9 @@ namespace WikipediaConsole.UI
                         {
                             // an entry could've be left out of the list because of notabilty -> show netto nr of chars article
                             int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
-                            Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
+
+                            if (nettoNrOfChars >= MinimumNrOfNettoCharsBiography)
+                                Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
                         }                            
                         else
                         {
@@ -134,11 +152,19 @@ namespace WikipediaConsole.UI
                                 string refInfo;
 
                                 if (entry.Reference == null)
+                                {
+                                    // Entry found for which a NYT obit. exists. Set access date of reference to add to today.
+                                    reference.AccessDate = DateTime.Today;
                                     refInfo = "New NYT reference!";
+                                }
                                 else
                                 {
-                                    if (entry.Reference.Contains("New York Times"))
-                                        refInfo = "Update NYT reference!";
+                                    if (entry.Reference.Contains("New York Times") && !entry.Reference.Contains("paid notice", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        // Entry has NYT obituary reference. Update the reference but keep the access date of the original ref.
+                                        reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
+                                        refInfo = $"Update NYT reference! Access date = {reference.AccessDate.ToShortDateString()}";
+                                    }
                                     else
                                     {
                                         consoleColor = ConsoleColor.DarkGreen;
@@ -149,13 +175,14 @@ namespace WikipediaConsole.UI
                             }
                             else
                             {
+                                string message = $"Death date entry: {entry.DeathDate.ToShortDateString()} Url:\r\n{reference.Url}";
+
                                 if (entry.Reference == null)
-                                    Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT ref; death date entry: {entry.DeathDate.ToShortDateString()}");
+                                    Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
                                 else
                                     if (entry.Reference.Contains("New York Times"))
-                                        Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Upd NYT ref; death date entry: {entry.DeathDate.ToShortDateString()}");
-                            }
-                                
+                                        Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
+                            }                                
                         }
                     }
                 }
@@ -166,12 +193,37 @@ namespace WikipediaConsole.UI
             }
         }
 
+        private DateTime GetAccessDateFromEntryReference(string entryReference, DateTime defaultAccessDate)
+        {
+            int posStart = entryReference.IndexOf("access-date");
+
+            if (posStart == -1)
+                posStart = entryReference.IndexOf("accessdate");
+
+            if (posStart == -1)
+                return defaultAccessDate;
+
+            posStart = entryReference.IndexOf("=", posStart) + 1;
+
+            try
+            {
+                int posEnd = Math.Min(entryReference.IndexOf("|", posStart), entryReference.IndexOf("}}", posStart));
+
+                string accessdate = entryReference.Substring(posStart, posEnd - posStart).Trim();
+
+                return DateTime.Parse(accessdate);
+            }
+            catch (Exception)
+            {
+                return defaultAccessDate;
+            }
+        }
+
         private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
         {
             // page redirects have been handled
             HttpResponseMessage response;
 
-            //string uri = $"wikipedia/articleraw/{articleTitle}/netto/1";
             string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
             string result = SendGetRequest(uri, out response);
 
