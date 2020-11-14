@@ -20,89 +20,101 @@ namespace WikipediaConsole
             this.util = util;
         }
 
-        public void InspectListArticle()
+        public void InspectListArticle(int year, int monthId)
         {
             try
             {
-                // TODO obviously
-                Console.WriteLine("Death year:");
-                int year = int.Parse(Console.ReadLine());
-                Console.WriteLine("Death month id: (March = 3)");
-                int monthId = int.Parse(Console.ReadLine());
-
                 Console.WriteLine("Getting things ready. This may take a minute..");
-                IEnumerable<Entry> entries;
-                entries = GetEntriesPermonth(year, monthId);
 
-                IEnumerable<Reference> references;
-                references = GetReferencesPermonth(year, monthId);
+                IEnumerable<Entry> entries = GetEntriesPermonth(year, monthId);
+                IEnumerable<Reference> references = GetReferencesPermonth(year, monthId);
 
                 for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
                 {
-                    IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
-
                     Console.WriteLine($"\r\nInspecting date {new DateTime(year, monthId, day).ToShortDateString()}");
 
+                    IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
+
                     foreach (var reference in referencesPerDay)
-                    {
-                        //Get matching entry 
-                        Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
-
-                        if (entry == null)
-                        {
-                            // an entry could've be left out of the list because of notabilty. Determine netto nr of chars article
-                            int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
-
-                            if (nettoNrOfChars >= MinimumNrOfNettoCharsBiography)
-                                UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
-                        }
-                        else
-                        {
-                            if (entry.DeathDate == reference.DeathDate)
-                            {
-                                ConsoleColor consoleColor = ConsoleColor.Green;
-                                string refInfo;
-
-                                if (entry.Reference == null)
-                                {
-                                    // Entry found for which a NYT obit. exists. Set access date of reference to add to today.
-                                    reference.AccessDate = DateTime.Today;
-                                    refInfo = "New NYT reference!";
-                                }
-                                else
-                                {
-                                    if (entry.Reference.Contains("New York Times") && !entry.Reference.Contains("paid notice", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        // Entry has NYT obituary reference. Update the reference but keep the access date of the original ref.
-                                        reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
-                                        refInfo = $"Update NYT reference! Access date = {reference.AccessDate.ToShortDateString()}";
-                                    }
-                                    else
-                                    {
-                                        consoleColor = ConsoleColor.DarkGreen;
-                                        refInfo = "Non-NYT reference";
-                                    }
-                                }
-                                UI.Console.WriteLine(consoleColor, $"{entry.LinkedName}: {refInfo}");
-                            }
-                            else
-                            {
-                                string message = $"Death date entry: {entry.DeathDate.ToShortDateString()} Url:\r\n{reference.Url}";
-
-                                if (entry.Reference == null)
-                                    UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
-                                else
-                                    if (entry.Reference.Contains("New York Times"))
-                                    UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
-                            }
-                        }
-                    }
+                        HandleReference(reference, entries);
                 }
             }
             catch (Exception e)
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        private void HandleReference(Reference reference, IEnumerable<Entry> entries)
+        {
+            //Get matching entry 
+            Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
+
+            if (entry == null)
+            {
+                // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
+                int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+
+                if (nettoNrOfChars >= MinimumNrOfNettoCharsBiography)
+                    UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
+            }
+            else
+            {
+                HandleExistingEntry(entry, reference);
+            }
+        }
+
+        private void HandleExistingEntry(Entry entry, Reference reference)
+        {
+            if (entry.DeathDate == reference.DeathDate)
+            {
+                ConsoleColor consoleColor = ConsoleColor.White;
+
+                string refInfo = HandleMatchingDatesOfDeath(reference, entry, out consoleColor);
+
+                UI.Console.WriteLine(consoleColor, $"{entry.LinkedName}: {refInfo}");
+            }
+            else
+            {
+                PrintMismatchDateOfDeaths(reference, entry);
+            }
+        }
+
+        private string HandleMatchingDatesOfDeath(Reference reference, Entry entry, out ConsoleColor consoleColor)
+        {
+            if (entry.Reference == null)
+            {
+                // Entry found for which a NYT obit. exists. Set access date of reference to add to today.
+                reference.AccessDate = DateTime.Today;
+                consoleColor = ConsoleColor.Green;
+                return "New NYT reference!";
+            }
+            else
+            {
+                if (entry.Reference.Contains("New York Times") && !entry.Reference.Contains("paid notice", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Entry has NYT obituary reference. Update the reference but keep the access date of the original ref.
+                    reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
+                    consoleColor = ConsoleColor.Green;
+                    return $"Update NYT reference! Access date = {reference.AccessDate.ToShortDateString()}";
+                }
+                else
+                {
+                    consoleColor = ConsoleColor.DarkGreen;
+                    return "Non-NYT reference";
+                }
+            }
+        }
+
+        private void PrintMismatchDateOfDeaths(Reference reference, Entry entry)
+        {
+            string message = $"Death date entry: {entry.DeathDate.ToShortDateString()} Url:\r\n{reference.Url}";
+
+            if (entry.Reference == null)
+                UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
+            else
+                if (entry.Reference.Contains("New York Times"))
+                UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
         }
 
         private DateTime GetAccessDateFromEntryReference(string entryReference, DateTime defaultAccessDate)
@@ -177,6 +189,5 @@ namespace WikipediaConsole
 
             return references;
         }
-
     }
 }

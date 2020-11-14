@@ -73,7 +73,9 @@ namespace WikipediaConsole.UI
             switch (answer)
             {
                 case WikiListCheck:
-                    listArticleGenerator.InspectListArticle();
+                    int year, monthId;
+                    GetDeathMonth(out year, out monthId);
+                    listArticleGenerator.InspectListArticle(year, monthId);
                     break;
                 case DayCheck:
                     GetDaynameFromDate();
@@ -116,7 +118,7 @@ namespace WikipediaConsole.UI
 
             Console.WriteLine($"Nr of entries: {entries.Count()}");
             Console.WriteLine($"Nr of entries with references: {refs.Count()}");
-            Console.WriteLine($"Longest entry (excl. ref):  {entry.Name}");
+            Console.WriteLine($"Longest entry (excl. ref): {entry.Name}");
             Console.WriteLine($"Longest entry value:\r\n{entry}");
         }
 
@@ -149,10 +151,9 @@ namespace WikipediaConsole.UI
         {
             const string ApiKey = "NYTimes Archive API key";
 
-            Console.WriteLine("Death year:");
-            int year = int.Parse(Console.ReadLine());
-            Console.WriteLine("Death month id: (March = 3)");
-            int monthId = int.Parse(Console.ReadLine());
+            int year, monthId;
+            GetDeathMonth(out year, out monthId);
+
             string apiKey = configuration.GetValue<string>(ApiKey);
 
             if (apiKey == null || apiKey == "TOSET")
@@ -162,6 +163,14 @@ namespace WikipediaConsole.UI
             }
 
             return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+        }
+
+        private void GetDeathMonth(out int year, out int monthId)
+        {
+            Console.WriteLine("Death year:");
+            year = int.Parse(Console.ReadLine());
+            Console.WriteLine("Death month id: (March = 3)");
+            monthId = int.Parse(Console.ReadLine());
         }
     }
 }
