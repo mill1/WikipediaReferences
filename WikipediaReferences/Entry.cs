@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace WikipediaReferences
 {
@@ -15,10 +14,8 @@ namespace WikipediaReferences
 
         public override string ToString()
         {
-            string linkedName = (Name == LinkedName) ? "," : LinkedName + ", ";
-            string reference = (Reference == null) ? String.Empty : "<ref>...";
-
-            return $"{DeathDate.ToShortDateString()}: {Name}{linkedName} {Information} {reference}";
+            string name = (LinkedName == Name) ? Name : $"{LinkedName}|{Name}";
+            return $"*[[{name}]], {Information}{Reference}";
         }
     }
 }

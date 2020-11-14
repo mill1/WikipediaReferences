@@ -5,32 +5,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using WikipediaReferences;
-using WikipediaReferences.Models;
 
 namespace WikipediaConsole.UI
 {    
     public class Runner
-    {
-        private const string WikiListCheck = "w";
+    {       
+        private const string EvaluateDeathMonth = "e";
+        private const string PrintDeathMonth = "p";
+        private const string DayCheck = "d";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
         private const string Quit = "q";
         private bool quit;
 
         private readonly IConfiguration configuration;
-        private readonly HttpClient client;
+        private readonly Util util;
+        private readonly ListArticleGenerator listArticleGenerator;
 
-        public Runner(IConfiguration configuration, HttpClient client, AssemblyInfo assemblyInfo)
+        public Runner(IConfiguration configuration, Util util, ListArticleGenerator listArticleGenerator, AssemblyInfo assemblyInfo)
         {
             this.configuration = configuration;
-
-            this.client = client;
-            var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
-            this.client.BaseAddress = new Uri(uri);
-            this.client.DefaultRequestHeaders.Accept.Clear();
-            this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            this.util = util;
+            this.listArticleGenerator = listArticleGenerator;
 
             quit = false;
 
@@ -42,21 +39,20 @@ namespace WikipediaConsole.UI
 
         public void Run()
         {
-            try
+            while (!quit)
             {
-                while (!quit)
+                Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItems());
+
+                string answer = Console.ReadLine();
+
+                try
                 {
-                    Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItems());
-
-                    string answer = Console.ReadLine();
-
                     ProcessAnswer(answer);
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ConsoleColor.Red, e);
-                Console.ReadLine();            
+                catch (Exception e)
+                {
+                    Console.WriteLine(ConsoleColor.Red, e);
+                }
             }
         }
 
@@ -64,7 +60,9 @@ namespace WikipediaConsole.UI
         {
             return new List<string>
             {
-                $"{WikiListCheck}:\tWiki list: check NYT references",
+                $"{EvaluateDeathMonth}:\tEvaluate month of death",
+                $"{PrintDeathMonth}:\tPrint month of death",
+                $"{DayCheck}:\tDay name of date",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
                 $"{Quit}:\tQuit application"
@@ -73,10 +71,20 @@ namespace WikipediaConsole.UI
 
         private void ProcessAnswer(string answer)
         {
+            int year, monthId;
+
             switch (answer)
             {
-                case WikiListCheck:
-                    CheckListArticle();
+                case EvaluateDeathMonth:
+                    GetDeathMontArgs(out year, out monthId);
+                    listArticleGenerator.EvaluateDeathsPerMonthArticle(year, monthId);
+                    break;
+                case PrintDeathMonth:                    
+                    GetDeathMontArgs(out year, out monthId);
+                    listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
+                    break;
+                case DayCheck:
+                    GetDaynameFromDate();
                     break;
                 case Test:
                     TestGetDeceasedFromWikipedia();
@@ -93,99 +101,12 @@ namespace WikipediaConsole.UI
             }
         }
 
-        private void CheckListArticle()
+        private void GetDaynameFromDate()
         {
-            try
-            {
-                // voorbeeld: 2 maart 1997
-                int year = 1997;
-                int monthId = 3;
+            Console.WriteLine("Date: (yyyy-M-d)");
+            DateTime date = DateTime.Parse(Console.ReadLine());
 
-                IEnumerable<Entry> entries;
-                entries = GetEntriesPermonth(year, monthId);
-
-                IEnumerable<Reference> references;
-                references = GetReferencesPermonth(year, monthId);
-                
-                for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
-                {
-                    IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
-
-                    Console.WriteLine($"\r\nInspecting date {new DateTime(year, monthId, day).ToShortDateString()}");
-
-                    foreach (var reference in referencesPerDay)
-                    {
-                        //Get matching entry 
-                        Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
-
-                        if (entry == null)
-                        {
-                            // an entry could deliberately 've be left out of the list -> show netto nr of chars article?
-                            int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
-                            Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
-                        }                            
-                        else
-                        {
-                            if (entry.DeathDate == reference.DeathDate)
-                                Console.WriteLine(ConsoleColor.Green, entry.LinkedName);
-                            else
-                                Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName} death date entry: {entry.DeathDate.ToShortDateString()}");
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ConsoleColor.Red, e);
-            }
-        }
-
-        private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
-        {
-            // page redirects have been handled
-            HttpResponseMessage response;
-
-            //string uri = $"wikipedia/articleraw/{articleTitle}/netto/1";
-            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
-            string result = SendGetRequest(uri, out response);
-
-            if (response.IsSuccessStatusCode)
-                return result.Length;
-            else
-                throw new Exception(result);
-        }
-
-        private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
-        {
-            IEnumerable<Entry> entries;
-            HttpResponseMessage response;
-
-            string uri = $"wikipedia/deceased/{year}/{monthId}";
-            string result = SendGetRequest(uri, out response);
-
-            if (response.IsSuccessStatusCode)
-                entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
-            else
-                throw new Exception(result);
-
-            return entries;
-        }
-
-        private IEnumerable<Reference> GetReferencesPermonth(int year, int monthId)
-        {
-            IEnumerable<Reference> references;
-            HttpResponseMessage response;
-
-            string uri = $"nytimes/reference/{year}/{ monthId}";
-
-            string result = SendGetRequest(uri, out response);
-
-            if (response.IsSuccessStatusCode)
-                references = JsonConvert.DeserializeObject<IEnumerable<Reference>>(result);
-            else
-                throw new Exception(result);
-
-            return references;
+            Console.WriteLine(ConsoleColor.Blue, date.DayOfWeek.ToString());
         }
 
         private void TestGetDeceasedFromWikipedia()
@@ -193,7 +114,7 @@ namespace WikipediaConsole.UI
             string uri = $"wikipedia/deceased/1997/3";
 
             HttpResponseMessage response;
-            string result = SendGetRequest(uri, out response);
+            string result = util.SendGetRequest(uri, out response);
             IEnumerable<Entry> entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
 
             var refs = entries.Where(e => e.Reference != null);
@@ -203,7 +124,7 @@ namespace WikipediaConsole.UI
 
             Console.WriteLine($"Nr of entries: {entries.Count()}");
             Console.WriteLine($"Nr of entries with references: {refs.Count()}");
-            Console.WriteLine($"Longest entry (excl. ref):  {entry.Name}");
+            Console.WriteLine($"Longest entry (excl. ref): {entry.Name}");
             Console.WriteLine($"Longest entry value:\r\n{entry}");
         }
 
@@ -214,7 +135,7 @@ namespace WikipediaConsole.UI
                 string uri = GetAddObitsApiUri();
 
                 HttpResponseMessage response;
-                string result = SendGetRequest(uri, out response);
+                string result = util.SendGetRequest(uri, out response);
 
                 if (response.IsSuccessStatusCode)
                     Console.WriteLine(ConsoleColor.Green, result);
@@ -232,22 +153,13 @@ namespace WikipediaConsole.UI
             }
         }
 
-        private string SendGetRequest(string uri, out HttpResponseMessage response)
-        {
-            Console.WriteLine("Processing request. Please wait...");
-            response = client.GetAsync(uri).Result;
-
-            return response.Content.ReadAsStringAsync().Result;
-        }
-
         private string GetAddObitsApiUri()
         {
             const string ApiKey = "NYTimes Archive API key";
 
-            Console.WriteLine("Death year:");
-            int year = int.Parse(Console.ReadLine());
-            Console.WriteLine("Death month id: (March = 3)");
-            int monthId = int.Parse(Console.ReadLine());
+            int year, monthId;
+            GetDeathMontArgs(out year, out monthId);
+
             string apiKey = configuration.GetValue<string>(ApiKey);
 
             if (apiKey == null || apiKey == "TOSET")
@@ -257,6 +169,14 @@ namespace WikipediaConsole.UI
             }
 
             return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+        }
+
+        private void GetDeathMontArgs(out int year, out int monthId)
+        {
+            Console.WriteLine("Death year:");
+            year = int.Parse(Console.ReadLine());
+            Console.WriteLine("Death month id: (March = 3)");
+            monthId = int.Parse(Console.ReadLine());
         }
     }
 }
