@@ -6,6 +6,9 @@ using System.Text;
 using WikipediaReferences.Models;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
 
 namespace WikipediaConsole
 {
@@ -15,19 +18,22 @@ namespace WikipediaConsole
 
         private readonly Util util;
 
+        private IEnumerable<Entry> entries;
+        private  IEnumerable<Reference> references;
+
         public ListArticleGenerator(Util util)
         {
             this.util = util;
         }
 
-        public void InspectListArticle(int year, int monthId)
+        public void EvaluateDeathsPerMonthArticle(int year, int monthId)
         {
             try
             {
                 Console.WriteLine("Getting things ready. This may take a minute..");
 
-                IEnumerable<Entry> entries = GetEntriesPermonth(year, monthId);
-                IEnumerable<Reference> references = GetReferencesPermonth(year, monthId);
+                entries = GetEntriesPermonth(year, monthId);
+                references = GetReferencesPermonth(year, monthId);
 
                 for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
                 {
@@ -42,6 +48,45 @@ namespace WikipediaConsole
             catch (Exception e)
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        public void PrintDeathsPerMonthArticle(int year, int monthId)
+        {
+            EvaluateDeathsPerMonthArticle(year, monthId);
+
+            UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
+            if (UI.Console.ReadLine() != "y")
+                return;
+
+            PrintOutput(year, monthId);
+
+            Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+        }
+
+        private void PrintOutput(int year, int monthId)
+        {
+            string month = GetMonthNames().ElementAt(monthId - 1);
+
+            Directory.CreateDirectory("output");
+            string fileName = $"Deaths in {month} {year}.txt";
+            string file = Path.Combine("output", fileName);
+
+            int day = 0;
+
+            using (var writer = File.CreateText(file))
+            {
+                writer.WriteLine($"=={GetMonthNames().ElementAt(monthId - 1)} {year}==");
+
+                foreach (var entry in entries)
+                {
+                    if (entry.DeathDate.Day != day)
+                    {
+                        day = entry.DeathDate.Day;
+                        writer.WriteLine($"\r\n==={day}===");
+                    }
+                    writer.WriteLine(entry.ToString());
+                }
             }
         }
 
@@ -70,7 +115,7 @@ namespace WikipediaConsole
             {
                 ConsoleColor consoleColor = ConsoleColor.White;
 
-                string refInfo = HandleMatchingDatesOfDeath(reference, entry, out consoleColor);
+                string refInfo = HandleMatchingDatesOfDeath(entry, reference, out consoleColor);
 
                 UI.Console.WriteLine(consoleColor, $"{entry.LinkedName}: {refInfo}");
             }
@@ -80,13 +125,15 @@ namespace WikipediaConsole
             }
         }
 
-        private string HandleMatchingDatesOfDeath(Reference reference, Entry entry, out ConsoleColor consoleColor)
+        private string HandleMatchingDatesOfDeath(Entry entry, Reference reference,  out ConsoleColor consoleColor)
         {
             if (entry.Reference == null)
             {
-                // Entry found for which a NYT obit. exists. Set access date of reference to add to today.
+                // Entry without reference found for which a NYT obit. exists. Set access date of reference to add to today.
                 reference.AccessDate = DateTime.Today;
+                entry.Reference = reference.GetNewsReference();
                 consoleColor = ConsoleColor.Green;
+
                 return "New NYT reference!";
             }
             else
@@ -95,8 +142,10 @@ namespace WikipediaConsole
                 {
                     // Entry has NYT obituary reference. Update the reference but keep the access date of the original ref.
                     reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
+                    entry.Reference = reference.GetNewsReference();
                     consoleColor = ConsoleColor.Green;
-                    return $"Update NYT reference! Access date = {reference.AccessDate.ToShortDateString()}";
+
+                    return $"Updateable NYT reference! Access date = {reference.AccessDate.ToShortDateString()}";
                 }
                 else
                 {
@@ -188,6 +237,17 @@ namespace WikipediaConsole
                 throw new Exception(result);
 
             return references;
+        }
+
+        private List<string> GetMonthNames()
+        {
+            List<string> monthNames;
+
+            monthNames = CultureInfo.GetCultureInfo("en-US").DateTimeFormat.MonthNames.ToList();
+            //Trunc 13th month
+            monthNames.RemoveAt(monthNames.Count - 1);
+
+            return monthNames;
         }
     }
 }

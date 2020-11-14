@@ -11,7 +11,8 @@ namespace WikipediaConsole.UI
 {    
     public class Runner
     {       
-        private const string WikiListCheck = "w";
+        private const string EvaluateDeathMonth = "e";
+        private const string PrintDeathMonth = "p";
         private const string DayCheck = "d";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
@@ -38,21 +39,20 @@ namespace WikipediaConsole.UI
 
         public void Run()
         {
-            try
+            while (!quit)
             {
-                while (!quit)
+                Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItems());
+
+                string answer = Console.ReadLine();
+
+                try
                 {
-                    Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItems());
-
-                    string answer = Console.ReadLine();
-
                     ProcessAnswer(answer);
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ConsoleColor.Red, e);
-                Console.ReadLine();            
+                catch (Exception e)
+                {
+                    Console.WriteLine(ConsoleColor.Red, e);
+                }
             }
         }
 
@@ -60,7 +60,8 @@ namespace WikipediaConsole.UI
         {
             return new List<string>
             {
-                $"{WikiListCheck}:\tWiki list: check NYT references",
+                $"{EvaluateDeathMonth}:\tEvaluate month of death",
+                $"{PrintDeathMonth}:\tPrint month of death",
                 $"{DayCheck}:\tDay name of date",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
@@ -70,12 +71,17 @@ namespace WikipediaConsole.UI
 
         private void ProcessAnswer(string answer)
         {
+            int year, monthId;
+
             switch (answer)
             {
-                case WikiListCheck:
-                    int year, monthId;
-                    GetDeathMonth(out year, out monthId);
-                    listArticleGenerator.InspectListArticle(year, monthId);
+                case EvaluateDeathMonth:
+                    GetDeathMontArgs(out year, out monthId);
+                    listArticleGenerator.EvaluateDeathsPerMonthArticle(year, monthId);
+                    break;
+                case PrintDeathMonth:                    
+                    GetDeathMontArgs(out year, out monthId);
+                    listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
                     break;
                 case DayCheck:
                     GetDaynameFromDate();
@@ -152,7 +158,7 @@ namespace WikipediaConsole.UI
             const string ApiKey = "NYTimes Archive API key";
 
             int year, monthId;
-            GetDeathMonth(out year, out monthId);
+            GetDeathMontArgs(out year, out monthId);
 
             string apiKey = configuration.GetValue<string>(ApiKey);
 
@@ -165,7 +171,7 @@ namespace WikipediaConsole.UI
             return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
         }
 
-        private void GetDeathMonth(out int year, out int monthId)
+        private void GetDeathMontArgs(out int year, out int monthId)
         {
             Console.WriteLine("Death year:");
             year = int.Parse(Console.ReadLine());

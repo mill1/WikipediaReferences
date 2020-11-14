@@ -44,6 +44,8 @@ namespace WikipediaReferences.Models
                     $" |work=[[{Work}]]" +
                     $" |date={Date.ToString("d MMMM yyyy", ci)}" +
                     $" |page={Page}" +
+                   //$" |language={Language}" +
+                   //$" |quote={Quote}" +
                    "}}</ref>";
         }
     }

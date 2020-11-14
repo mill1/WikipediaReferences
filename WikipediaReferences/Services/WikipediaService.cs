@@ -346,7 +346,7 @@ namespace WikipediaReferences.Services
                     name = namePart.Substring(pos + "|".Length);
             }
 
-            // TODO lw name = CheckRedirection(linkedName, name);
+            name = CheckRedirection(linkedName, name);
 
             return name;
         }
@@ -361,9 +361,9 @@ namespace WikipediaReferences.Services
                 string originalName = name;
                 GetRawArticleMarkup(ref name, out isRedirect, false);
 
-                string redirectInfo = isRedirect ? $" Corrected REDIRECT '{originalName}'" : string.Empty;
+                string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
 
-                Console.WriteLine($"Entry: {name}.{redirectInfo}");
+                Console.WriteLine($"Entry: {name}{redirectInfo}");
             }
             return name;
         }
