@@ -11,7 +11,6 @@
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
-      "launchBrowser": true,
       "launchUrl": "nytimes/reference/1997-3-4",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

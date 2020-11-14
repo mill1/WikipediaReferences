@@ -61,7 +61,7 @@ namespace WikipediaReferences.Services
                 LinkedName = GetNameFromRawEntry(rawEntry, true),
                 Name = GetNameFromRawEntry(rawEntry, false),
                 Information = GetInformationFromRawEntry(rawEntry),
-                Reference = GetReferenceFromRawEntry(rawEntry),
+                Reference = GetReferencesFromRawEntry(rawEntry),
                 DeathDate = deathDate
             };
         }
@@ -320,14 +320,17 @@ namespace WikipediaReferences.Services
                 return info.Substring(0, posRef);
         }
 
-        private string GetReferenceFromRawEntry(string rawEntry)
+        private string GetReferencesFromRawEntry(string rawEntry)
         {
-            int pos = rawEntry.IndexOf("<ref>");
+            int posStart = rawEntry.IndexOf("<ref>");
 
-            if (pos < 0)
+            if (posStart < 0)
                 return null;
             else
-                return rawEntry.Substring(pos);
+            {
+                string x = rawEntry.Substring(posStart);
+                return x;
+            }
         }
 
         private string GetNameFromRawEntry (string rawEntry, bool linkedName)
