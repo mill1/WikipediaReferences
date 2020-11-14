@@ -100,15 +100,28 @@ namespace WikipediaReferences.Services
                     return null;
             }
         }
-        public string GetRawArticleText(ref string article, bool nettoContent, bool printNotFound)
+
+        private string GetRawArticleMarkup(ref string article, out bool isRedirect, bool printNotFound)
         {
+            isRedirect = false;
             string rawText = GetRawWikiPageText(article, printNotFound);
 
             if (rawText.Contains("#REDIRECT"))
             {
+                isRedirect = true;
                 article = GetRedirectPage(rawText);
-                rawText = GetRawWikiPageText(article, printNotFound);
             }
+            return rawText;
+        }
+
+        public string GetRawArticleText(ref string article, bool nettoContent, bool printNotFound)
+        {
+            bool isRedirect;
+
+            string rawText = GetRawArticleMarkup(ref article, out isRedirect, printNotFound);            
+
+            if (isRedirect)
+                rawText = GetRawWikiPageText(article, printNotFound);           
 
             if (nettoContent)
                 rawText = GetNettoContentRawArticleText(rawText);
@@ -321,16 +334,31 @@ namespace WikipediaReferences.Services
         {
             string namePart = rawEntry.Substring("[[".Length, rawEntry.IndexOf("]]") - "]]".Length);
             int pos = namePart.IndexOf('|');
+            string name;
+            bool isRedirect;
 
             if (pos < 0)
-                return namePart;
+                name = namePart;
             else
             {
                 if (linkedName)
-                    return namePart.Substring(0, pos);
+                    name = namePart.Substring(0, pos);
                 else
-                    return namePart.Substring(pos + "|".Length);
+                    name = namePart.Substring(pos + "|".Length);
             }
+
+            //if linked name make sure it is not a redirect.
+            if (linkedName)
+            {
+                string originalName = name;
+                GetRawArticleMarkup(ref name, out isRedirect, false);
+
+                string redirectInfo = isRedirect ? $" Corrected for REDIRECT '{originalName}'" : string.Empty;
+
+                Console.WriteLine($"Entry: {name}.{redirectInfo}");
+            }
+
+            return name;
         }
 
         private IEnumerable<string> GetRawDeceased(string daySection)
@@ -391,7 +419,7 @@ namespace WikipediaReferences.Services
 
         private string InspectDisambiguationPage(string rawText, string nameVersion, string searchValue)
         {
-            // TODO https://en.wikipedia.org/wiki/Roger_Brown : three entries '-1997)'
+            // https://en.wikipedia.org/wiki/Roger_Brown : three entries '-1997)': will be caught in process because of datediff.
 
             int pos = rawText.IndexOf(searchValue);
 

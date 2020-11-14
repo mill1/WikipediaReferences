@@ -97,9 +97,11 @@ namespace WikipediaConsole.UI
         {
             try
             {
-                // voorbeeld: 2 maart 1997
-                int year = 1997;
-                int monthId = 3;
+                // TODO obviously
+                Console.WriteLine("Death year:");
+                int year = int.Parse(Console.ReadLine());
+                Console.WriteLine("Death month id: (March = 3)");
+                int monthId = int.Parse(Console.ReadLine());
 
                 IEnumerable<Entry> entries;
                 entries = GetEntriesPermonth(year, monthId);
@@ -120,16 +122,40 @@ namespace WikipediaConsole.UI
 
                         if (entry == null)
                         {
-                            // an entry could deliberately 've be left out of the list -> show netto nr of chars article?
+                            // an entry could've be left out of the list because of notabilty -> show netto nr of chars article
                             int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
                             Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
                         }                            
                         else
                         {
                             if (entry.DeathDate == reference.DeathDate)
-                                Console.WriteLine(ConsoleColor.Green, entry.LinkedName);
+                            {
+                                ConsoleColor consoleColor = ConsoleColor.Green; 
+                                string refInfo;
+
+                                if (entry.Reference == null)
+                                    refInfo = "New NYT reference!";
+                                else
+                                {
+                                    if (entry.Reference.Contains("New York Times"))
+                                        refInfo = "Update NYT reference!";
+                                    else
+                                    {
+                                        consoleColor = ConsoleColor.DarkGreen;
+                                        refInfo = "Non-NYT reference";
+                                    }                                        
+                                }
+                                Console.WriteLine(consoleColor, $"{entry.LinkedName}: {refInfo}");
+                            }
                             else
-                                Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName} death date entry: {entry.DeathDate.ToShortDateString()}");
+                            {
+                                if (entry.Reference == null)
+                                    Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT ref; death date entry: {entry.DeathDate.ToShortDateString()}");
+                                else
+                                    if (entry.Reference.Contains("New York Times"))
+                                        Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Upd NYT ref; death date entry: {entry.DeathDate.ToShortDateString()}");
+                            }
+                                
                         }
                     }
                 }
