@@ -23,7 +23,9 @@ namespace WikipediaConsole
         {           
             services.AddSingleton(Configuration);
             services.AddSingleton<HttpClient>();
+            services.AddSingleton<Util>();
             services.AddSingleton<Runner>();
+            services.AddScoped<ListArticleGenerator>();
             services.AddScoped<AssemblyInfo>();
         }
     }
