@@ -285,20 +285,7 @@ namespace WikipediaReferences.Services
         public string GetAuthorsArticle(string author, string source)
         {
             string authorsArticle = author;
-            string rawText;
-
-            try
-            {
-                rawText = GetRawArticleText(ref authorsArticle, false);
-            }
-            catch (WikipediaPageNotFoundException)
-            {
-                return null;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            string rawText = GetRawArticleTextAuthor(ref authorsArticle);
 
             if (!rawText.Contains(source))
                 return null;
@@ -311,10 +298,26 @@ namespace WikipediaReferences.Services
                     return null;
             }
 
-            if (rawText.Contains("journalist") || rawText.Contains("columnist") || rawText.Contains("critic") ||  rawText.Contains("editor"))
+            if (rawText.Contains("journalist") || rawText.Contains("columnist") || rawText.Contains("critic") || rawText.Contains("editor"))
                 return authorsArticle;
             else
                 return null;
+        }
+
+        private string GetRawArticleTextAuthor(ref string authorsArticle)
+        {
+            try
+            {
+                return GetRawArticleText(ref authorsArticle, false);
+            }
+            catch (WikipediaPageNotFoundException)
+            {
+                return null;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         private string GetInformationFromRawEntry(string rawEntry)

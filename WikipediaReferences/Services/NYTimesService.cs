@@ -53,7 +53,7 @@ namespace WikipediaReferences.Services
 
             context.References.AddRange(references);
 
-            //context.SaveChanges();
+            context.SaveChanges();
 
             string message = $"{references.Count()} NYTimes obituary references have been saved succesfully.";
             Console.WriteLine(message);
@@ -123,19 +123,7 @@ namespace WikipediaReferences.Services
 
                 foreach (var nameVersion in nameVersions)
                 {
-
-                    try
-                    {
-                        articleTitle = wikipediaService.GetArticleTitle(nameVersion, year, monthId);
-                    }
-                    catch (WikipediaPageNotFoundException e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (Exception)
-                    {
-                        throw;
-                    }
+                    articleTitle = CheckIfNameVersionExistsAsArticle(monthId, year, articleTitle, nameVersion);
 
                     if (articleTitle != null)
                     {
@@ -145,6 +133,24 @@ namespace WikipediaReferences.Services
                 }
             }
             return articles;
+        }
+
+        private string CheckIfNameVersionExistsAsArticle(int monthId, int year, string articleTitle, string nameVersion)
+        {
+            try
+            {
+                articleTitle = wikipediaService.GetArticleTitle(nameVersion, year, monthId);
+            }
+            catch (WikipediaPageNotFoundException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return articleTitle;
         }
 
         private string[] GetDeceasedNames(Doc doc)

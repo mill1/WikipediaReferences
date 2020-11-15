@@ -97,27 +97,34 @@ namespace WikipediaConsole
 
             if (entry == null)
             {
-                int nettoNrOfChars = 0;
-
-                try
-                {
-                    // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
-                    nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
-                }
-                catch(WikipediaPageNotFoundException e)
-                {
-                    UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
+                int nettoNrOfChars = DetermineNumberOfCharactersBiography(reference);
 
                 if (nettoNrOfChars >= MinimumNrOfNettoCharsBiography)
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
             }
             else
                 HandleExistingEntry(entry, reference);
+        }
+
+        private int DetermineNumberOfCharactersBiography(Reference reference)
+        {
+            int nettoNrOfChars = 0;
+
+            try
+            {
+                // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
+                nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+            }
+            catch (WikipediaPageNotFoundException e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            return nettoNrOfChars;
         }
 
         private void HandleExistingEntry(Entry entry, Reference reference)

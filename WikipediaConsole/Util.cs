@@ -25,7 +25,7 @@ namespace WikipediaConsole
 
         public string SendGetRequest(string uri, out HttpResponseMessage response)
         {
-            Console.WriteLine("Processing request. Please wait...");
+            //Console.WriteLine("Processing request. Please wait...");
             response = client.GetAsync(uri).Result;
 
             return response.Content.ReadAsStringAsync().Result;
