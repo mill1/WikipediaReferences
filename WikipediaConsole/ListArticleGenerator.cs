@@ -97,8 +97,21 @@ namespace WikipediaConsole
 
             if (entry == null)
             {
-                // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
-                int nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+                int nettoNrOfChars = 0;
+
+                try
+                {
+                    // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
+                    nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+                }
+                catch(WikipediaPageNotFoundException e)
+                {
+                    UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
 
                 if (nettoNrOfChars >= MinimumNrOfNettoCharsBiography)
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
@@ -202,7 +215,12 @@ namespace WikipediaConsole
             if (response.IsSuccessStatusCode)
                 return result.Length;
             else
-                throw new Exception(result);
+            {
+                if (result.Contains( typeof(WikipediaPageNotFoundException).Name))
+                    throw new WikipediaPageNotFoundException($"Article '{articleTitle}' has been deleted on Wikipedia.");
+                else
+                    throw new Exception(result);
+            }
         }
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)

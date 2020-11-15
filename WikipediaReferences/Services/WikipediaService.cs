@@ -84,7 +84,7 @@ namespace WikipediaReferences.Services
         public string GetArticleTitle(string nameVersion, int year, int monthId)
         {
             string articleTitle = nameVersion;
-            string rawText = GetRawArticleText(ref articleTitle, false, true);
+            string rawText = GetRawArticleText(ref articleTitle, false);
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
@@ -101,10 +101,10 @@ namespace WikipediaReferences.Services
             }
         }
 
-        private string GetRawArticleMarkup(ref string article, out bool isRedirect, bool printNotFound)
+        private string GetRawArticleMarkup(ref string article, out bool isRedirect)
         {
             isRedirect = false;
-            string rawText = GetRawWikiPageText(article, printNotFound);
+            string rawText = GetRawWikiPageText(article);
 
             if (rawText.Contains("#REDIRECT"))
             {
@@ -114,14 +114,14 @@ namespace WikipediaReferences.Services
             return rawText;
         }
 
-        public string GetRawArticleText(ref string article, bool nettoContent, bool printNotFound)
+        public string GetRawArticleText(ref string article, bool nettoContent)
         {
             bool isRedirect;
 
-            string rawText = GetRawArticleMarkup(ref article, out isRedirect, printNotFound);            
+            string rawText = GetRawArticleMarkup(ref article, out isRedirect);            
 
             if (isRedirect)
-                rawText = GetRawWikiPageText(article, printNotFound);           
+                rawText = GetRawWikiPageText(article);           
 
             if (nettoContent)
                 rawText = GetNettoContentRawArticleText(rawText);
@@ -227,8 +227,7 @@ namespace WikipediaReferences.Services
             posEndList = posEndList.Where(pos => pos != -1).ToList();
 
             if (posEndList.Count() == 0)
-                // TODO create WikipediaException
-                throw new Exception("Invalid article end. Edit Article");
+                throw new Exception("Invalid article end. Edit the article");
 
             int posEnd = posEndList.Min();            
 
@@ -286,7 +285,20 @@ namespace WikipediaReferences.Services
         public string GetAuthorsArticle(string author, string source)
         {
             string authorsArticle = author;
-            string rawText = GetRawArticleText(ref authorsArticle, false, false);
+            string rawText;
+
+            try
+            {
+                rawText = GetRawArticleText(ref authorsArticle, false);
+            }
+            catch (WikipediaPageNotFoundException)
+            {
+                return null;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
 
             if (!rawText.Contains(source))
                 return null;
@@ -362,7 +374,7 @@ namespace WikipediaReferences.Services
             if (linkedName)
             {
                 string originalName = name;
-                GetRawArticleMarkup(ref name, out isRedirect, false);
+                GetRawArticleMarkup(ref name, out isRedirect);
 
                 string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
 
@@ -485,7 +497,7 @@ namespace WikipediaReferences.Services
             }
         }       
 
-        private string GetRawWikiPageText(string wikiPage, bool printNotFound)
+        private string GetRawWikiPageText(string wikiPage)
         {
             string uri = UrlWikipediaRawBase + wikiPage.Replace(" ", "_");
 
@@ -494,12 +506,9 @@ namespace WikipediaReferences.Services
                 using WebClient client = new WebClient();
                 return client.DownloadString(uri);
             }
-            catch (WebException) // article does not exist in Wikipedia
-            {                
-                if (printNotFound)
-                    Console.WriteLine($"{wikiPage}: FAIL (no such wiki page)");
-
-                return string.Empty;
+            catch (WebException) // article does not exist (anymore) in Wikipedia
+            {
+                throw new WikipediaPageNotFoundException($"{wikiPage}: FAIL (no such wiki page)");
             }
             catch (Exception)
             {
