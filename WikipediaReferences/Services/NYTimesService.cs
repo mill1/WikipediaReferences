@@ -403,6 +403,8 @@ namespace WikipediaReferences.Services
 
             DateTime dateOfDeath = DateTime.MinValue;
 
+           // if (obituaryDoc.)
+
             dateOfDeath = GetDateOfDeathFromMonthInformation(obituaryDoc, monthId, year, dateOfDeath);
 
             if (dateOfDeath != DateTime.MinValue)
@@ -438,11 +440,11 @@ namespace WikipediaReferences.Services
         {
             foreach (var excerpt in new string[] { obituaryDoc.lead_paragraph, obituaryDoc.@abstract })
             {
-                string monthName = GetMonthOfDeath(excerpt, monthId, out string search);
+                string monthName = GetMonthOfDeath(excerpt, monthId, out string matchedValue);
 
                 if (monthName != null)
                 {
-                    dateOfDeath = GetDateOfDeathFromMonth(excerpt, monthName, year, search);
+                    dateOfDeath = GetDateOfDeathFromMonth(excerpt, monthName, year, matchedValue, obituaryDoc.pub_date.Date);
 
                     if (dateOfDeath != DateTime.MinValue)
                         return dateOfDeath;
@@ -500,16 +502,29 @@ namespace WikipediaReferences.Services
             return DateTime.MinValue;
         }
 
-        private DateTime GetDateOfDeathFromMonth(string excerpt, string monthName, int year, string search)
+        private DateTime GetDateOfDeathFromMonth(string excerpt, string monthName, int year, string matchedValue, DateTime publicationDate)
         {
-            int pos = excerpt.IndexOf(search);
-            string dayString = GetValueInBetweenSeparators(excerpt, " ", pos + search.Length);
+            int pos = excerpt.IndexOf(matchedValue);
+            string dayString = GetValueInBetweenSeparators(excerpt, " ", pos + matchedValue.Length);
 
             // f.i.: "died in early July when he lost his way in blizzard" [Error: parse 'when']
             if (!int.TryParse(dayString, out int day))
                 return DateTime.MinValue;
 
-            return DateTime.Parse($"{day} {monthName} {year}"); // I removed FixMonthName(monthName)
+            // https://www.nytimes.com/1997/01/18/arts/mae-barnes-89-jazz-singer-famous-for-the-charleston.html
+            // https://www.nytimes.com/2003/01/09/arts/richard-mohr-83-impresario-of-radio-opera-intermissions.html
+            // https://www.nytimes.com/1995/02/11/obituaries/dr-eli-robins-73-challenger-of-freudian-psychiatry-is-dead.html
+            switch (monthName)
+            {
+                case "Oct": 
+                case "Nov":
+                case "Dec":
+                    if (publicationDate.Month <= 3)
+                        year--;
+                    break;
+            }
+
+            return DateTime.Parse($"{day} {monthName} {year}"); 
         }
 
         private string GetValueInBetweenSeparators(string text, string separator, int startIndex)
@@ -554,9 +569,9 @@ namespace WikipediaReferences.Services
             return cultureInfo.DateTimeFormat.GetDayName(date.DayOfWeek);
         }
 
-        private string GetMonthOfDeath(string excerpt, int monthId, out string search)
+        private string GetMonthOfDeath(string excerpt, int monthId, out string matchedValue)
         {
-            search = null;
+            matchedValue = null;
 
             if (excerpt == null)
                 return null;
@@ -575,7 +590,7 @@ namespace WikipediaReferences.Services
 
                 if (matches.Success)
                 {
-                    search = matches.Value;
+                    matchedValue = matches.Value;
                     return monthArray.ElementAt(i);
                 }
             }
