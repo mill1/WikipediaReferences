@@ -175,7 +175,7 @@ namespace WikipediaConsole.UI
         {
             Console.WriteLine("Death year:");
             year = int.Parse(Console.ReadLine());
-            Console.WriteLine("Death month id: (March = 3)");
+            Console.WriteLine("Death month id:");
             monthId = int.Parse(Console.ReadLine());
         }
     }

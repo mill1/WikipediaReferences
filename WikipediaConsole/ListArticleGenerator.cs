@@ -14,7 +14,7 @@ namespace WikipediaConsole
 {
     public class ListArticleGenerator
     {
-        private const int MinimumNrOfNettoCharsBiography = 2000;
+        private const int MinimumNrOfNettoCharsBiography = 4000;
 
         private readonly Util util;
 
@@ -30,14 +30,14 @@ namespace WikipediaConsole
         {
             try
             {
-                Console.WriteLine("Getting things ready. This may take a minute..");
+                UI.Console.WriteLine("Getting things ready. This may take a minute..");
 
                 entries = GetEntriesPermonth(year, monthId);
                 references = GetReferencesPermonth(year, monthId);
 
                 for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
                 {
-                    Console.WriteLine($"\r\nInspecting date {new DateTime(year, monthId, day).ToShortDateString()}");
+                    UI.Console.WriteLine($"\r\nChecking ref. date {new DateTime(year, monthId, day).ToShortDateString()}");
 
                     IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
 
@@ -61,7 +61,7 @@ namespace WikipediaConsole
 
             PrintOutput(year, monthId);
 
-            Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+            UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
         }
 
         private void PrintOutput(int year, int monthId)
