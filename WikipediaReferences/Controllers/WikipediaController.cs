@@ -27,7 +27,7 @@ namespace WikipediaReferences.Controllers
         {
             try
             {
-                return Ok(wikipediaService.GetRawArticleText(ref articleTitle, nettoContent, false));
+                return Ok(wikipediaService.GetRawArticleText(ref articleTitle, nettoContent));
             }
             catch (Exception e)
             {

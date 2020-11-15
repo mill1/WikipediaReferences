@@ -53,7 +53,7 @@ namespace WikipediaReferences.Services
 
             context.References.AddRange(references);
 
-            context.SaveChanges();
+            //context.SaveChanges();
 
             string message = $"{references.Count()} NYTimes obituary references have been saved succesfully.";
             Console.WriteLine(message);
@@ -123,7 +123,19 @@ namespace WikipediaReferences.Services
 
                 foreach (var nameVersion in nameVersions)
                 {
-                    articleTitle = wikipediaService.GetArticleTitle(nameVersion, year, monthId);
+
+                    try
+                    {
+                        articleTitle = wikipediaService.GetArticleTitle(nameVersion, year, monthId);
+                    }
+                    catch (WikipediaPageNotFoundException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                    catch (Exception)
+                    {
+                        throw;
+                    }
 
                     if (articleTitle != null)
                     {
