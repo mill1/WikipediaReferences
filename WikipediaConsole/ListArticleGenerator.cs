@@ -214,10 +214,10 @@ namespace WikipediaConsole
         private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
         {
             // page redirects have been handled
-            HttpResponseMessage response;
-
             string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
-            string result = util.SendGetRequest(uri, out response);
+            HttpResponseMessage response = util.SendGetRequest(uri);
+
+            string result = response.Content.ReadAsStringAsync().Result;
 
             if (response.IsSuccessStatusCode)
                 return result.Length;
@@ -232,11 +232,11 @@ namespace WikipediaConsole
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
         {
-            IEnumerable<Entry> entries;
-            HttpResponseMessage response;
-
+            IEnumerable<Entry> entries;            
             string uri = $"wikipedia/deceased/{year}/{monthId}";
-            string result = util.SendGetRequest(uri, out response);
+            HttpResponseMessage response = util.SendGetRequest(uri);
+
+            string result = response.Content.ReadAsStringAsync().Result;
 
             if (response.IsSuccessStatusCode)
                 entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
@@ -248,12 +248,10 @@ namespace WikipediaConsole
 
         private IEnumerable<Reference> GetReferencesPermonth(int year, int monthId)
         {
-            IEnumerable<Reference> references;
-            HttpResponseMessage response;
-
+            IEnumerable<Reference> references;            
             string uri = $"nytimes/reference/{year}/{ monthId}";
-
-            string result = util.SendGetRequest(uri, out response);
+            HttpResponseMessage response = util.SendGetRequest(uri);
+            string result = response.Content.ReadAsStringAsync().Result;
 
             if (response.IsSuccessStatusCode)
                 references = JsonConvert.DeserializeObject<IEnumerable<Reference>>(result);
