@@ -11,5 +11,7 @@ namespace WikipediaReferences.Interfaces
         public IEnumerable<Reference> GetReferencesPerDeathDate(DateTime deathDate);
         public IEnumerable<Reference> GetReferencesPerMonthOfDeath(int year, int monthId);
         public string AddObituaryReferences(int year, int month, string apiKey);
+        public IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle);
+        public Reference UpdateDeathDate(IEnumerable<Reference> references, Dtos.UpdateDeathDate updateDeathDateDto);
     }
 }

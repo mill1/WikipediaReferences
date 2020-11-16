@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using WikipediaReferences;
+using WikipediaReferences.Dtos;
 
 namespace WikipediaConsole.UI
 {    
@@ -13,6 +14,7 @@ namespace WikipediaConsole.UI
     {       
         private const string EvaluateDeathMonth = "e";
         private const string PrintDeathMonth = "p";
+        private const string UpdateNYTDeathDate = "u";
         private const string DayCheck = "d";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
@@ -62,6 +64,7 @@ namespace WikipediaConsole.UI
             {
                 $"{EvaluateDeathMonth}:\tEvaluate month of death",
                 $"{PrintDeathMonth}:\tPrint month of death",
+                $"{UpdateNYTDeathDate}:\tUpdate date of death",
                 $"{DayCheck}:\tDay name of date",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
@@ -82,6 +85,9 @@ namespace WikipediaConsole.UI
                 case PrintDeathMonth:                    
                     GetDeathMontArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
+                    break;
+                case UpdateNYTDeathDate:
+                    UpdateNYTDeathDateOfReference();
                     break;
                 case DayCheck:
                     GetDaynameFromDate();
@@ -112,11 +118,10 @@ namespace WikipediaConsole.UI
         private void TestGetDeceasedFromWikipedia()
         {
             string uri = $"wikipedia/deceased/1997/3";
+            HttpResponseMessage response = util.SendGetRequest(uri);
+            string result = response.Content.ReadAsStringAsync().Result;
 
-            HttpResponseMessage response;
-            string result = util.SendGetRequest(uri, out response);
             IEnumerable<Entry> entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
-
             var refs = entries.Where(e => e.Reference != null);
             
             int maxLength = entries.Max(e => e.Information.Length);
@@ -128,14 +133,54 @@ namespace WikipediaConsole.UI
             Console.WriteLine($"Longest entry value:\r\n{entry}");
         }
 
+        private void UpdateNYTDeathDateOfReference()
+        {
+            try
+            {
+                UpdateDeathDate updateDeathDate = GetUpdateDeathDateDto();
+                HttpResponseMessage response = util.SendPutRequest("nytimes/updatedeathdate", updateDeathDate);
+
+                string result = response.Content.ReadAsStringAsync().Result;
+
+                if (response.IsSuccessStatusCode)
+                    ShowUpdatedDeathDate(result);
+                else
+                    throw new Exception(result);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private static void ShowUpdatedDeathDate(string result)
+        {
+            var updateDeathDate = JsonConvert.DeserializeObject<UpdateDeathDate>(result);
+
+            Console.WriteLine(ConsoleColor.Green, $"Updated death date: {updateDeathDate.DeathDate.ToShortDateString()}");
+            Console.WriteLine(ConsoleColor.Green, $"Article subject: {updateDeathDate.ArticleTitle} (1st id: {updateDeathDate.Id})");
+        }
+
+        private UpdateDeathDate GetUpdateDeathDateDto()
+        {
+            UpdateDeathDate updateDeathDate = new UpdateDeathDate(){ SourceCode = "NYT" };
+            
+            Console.WriteLine("New date of death: (yyyy-m-d)");
+            updateDeathDate.DeathDate = DateTime.Parse(Console.ReadLine());
+
+            Console.WriteLine("Article title:");
+            updateDeathDate.ArticleTitle = Console.ReadLine();
+
+            return updateDeathDate;
+        }
+
         private void AddNYTimesObituaryReferences()
         {
             try
             {
                 string uri = GetAddObitsApiUri();
-
-                HttpResponseMessage response;
-                string result = util.SendGetRequest(uri, out response);
+                HttpResponseMessage response = util.SendGetRequest(uri);
+                string result = response.Content.ReadAsStringAsync().Result;
 
                 if (response.IsSuccessStatusCode)
                     Console.WriteLine(ConsoleColor.Green, result);

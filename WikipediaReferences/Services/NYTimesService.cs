@@ -37,6 +37,23 @@ namespace WikipediaReferences.Services
             return context.References.Where(r => r.DeathDate.Year == year && r.DeathDate.Month == monthId);
         }
 
+        public IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle)
+        {
+            return context.References.Where(r => r.SourceCode == "NYT" && r.ArticleTitle == articleTitle);
+        }
+
+        public Reference UpdateDeathDate(IEnumerable<Reference> references, Dtos.UpdateDeathDate updateDeathDateDto)
+        {
+            // mini mapper
+            references.ToList().ForEach(r => r.DeathDate = updateDeathDateDto.DeathDate);
+
+            context.UpdateRange(references);
+
+            context.SaveChanges();
+
+            return references.First();
+        }
+
         public string AddObituaryReferences(int year, int monthId, string apiKey)
         {
             IEnumerable<Reference> references = GetReferencesPerArchiveMonth(year, monthId);

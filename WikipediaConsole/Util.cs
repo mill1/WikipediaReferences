@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using Newtonsoft.Json;
 using System.Text;
+using WikipediaReferences.Dtos;
 
 namespace WikipediaConsole
 {
@@ -23,12 +25,14 @@ namespace WikipediaConsole
             this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public string SendGetRequest(string uri, out HttpResponseMessage response)
+        public HttpResponseMessage SendGetRequest(string uri)
         {
-            //Console.WriteLine("Processing request. Please wait...");
-            response = client.GetAsync(uri).Result;
+            return client.GetAsync(uri).Result;
+        }
 
-            return response.Content.ReadAsStringAsync().Result;
+        public HttpResponseMessage SendPutRequest(string uri, UpdateDeathDate updateDeathDate)
+        {
+            return client.PutAsJsonAsync(uri, updateDeathDate).Result;
         }
     }
 }
