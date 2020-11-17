@@ -31,9 +31,10 @@ namespace WikipediaConsole
 
                 references.ToList().ForEach(r => UI.Console.WriteLine(ConsoleColor.Green, r.Url));                
             }
-            catch (ArgumentException e)
+            catch (WikipediaReferencesException e)
             {
-                UI.Console.WriteLine(ConsoleColor.Magenta, e);
+                // TODO chk op e.msg
+                UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
             }
             catch (Exception e)
             {
@@ -45,12 +46,13 @@ namespace WikipediaConsole
         {
             string uri = $"nytimes/referencebyarticletitle/{ articleTitle.Replace(" ", "_") }";
             HttpResponseMessage response = util.SendGetRequest(uri);
+
             string result = response.Content.ReadAsStringAsync().Result;
 
             if (response.IsSuccessStatusCode)
                 return JsonConvert.DeserializeObject<IEnumerable<Reference>>(result);
             else
-                throw new ArgumentException(result);
+                throw new WikipediaReferencesException(result);
         }
 
         public void UpdateNYTDeathDateOfReference()
@@ -65,7 +67,11 @@ namespace WikipediaConsole
                 if (response.IsSuccessStatusCode)
                     ShowUpdatedDeathDate(result);
                 else
-                    throw new Exception(result);
+                    throw new WikipediaReferencesException(result);
+            }
+            catch (WikipediaReferencesException e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
             }
             catch (Exception e)
             {
@@ -105,12 +111,11 @@ namespace WikipediaConsole
                 if (response.IsSuccessStatusCode)
                     UI.Console.WriteLine(ConsoleColor.Green, result);
                 else
-                    throw new ArgumentException(result);
-
+                    throw new WikipediaReferencesException(result);
             }
-            catch (ArgumentException e)
+            catch (WikipediaReferencesException e)
             {
-                UI.Console.WriteLine(ConsoleColor.Magenta, e);
+                UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
             }
             catch (Exception e)
             {

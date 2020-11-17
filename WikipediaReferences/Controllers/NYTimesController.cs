@@ -74,7 +74,7 @@ namespace WikipediaReferences.Controllers
                 IEnumerable<Models.Reference> references = nyTimesService.GetReferencesPerMonthOfDeath(year, monthId);
 
                 if (references.Count() == 0)
-                    return NotFound($"No references were found. Requested month: {year} {monthId}");
+                    return NotFound($"References not found. Requested month: {year} {monthId}");
 
                 return Ok(references);
             }
