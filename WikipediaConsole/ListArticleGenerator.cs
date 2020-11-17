@@ -14,7 +14,7 @@ namespace WikipediaConsole
 {
     public class ListArticleGenerator
     {
-        private const int MinimumNrOfNettoCharsBiography = 4000;
+        private const int MinimumNrOfNettoCharsBiography = 5000;
 
         private readonly Util util;
 
@@ -57,6 +57,10 @@ namespace WikipediaConsole
                     foreach (var reference in referencesPerDay)
                         HandleReference(reference, entries);
                 }
+            }
+            catch (ReferencesNotFoundException e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Magenta, e);
             }
             catch (Exception e)
             {
@@ -115,7 +119,7 @@ namespace WikipediaConsole
                 // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
                 nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
             }
-            catch (WikipediaPageNotFoundException e)
+            catch (ReferencesNotFoundException e)
             {
                 UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
             }
@@ -214,20 +218,12 @@ namespace WikipediaConsole
         private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
         {
             // page redirects have been handled
-            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/{netto}";
             HttpResponseMessage response = util.SendGetRequest(uri);
 
-            string result = response.Content.ReadAsStringAsync().Result;
+            string rawArticleText = util.HandleResponse(response, articleTitle);
 
-            if (response.IsSuccessStatusCode)
-                return result.Length;
-            else
-            {
-                if (result.Contains( typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaPageNotFoundException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
-                else
-                    throw new Exception(result);
-            }
+            return rawArticleText.Length;
         }
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)

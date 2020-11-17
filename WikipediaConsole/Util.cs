@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using System.Text;
 using WikipediaReferences.Dtos;
+using WikipediaReferences;
 
 namespace WikipediaConsole
 {
@@ -13,6 +14,21 @@ namespace WikipediaConsole
     {
         private readonly IConfiguration configuration;
         private readonly HttpClient client;
+
+        public string HandleResponse(HttpResponseMessage response, string articleTitle)
+        {
+            string result = response.Content.ReadAsStringAsync().Result;
+
+            if (response.IsSuccessStatusCode)
+                return result;
+            else
+            {
+                if (result.Contains(typeof(ReferencesNotFoundException).Name))
+                    throw new ReferencesNotFoundException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
+                else
+                    throw new Exception(result);
+            }
+        }
 
         public Util(IConfiguration configuration, HttpClient client)
         {

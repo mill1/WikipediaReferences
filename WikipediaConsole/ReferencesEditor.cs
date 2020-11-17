@@ -31,7 +31,7 @@ namespace WikipediaConsole
 
                 references.ToList().ForEach(r => UI.Console.WriteLine(ConsoleColor.Green, r.Url));                
             }
-            catch (ArgumentException e)
+            catch (ReferencesNotFoundException e)
             {
                 UI.Console.WriteLine(ConsoleColor.Magenta, e);
             }
@@ -50,7 +50,8 @@ namespace WikipediaConsole
             if (response.IsSuccessStatusCode)
                 return JsonConvert.DeserializeObject<IEnumerable<Reference>>(result);
             else
-                throw new ArgumentException(result);
+                throw new ReferencesNotFoundException(result);
+                // TODO throw new WikipediaReferencesException(result);
         }
 
         public void UpdateNYTDeathDateOfReference()
@@ -105,12 +106,8 @@ namespace WikipediaConsole
                 if (response.IsSuccessStatusCode)
                     UI.Console.WriteLine(ConsoleColor.Green, result);
                 else
-                    throw new ArgumentException(result);
+                    throw new Exception(result);
 
-            }
-            catch (ArgumentException e)
-            {
-                UI.Console.WriteLine(ConsoleColor.Magenta, e);
             }
             catch (Exception e)
             {
