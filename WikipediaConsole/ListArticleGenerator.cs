@@ -224,7 +224,7 @@ namespace WikipediaConsole
             else
             {
                 if (result.Contains( typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaPageNotFoundException($"Article '{articleTitle}' has been deleted on Wikipedia.");
+                    throw new WikipediaPageNotFoundException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
                 else
                     throw new Exception(result);
             }
@@ -249,7 +249,7 @@ namespace WikipediaConsole
         private IEnumerable<Reference> GetReferencesPermonth(int year, int monthId)
         {
             IEnumerable<Reference> references;            
-            string uri = $"nytimes/reference/{year}/{ monthId}";
+            string uri = $"nytimes/references/{year}/{monthId}";
             HttpResponseMessage response = util.SendGetRequest(uri);
             string result = response.Content.ReadAsStringAsync().Result;
 

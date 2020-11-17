@@ -23,9 +23,34 @@ namespace WikipediaReferences.Controllers
             this.logger = logger;
         }
 
-        [HttpGet("reference/{deathDate}")]
+        [HttpGet("referencebyarticletitle/{articleTitle}")]
+        public IActionResult GetReferencesByArticleTitle(string articleTitle)
+        {
+            if (string.IsNullOrEmpty(articleTitle))
+                return BadRequest("articleTitle cannot be null or empty.");
+
+            articleTitle = articleTitle.Replace("_", " ");
+
+            IEnumerable<Models.Reference> references = nyTimesService.GetReferencesByArticleTitle(articleTitle);
+
+            if (references.Count() == 0)
+                return NotFound($"Reference(s) not found. Requested article title = {articleTitle}.");
+            try
+            {
+                return Ok(MapModelToDto(references));
+            }
+            catch (Exception e)
+            {
+                string message = $"Gettig the reference(s) failed. Article title = {articleTitle}.";
+                logger.LogError($"{message} Exception:\r\n{e}", e);
+                return BadRequest(message);
+            }
+        }
+
+        [HttpGet("references/{deathDate}")]
         public IActionResult GetReferencesPerDeathDate(DateTime deathDate)
         {
+            // Not being caled yet from the client.
             try
             {
                 IEnumerable<Models.Reference> references = nyTimesService.GetReferencesPerDeathDate(deathDate);
@@ -41,7 +66,7 @@ namespace WikipediaReferences.Controllers
             }
         }
 
-        [HttpGet("reference/{year}/{monthId}")]
+        [HttpGet("references/{year}/{monthId}")]
         public IActionResult GetReferencesPerMonthOfDeath(int year, int monthId)
         {
             try
@@ -89,7 +114,7 @@ namespace WikipediaReferences.Controllers
             IEnumerable<Models.Reference> references = nyTimesService.GetReferencesByArticleTitle(updateDeathDateDto.ArticleTitle);
 
             if (references.Count() == 0)
-                return NotFound($"Reference(s) was not found. Requested article title = {updateDeathDateDto.ArticleTitle}.");
+                return NotFound($"Reference(s) not found. Requested article title = {updateDeathDateDto.ArticleTitle}.");
             try
             {
                 var reference = nyTimesService.UpdateDeathDate(references, updateDeathDateDto);
@@ -113,6 +138,16 @@ namespace WikipediaReferences.Controllers
                 ArticleTitle = reference.ArticleTitle,
                 DeathDate = deathDate
             };
+        }
+
+        private IEnumerable<Dtos.Reference> MapModelToDto(IEnumerable<Models.Reference> references)
+        {
+            List<Dtos.Reference> referencesDto = new List<Dtos.Reference>();
+
+            foreach (var reference in references)
+                referencesDto.Add(MapModelToDto(reference));
+            
+            return referencesDto;
         }
 
         private Dtos.Reference MapModelToDto(Models.Reference reference)

@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using WikipediaReferences.Dtos;
@@ -17,6 +18,39 @@ namespace WikipediaConsole
         {
             this.configuration = configuration;
             this.util = util;            
+        }
+
+        public void ShowNYTimesUrlOfArticle()
+        {
+            try
+            {
+                Console.WriteLine("Article title:");
+                string articleTitle = Console.ReadLine();
+
+                IEnumerable<Reference> references = GetReferencesByArticleTitle(articleTitle);
+
+                references.ToList().ForEach(r => UI.Console.WriteLine(ConsoleColor.Green, r.Url));                
+            }
+            catch (ArgumentException e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Magenta, e);
+            }
+            catch (Exception e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle)
+        {
+            string uri = $"nytimes/referencebyarticletitle/{ articleTitle.Replace(" ", "_") }";
+            HttpResponseMessage response = util.SendGetRequest(uri);
+            string result = response.Content.ReadAsStringAsync().Result;
+
+            if (response.IsSuccessStatusCode)
+                return JsonConvert.DeserializeObject<IEnumerable<Reference>>(result);
+            else
+                throw new ArgumentException(result);
         }
 
         public void UpdateNYTDeathDateOfReference()
