@@ -26,31 +26,6 @@ namespace WikipediaConsole
             this.util = util;
         }
 
-        public void EvaluateDeathsPerMonthArticle(int year, int monthId)
-        {
-            try
-            {
-                UI.Console.WriteLine("Getting things ready. This may take a minute..");
-
-                entries = GetEntriesPermonth(year, monthId);
-                references = GetReferencesPermonth(year, monthId);
-
-                for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
-                {
-                    UI.Console.WriteLine($"\r\nChecking ref. date {new DateTime(year, monthId, day).ToShortDateString()}");
-
-                    IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
-
-                    foreach (var reference in referencesPerDay)
-                        HandleReference(reference, entries);
-                }
-            }
-            catch (Exception e)
-            {
-                UI.Console.WriteLine(ConsoleColor.Red, e);
-            }
-        }
-
         public void PrintDeathsPerMonthArticle(int year, int monthId)
         {
             EvaluateDeathsPerMonthArticle(year, monthId);
@@ -62,6 +37,31 @@ namespace WikipediaConsole
             PrintOutput(year, monthId);
 
             UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+        }
+
+        private void EvaluateDeathsPerMonthArticle(int year, int monthId)
+        {
+            try
+            {
+                UI.Console.WriteLine("Getting things ready. This may take a minute..");
+
+                entries = GetEntriesPermonth(year, monthId);
+                references = GetReferencesPermonth(year, monthId);
+
+                for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
+                {
+                    UI.Console.WriteLine($"\r\nChecking nyt ref. date {new DateTime(year, monthId, day).ToShortDateString()}");
+
+                    IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
+
+                    foreach (var reference in referencesPerDay)
+                        HandleReference(reference, entries);
+                }
+            }
+            catch (Exception e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
         }
 
         private void PrintOutput(int year, int monthId)

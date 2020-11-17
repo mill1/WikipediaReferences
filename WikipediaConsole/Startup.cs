@@ -26,6 +26,7 @@ namespace WikipediaConsole
             services.AddSingleton<Util>();
             services.AddSingleton<Runner>();
             services.AddScoped<ListArticleGenerator>();
+            services.AddScoped<ReferencesEditor>();
             services.AddScoped<AssemblyInfo>();
         }
     }

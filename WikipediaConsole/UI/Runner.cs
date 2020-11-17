@@ -1,18 +1,15 @@
 ﻿
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using WikipediaReferences;
-using WikipediaReferences.Dtos;
 
 namespace WikipediaConsole.UI
 {    
     public class Runner
     {       
-        private const string EvaluateDeathMonth = "e";
         private const string PrintDeathMonth = "p";
         private const string UpdateNYTDeathDate = "u";
         private const string DayCheck = "d";
@@ -20,16 +17,16 @@ namespace WikipediaConsole.UI
         private const string AddNYTObitRefs = "a";
         private const string Quit = "q";
         private bool quit;
-
-        private readonly IConfiguration configuration;
+       
         private readonly Util util;
         private readonly ListArticleGenerator listArticleGenerator;
+        private readonly ReferencesEditor referencesEditor;
 
-        public Runner(IConfiguration configuration, Util util, ListArticleGenerator listArticleGenerator, AssemblyInfo assemblyInfo)
+        public Runner(Util util, ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor, AssemblyInfo assemblyInfo)
         {
-            this.configuration = configuration;
             this.util = util;
             this.listArticleGenerator = listArticleGenerator;
+            this.referencesEditor = referencesEditor; ;
 
             quit = false;
 
@@ -62,7 +59,6 @@ namespace WikipediaConsole.UI
         {
             return new List<string>
             {
-                $"{EvaluateDeathMonth}:\tEvaluate month of death",
                 $"{PrintDeathMonth}:\tPrint month of death",
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
                 $"{DayCheck}:\tDay name of date",
@@ -78,16 +74,12 @@ namespace WikipediaConsole.UI
 
             switch (answer)
             {
-                case EvaluateDeathMonth:
-                    GetDeathMontArgs(out year, out monthId);
-                    listArticleGenerator.EvaluateDeathsPerMonthArticle(year, monthId);
-                    break;
                 case PrintDeathMonth:                    
-                    GetDeathMontArgs(out year, out monthId);
+                    util.GetDeathMontArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
                     break;
                 case UpdateNYTDeathDate:
-                    UpdateNYTDeathDateOfReference();
+                    referencesEditor.UpdateNYTDeathDateOfReference();
                     break;
                 case DayCheck:
                     GetDaynameFromDate();
@@ -96,7 +88,7 @@ namespace WikipediaConsole.UI
                     TestGetDeceasedFromWikipedia();
                     break;
                 case AddNYTObitRefs:
-                    AddNYTimesObituaryReferences();
+                    referencesEditor.AddNYTimesObituaryReferences();
                     break;
                 case Quit:
                     quit = true;
@@ -131,97 +123,6 @@ namespace WikipediaConsole.UI
             Console.WriteLine($"Nr of entries with references: {refs.Count()}");
             Console.WriteLine($"Longest entry (excl. ref): {entry.Name}");
             Console.WriteLine($"Longest entry value:\r\n{entry}");
-        }
-
-        private void UpdateNYTDeathDateOfReference()
-        {
-            try
-            {
-                UpdateDeathDate updateDeathDate = GetUpdateDeathDateDto();
-                HttpResponseMessage response = util.SendPutRequest("nytimes/updatedeathdate", updateDeathDate);
-
-                string result = response.Content.ReadAsStringAsync().Result;
-
-                if (response.IsSuccessStatusCode)
-                    ShowUpdatedDeathDate(result);
-                else
-                    throw new Exception(result);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ConsoleColor.Red, e);
-            }
-        }
-
-        private static void ShowUpdatedDeathDate(string result)
-        {
-            var updateDeathDate = JsonConvert.DeserializeObject<UpdateDeathDate>(result);
-
-            Console.WriteLine(ConsoleColor.Green, $"Updated death date: {updateDeathDate.DeathDate.ToShortDateString()}");
-            Console.WriteLine(ConsoleColor.Green, $"Article subject: {updateDeathDate.ArticleTitle} (1st id: {updateDeathDate.Id})");
-        }
-
-        private UpdateDeathDate GetUpdateDeathDateDto()
-        {
-            UpdateDeathDate updateDeathDate = new UpdateDeathDate(){ SourceCode = "NYT" };
-            
-            Console.WriteLine("New date of death: (yyyy-m-d)");
-            updateDeathDate.DeathDate = DateTime.Parse(Console.ReadLine());
-
-            Console.WriteLine("Article title:");
-            updateDeathDate.ArticleTitle = Console.ReadLine();
-
-            return updateDeathDate;
-        }
-
-        private void AddNYTimesObituaryReferences()
-        {
-            try
-            {
-                string uri = GetAddObitsApiUri();
-                HttpResponseMessage response = util.SendGetRequest(uri);
-                string result = response.Content.ReadAsStringAsync().Result;
-
-                if (response.IsSuccessStatusCode)
-                    Console.WriteLine(ConsoleColor.Green, result);
-                else
-                    throw new ArgumentException(result);
-
-            }
-            catch (ArgumentException e)
-            {
-                Console.WriteLine(ConsoleColor.Magenta, e);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(ConsoleColor.Red, e);
-            }
-        }
-
-        private string GetAddObitsApiUri()
-        {
-            const string ApiKey = "NYTimes Archive API key";
-
-            int year, monthId;
-            GetDeathMontArgs(out year, out monthId);
-
-            string apiKey = configuration.GetValue<string>(ApiKey);
-
-            if (apiKey == null || apiKey == "TOSET")
-            {
-                Console.WriteLine(ApiKey + ":");
-                apiKey = Console.ReadLine();
-            }
-
-            return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
-        }
-
-        private void GetDeathMontArgs(out int year, out int monthId)
-        {
-            Console.WriteLine("Death year:");
-            year = int.Parse(Console.ReadLine());
-            Console.WriteLine("Death month id:");
-            monthId = int.Parse(Console.ReadLine());
-        }
+        }              
     }
 }
