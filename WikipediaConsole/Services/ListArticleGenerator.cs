@@ -10,7 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 
-namespace WikipediaConsole
+namespace WikipediaConsole.Services
 {
     public class ListArticleGenerator
     {

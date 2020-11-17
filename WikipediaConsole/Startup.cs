@@ -2,9 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
+using WikipediaConsole.Services;
 using WikipediaConsole.UI;
-using WikipediaReferences.Interfaces;
-using WikipediaReferences.Services;
 
 namespace WikipediaConsole
 {
@@ -27,6 +26,7 @@ namespace WikipediaConsole
             services.AddSingleton<Runner>();
             services.AddScoped<ListArticleGenerator>();
             services.AddScoped<ReferencesEditor>();
+            services.AddScoped<ArticleAnalyzer>();
             services.AddScoped<AssemblyInfo>();
         }
     }

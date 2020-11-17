@@ -1,9 +1,9 @@
-﻿
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using WikipediaConsole.Services;
 using WikipediaReferences;
 
 namespace WikipediaConsole.UI
@@ -22,12 +22,15 @@ namespace WikipediaConsole.UI
         private readonly Util util;
         private readonly ListArticleGenerator listArticleGenerator;
         private readonly ReferencesEditor referencesEditor;
+        private readonly ArticleAnalyzer articleAnalyzer;
 
-        public Runner(Util util, ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor, AssemblyInfo assemblyInfo)
+        public Runner(ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor, ArticleAnalyzer articleAnalyzer,
+                      Util util, AssemblyInfo assemblyInfo)
         {
             this.util = util;
             this.listArticleGenerator = listArticleGenerator;
-            this.referencesEditor = referencesEditor; ;
+            this.referencesEditor = referencesEditor;
+            this.articleAnalyzer = articleAnalyzer;
 
             quit = false;
 
@@ -90,7 +93,8 @@ namespace WikipediaConsole.UI
                     GetDaynameFromDate();
                     break;
                 case Test:
-                    TestGetDeceasedFromWikipedia();
+                    articleAnalyzer.ShowRawArticleText( false);
+                    //TestGetDeceasedFromWikipedia();
                     break;
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
