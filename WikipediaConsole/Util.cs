@@ -23,8 +23,8 @@ namespace WikipediaConsole
                 return result;
             else
             {
-                if (result.Contains(typeof(ReferencesNotFoundException).Name))
-                    throw new ReferencesNotFoundException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
+                if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
+                    throw new WikipediaReferencesException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
                 else
                     throw new Exception(result);
             }

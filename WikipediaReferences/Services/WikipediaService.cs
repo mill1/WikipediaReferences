@@ -287,6 +287,9 @@ namespace WikipediaReferences.Services
             string authorsArticle = author;
             string rawText = GetRawArticleTextAuthor(ref authorsArticle);
 
+            if (rawText == null)
+                return null;
+
             if (!rawText.Contains(source))
                 return null;
 
@@ -382,6 +385,7 @@ namespace WikipediaReferences.Services
                 string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
 
                 Console.WriteLine($"Entry: {name}{redirectInfo}");
+
             }
             return name;
         }
@@ -511,7 +515,7 @@ namespace WikipediaReferences.Services
             }
             catch (WebException) // article does not exist (anymore) in Wikipedia
             {
-                throw new WikipediaPageNotFoundException($"{wikiPage}: FAIL (no such wiki page)");
+                throw new WikipediaPageNotFoundException($"{wikiPage}: FAIL: no such wiki page");
             }
             catch (Exception)
             {

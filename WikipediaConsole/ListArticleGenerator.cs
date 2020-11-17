@@ -58,9 +58,9 @@ namespace WikipediaConsole
                         HandleReference(reference, entries);
                 }
             }
-            catch (ReferencesNotFoundException e)
+            catch (WikipediaReferencesException e)
             {
-                UI.Console.WriteLine(ConsoleColor.Magenta, e);
+                UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
             }
             catch (Exception e)
             {
@@ -119,7 +119,7 @@ namespace WikipediaConsole
                 // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
                 nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
             }
-            catch (ReferencesNotFoundException e)
+            catch (WikipediaReferencesException e)
             {
                 UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
             }
@@ -237,8 +237,13 @@ namespace WikipediaConsole
             if (response.IsSuccessStatusCode)
                 entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
             else
-                throw new Exception(result);
-
+            {
+                if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
+                    throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
+                else
+                    throw new Exception(result);
+            }
+            
             return entries;
         }
 
@@ -252,7 +257,7 @@ namespace WikipediaConsole
             if (response.IsSuccessStatusCode)
                 references = JsonConvert.DeserializeObject<IEnumerable<Reference>>(result);
             else
-                throw new Exception(result);
+                throw new WikipediaReferencesException(result);
 
             return references;
         }

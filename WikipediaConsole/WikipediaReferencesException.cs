@@ -5,18 +5,18 @@ using System.Threading.Tasks;
 
 namespace WikipediaConsole
 {
-    public class ReferencesNotFoundException : Exception
+    public class WikipediaReferencesException : Exception
     {
-        public ReferencesNotFoundException()
+        public WikipediaReferencesException()
         {
         }
 
-        public ReferencesNotFoundException(string message)
+        public WikipediaReferencesException(string message)
             : base(message)
         {
         }
 
-        public ReferencesNotFoundException(string message, Exception inner)
+        public WikipediaReferencesException(string message, Exception inner)
             : base(message, inner)
         {
         }
