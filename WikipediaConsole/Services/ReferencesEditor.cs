@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Text;
 using WikipediaReferences.Dtos;
 
-namespace WikipediaConsole
+namespace WikipediaConsole.Services
 {
     public class ReferencesEditor
     {
@@ -33,7 +33,6 @@ namespace WikipediaConsole
             }
             catch (WikipediaReferencesException e)
             {
-                // TODO chk op e.msg
                 UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
             }
             catch (Exception e)
