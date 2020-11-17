@@ -24,7 +24,7 @@ namespace WikipediaReferences.Controllers
         }
 
         [HttpGet("reference/{deathDate}")]
-        public IActionResult GetReferencePerDeathDate(DateTime deathDate)
+        public IActionResult GetReferencesPerDeathDate(DateTime deathDate)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace WikipediaReferences.Controllers
         }
 
         [HttpGet("reference/{year}/{monthId}")]
-        public IActionResult GetReferencePerMonthOfDeath(int year, int monthId)
+        public IActionResult GetReferencesPerMonthOfDeath(int year, int monthId)
         {
             try
             {
@@ -72,8 +72,9 @@ namespace WikipediaReferences.Controllers
             }
             catch (Exception e)
             {
-                string message = $"Adding the NYTimes obituary references failed. Requested month: {year} {monthId}.\r\n" +
+                string message = $"Adding the NYTimes references failed. Requested month: {year} {monthId}.\r\n" +
                                  $"Exception:\r\n{e}";
+
                 logger.LogError($"{message}", e);
                 return BadRequest(message);
             }
@@ -88,7 +89,7 @@ namespace WikipediaReferences.Controllers
             IEnumerable<Models.Reference> references = nyTimesService.GetReferencesByArticleTitle(updateDeathDateDto.ArticleTitle);
 
             if (references.Count() == 0)
-                return NotFound($"The reference was not found. Requested article title = {updateDeathDateDto.ArticleTitle}.");
+                return NotFound($"Reference(s) was not found. Requested article title = {updateDeathDateDto.ArticleTitle}.");
             try
             {
                 var reference = nyTimesService.UpdateDeathDate(references, updateDeathDateDto);
@@ -97,7 +98,7 @@ namespace WikipediaReferences.Controllers
             }
             catch (Exception e)
             {
-                string message = $"Updating the reference failed. Article title = {updateDeathDateDto.ArticleTitle}.";
+                string message = $"Updating the reference(s) failed. Article title = {updateDeathDateDto.ArticleTitle}.";
                 logger.LogError($"{message} Exception:\r\n{e}", e);
                 return BadRequest(message);
             }

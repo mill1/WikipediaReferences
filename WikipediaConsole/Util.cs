@@ -25,6 +25,14 @@ namespace WikipediaConsole
             this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        public void GetDeathMontArgs(out int year, out int monthId)
+        {
+            Console.WriteLine("Death year:");
+            year = int.Parse(Console.ReadLine());
+            Console.WriteLine("Death month id:");
+            monthId = int.Parse(Console.ReadLine());
+        }
+
         public HttpResponseMessage SendGetRequest(string uri)
         {
             return client.GetAsync(uri).Result;
