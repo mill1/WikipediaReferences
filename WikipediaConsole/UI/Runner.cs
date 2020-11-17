@@ -12,6 +12,7 @@ namespace WikipediaConsole.UI
     {       
         private const string PrintDeathMonth = "p";
         private const string UpdateNYTDeathDate = "u";
+        private const string ShowNYTUrl = "s";
         private const string DayCheck = "d";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
@@ -61,6 +62,7 @@ namespace WikipediaConsole.UI
             {
                 $"{PrintDeathMonth}:\tPrint month of death",
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
+                $"{ShowNYTUrl}:\tShow NYT Url of article",
                 $"{DayCheck}:\tDay name of date",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
@@ -80,6 +82,9 @@ namespace WikipediaConsole.UI
                     break;
                 case UpdateNYTDeathDate:
                     referencesEditor.UpdateNYTDeathDateOfReference();
+                    break;
+                case ShowNYTUrl:
+                    referencesEditor.ShowNYTimesUrlOfArticle();
                     break;
                 case DayCheck:
                     GetDaynameFromDate();
