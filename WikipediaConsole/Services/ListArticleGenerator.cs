@@ -241,7 +241,12 @@ namespace WikipediaConsole.Services
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
                     throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
                 else
-                    throw new Exception(result);
+                {
+                    if (result.Contains(typeof(InvalidWikipediaPageException).Name))
+                        throw new WikipediaReferencesException(result);
+                    else
+                        throw new Exception(result);
+                }
             }
             
             return entries;

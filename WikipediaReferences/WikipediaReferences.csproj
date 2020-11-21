@@ -6,6 +6,7 @@
     <Company>Delegate</Company>
     <AssemblyVersion>1.0.0.1</AssemblyVersion>
     <AssemblyName>Wikipedia references API</AssemblyName>
+    <UserSecretsId>cb8ba128-710e-448a-953b-01077992c797</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
