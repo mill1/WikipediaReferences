@@ -93,8 +93,8 @@ namespace WikipediaConsole.UI
                     GetDaynameFromDate();
                     break;
                 case Test:
-                    articleAnalyzer.ShowRawArticleText( false);
-                    //TestGetDeceasedFromWikipedia();
+                    //articleAnalyzer.ShowRawArticleText( false);
+                    TestGetDeceasedFromWikipedia();
                     break;
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
@@ -118,7 +118,7 @@ namespace WikipediaConsole.UI
 
         private void TestGetDeceasedFromWikipedia()
         {
-            string uri = $"wikipedia/deceased/1997/3";
+            string uri = $"wikipedia/deceased/1999-5-8";
             HttpResponseMessage response = util.SendGetRequest(uri);
             string result = response.Content.ReadAsStringAsync().Result;
 

@@ -74,11 +74,25 @@ namespace WikipediaReferences.Services
             using (WebClient client = new WebClient())
                 text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
 
-            if (text.Contains("* [[")) // We only want '*[[' (without the space); edit article in that case.
-                throw new Exception("Invalid markup style found: * [[");
-
             text = TrimWikiText(text, month, deathDate.Year);
+
+            CheckEntyPrefixes(text);
+
             return text;
+        }
+
+        private void CheckEntyPrefixes(string trimmedText)
+        {
+            const char Delimiter = '*';
+
+            // TODO: handle sub list (**[[)
+            var entries = trimmedText.Split(Delimiter).Skip(1).ToList();
+
+            entries.ForEach(entry => 
+            {
+                if (entry.Substring(0,2) != "[[")
+                    throw new InvalidWikipediaPageException($"Invalid markup style found: '{Delimiter}{entry}'. Fix the article");
+            });                
         }
 
         public string GetArticleTitle(string nameVersion, int year, int monthId)
