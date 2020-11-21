@@ -29,7 +29,14 @@ namespace WikipediaConsole.Services
 
                 IEnumerable<Reference> references = GetReferencesByArticleTitle(articleTitle);
 
-                references.ToList().ForEach(r => UI.Console.WriteLine(ConsoleColor.Green, r.Url));                
+                references.ToList().ForEach(r =>                 
+                    {
+                        var reference = MapDtoToModel(r);
+
+                        UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());                    
+                    });  
+                
+
             }
             catch (WikipediaReferencesException e)
             {
@@ -138,6 +145,34 @@ namespace WikipediaConsole.Services
             }
 
             return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+        }
+
+        private WikipediaReferences.Models.Reference MapDtoToModel(Reference referenceDto)
+        {
+            return new WikipediaReferences.Models.Reference
+            {
+                Id = referenceDto.Id,
+                Type = referenceDto.Type,
+                SourceCode = referenceDto.SourceCode,
+                ArticleTitle = referenceDto.ArticleTitle,
+                LastNameSubject = referenceDto.LastNameSubject,
+                Author1 = referenceDto.Author1,
+                Authorlink1 = referenceDto.Authorlink1,
+                Title = referenceDto.Title,
+                Url = referenceDto.Url,
+                UrlAccess = referenceDto.UrlAccess,
+                Quote = referenceDto.Quote,
+                Work = referenceDto.Work,
+                Agency = referenceDto.Agency,
+                Publisher = referenceDto.Publisher,
+                Language = referenceDto.Language,
+                Location = referenceDto.Location,
+                AccessDate = referenceDto.AccessDate,
+                Date = referenceDto.Date,
+                Page = referenceDto.Page,
+                DeathDate = referenceDto.DeathDate,
+                ArchiveDate = referenceDto.ArchiveDate,
+            };
         }
     }
 }

@@ -41,7 +41,7 @@ namespace WikipediaReferences.Controllers
             }
             catch (Exception e)
             {
-                string message = $"Gettig the reference(s) failed. Article title = {articleTitle}.";
+                string message = $"Getting the reference(s) failed. Article title = {articleTitle}.";
                 logger.LogError($"{message} Exception:\r\n{e}", e);
                 return BadRequest(message);
             }
@@ -176,33 +176,6 @@ namespace WikipediaReferences.Controllers
                 DeathDate = reference.DeathDate,
                 ArchiveDate = reference.ArchiveDate,
             };
-        }
-
-        private Models.Reference MapDtoToModel(Dtos.Reference referenceDto, Models.Reference reference)
-        {
-            reference.Id = referenceDto.Id;
-            reference.Type = referenceDto.Type;
-            reference.SourceCode = referenceDto.SourceCode;
-            reference.ArticleTitle = referenceDto.ArticleTitle;
-            reference.LastNameSubject = referenceDto.LastNameSubject;
-            reference.Author1 = referenceDto.Author1;
-            reference.Authorlink1 = referenceDto.Authorlink1;
-            reference.Title = referenceDto.Title;
-            reference.Url = referenceDto.Url;
-            reference.UrlAccess = referenceDto.UrlAccess;
-            reference.Quote = referenceDto.Quote;
-            reference.Work = referenceDto.Work;
-            reference.Agency = referenceDto.Agency;
-            reference.Publisher = referenceDto.Publisher;
-            reference.Language = referenceDto.Language;
-            reference.Location = referenceDto.Location;
-            reference.AccessDate = referenceDto.AccessDate;
-            reference.Date = referenceDto.Date;
-            reference.Page = referenceDto.Page;
-            reference.DeathDate = referenceDto.DeathDate;
-            reference.ArchiveDate = referenceDto.ArchiveDate;
-
-            return reference;
-        }
+        }       
     }
 }
