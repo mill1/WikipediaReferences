@@ -31,7 +31,7 @@ namespace WikipediaReferences.Controllers
             }
             catch (Exception e)
             {
-                string message = $"Getting the raw article text. Requested article: {articleTitle}.\r\n" +
+                string message = $"Getting the raw article text failed. Requested article: {articleTitle}.\r\n" +
                                  $"Exception:\r\n{e}";
                 logger.LogError($"{message}", e);
                 return BadRequest(message);
