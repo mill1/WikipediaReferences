@@ -31,6 +31,13 @@ namespace WikipediaConsole.UI
             SysConsole.Write(value);
         }
 
+        public static void Write(ConsoleColor color, object value)
+        {
+            ForegroundColor = color;
+            SysConsole.Write(value);
+            SysConsole.ResetColor();
+        }
+
         public static void WriteLine(ConsoleColor color, object value)
         {
             ForegroundColor = color;
