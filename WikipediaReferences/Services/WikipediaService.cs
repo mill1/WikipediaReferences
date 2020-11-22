@@ -13,6 +13,7 @@ namespace WikipediaReferences.Services
     {
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
         private const string EntryDelimiter = "*[[";
+        private const string TmpPrefix = "##[[";
         private const int NoInfobox = -1;
 
         private readonly ILogger logger;
@@ -75,23 +76,54 @@ namespace WikipediaReferences.Services
                 text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
 
             text = TrimWikiText(text, month, deathDate.Year);
+            text = RemoveSubLists(text);
 
             CheckEntyPrefixes(text);
 
             return text;
         }
 
-        private void CheckEntyPrefixes(string trimmedText)
-        {
-            const char Delimiter = '*';
+        private string RemoveSubLists(string text)
+        {            
+            if (!text.Contains("**[["))
+                return text;
 
-            // TODO: handle sub list (**[[)
-            var entries = trimmedText.Split(Delimiter).Skip(1).ToList();
+            text = text.Replace("**[[", TmpPrefix);
+
+            var entries = text.Split('*').Skip(1).ToList();
+
+            entries.ForEach(entry =>
+            {
+                if (entry.Substring(0, 2) != "[[")
+                    text = RemoveSubList(entry, text);
+            });
+
+            return text;                
+        }
+
+        private string RemoveSubList(string subList, string text)
+        {
+            int pos = subList.IndexOf("==");
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"Invalid markup found: no section found after sub list. Fix the article");
+
+            subList = subList.Substring(0, pos);
+
+            return text.Replace($"*{subList}", string.Empty);
+        }
+
+        private void CheckEntyPrefixes(string text)
+        {
+            if (text.Contains("* "))
+                throw new InvalidWikipediaPageException($"Invalid markup style found: '* '. Fix the article");
+
+            var entries = text.Split('*').Skip(1).ToList();
 
             entries.ForEach(entry => 
             {
                 if (entry.Substring(0,2) != "[[")
-                    throw new InvalidWikipediaPageException($"Invalid markup style found: '{Delimiter}{entry}'. Fix the article");
+                    throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article");
             });                
         }
 

@@ -17,46 +17,32 @@ namespace WikipediaConsole.Services
         private const int MinimumNrOfNettoCharsBiography = 5000;
 
         private readonly Util util;
+        private readonly ArticleAnalyzer articleAnalyzer;
 
         private IEnumerable<Entry> entries;
         private  IEnumerable<Reference> references;
 
-        public ListArticleGenerator(Util util)
+        public ListArticleGenerator(Util util, ArticleAnalyzer articleAnalyzer)
         {
             this.util = util;
+            this.articleAnalyzer = articleAnalyzer;
         }
 
         public void PrintDeathsPerMonthArticle(int year, int monthId)
         {
-            EvaluateDeathsPerMonthArticle(year, monthId);
-
-            UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
-            if (UI.Console.ReadLine() != "y")
-                return;
-
-            PrintOutput(year, monthId);
-
-            UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
-        }
-
-        private void EvaluateDeathsPerMonthArticle(int year, int monthId)
-        {
             try
             {
-                UI.Console.WriteLine("Getting things ready. This may take a minute..");
+                EvaluateDeathsPerMonthArticle(year, monthId);
+                CheckIfArticleContainsSublist(year, monthId);
 
-                entries = GetEntriesPermonth(year, monthId);
-                references = GetReferencesPermonth(year, monthId);
+                UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
 
-                for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
-                {
-                    UI.Console.WriteLine($"\r\nChecking nyt ref. date {new DateTime(year, monthId, day).ToShortDateString()}");
+                if (UI.Console.ReadLine() != "y")
+                    return;
 
-                    IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
+                PrintOutput(year, monthId);
 
-                    foreach (var reference in referencesPerDay)
-                        HandleReference(reference, entries);
-                }
+                UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
             }
             catch (WikipediaReferencesException e)
             {
@@ -65,6 +51,34 @@ namespace WikipediaConsole.Services
             catch (Exception e)
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private void CheckIfArticleContainsSublist(int year, int monthId)
+        {
+            string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+
+            bool articleContainsSublist = articleAnalyzer.ArticleContainsSublist(articleTitle);
+
+            if (articleContainsSublist)
+                UI.Console.Write(ConsoleColor.Red, "\r\nAttention! Article contains sublist!");
+        }
+
+        private void EvaluateDeathsPerMonthArticle(int year, int monthId)
+        {
+            UI.Console.WriteLine("Getting things ready. This may take a minute..");
+
+            entries = GetEntriesPermonth(year, monthId);
+            references = GetReferencesPermonth(year, monthId);
+
+            for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
+            {
+                UI.Console.WriteLine($"\r\nChecking nyt ref. date {new DateTime(year, monthId, day).ToShortDateString()}");
+
+                IEnumerable<Reference> referencesPerDay = references.Where(r => r.DeathDate.Day == day);
+
+                foreach (var reference in referencesPerDay)
+                    HandleReference(reference, entries);
             }
         }
 
@@ -80,7 +94,7 @@ namespace WikipediaConsole.Services
 
             using (var writer = File.CreateText(file))
             {
-                writer.WriteLine($"=={GetMonthNames().ElementAt(monthId - 1)} {year}==");
+                writer.WriteLine($"=={month} {year}==");
 
                 foreach (var entry in entries)
                 {
@@ -116,7 +130,7 @@ namespace WikipediaConsole.Services
 
             try
             {
-                // An entry could've be left out of the list because of notabilty. Determine netto nr of chars article
+                // An entry could've be left out of the list because of notabiltiy. Determine netto nr of chars article
                 nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
             }
             catch (WikipediaReferencesException e)
@@ -238,18 +252,24 @@ namespace WikipediaConsole.Services
                 entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
             else
             {
-                if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
-                else
-                {
-                    if (result.Contains(typeof(InvalidWikipediaPageException).Name))
-                        throw new WikipediaReferencesException(result);
-                    else
-                        throw new Exception(result);
-                }
+                HandleResultException(result);
+                return null;
             }
-            
+
             return entries;
+        }
+
+        private void HandleResultException(string result)
+        {
+            if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
+                throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
+            else
+            {
+                if (result.Contains(typeof(InvalidWikipediaPageException).Name))
+                    throw new WikipediaReferencesException(result);
+                else
+                    throw new Exception(result);
+            }
         }
 
         private IEnumerable<Reference> GetReferencesPermonth(int year, int monthId)

@@ -13,6 +13,16 @@ namespace WikipediaConsole.Services
             this.util = util;
         }
 
+        public bool ArticleContainsSublist(string articleTitle)
+        {
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
+            HttpResponseMessage response = util.SendGetRequest(uri);
+
+            string rawArticleText = util.HandleResponse(response, articleTitle);
+
+            return rawArticleText.Contains("**[[");
+        }
+
         public void ShowRawArticleText(bool netto)
         {
             try
