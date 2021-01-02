@@ -61,7 +61,7 @@ namespace WikipediaConsole.Services
             bool articleContainsSublist = articleAnalyzer.ArticleContainsSublist(articleTitle);
 
             if (articleContainsSublist)
-                UI.Console.Write(ConsoleColor.Red, "\r\nAttention! Article contains sublist!");
+                UI.Console.Write(ConsoleColor.Red, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
         }
 
         private void EvaluateDeathsPerMonthArticle(int year, int monthId)

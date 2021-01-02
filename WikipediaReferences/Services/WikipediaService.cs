@@ -12,8 +12,7 @@ namespace WikipediaReferences.Services
     public class WikipediaService : IWikipediaService
     {
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
-        private const string EntryDelimiter = "*[[";
-        private const string TmpPrefix = "##[[";
+        private const string EntryDelimiter = "*[[";        
         private const int NoInfobox = -1;
 
         private readonly ILogger logger;
@@ -88,7 +87,7 @@ namespace WikipediaReferences.Services
             if (!text.Contains("**[["))
                 return text;
 
-            text = text.Replace("**[[", TmpPrefix);
+            text = text.Replace("**[[", "~~[[");
 
             var entries = text.Split('*').Skip(1).ToList();
 
