@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
@@ -83,7 +84,7 @@ namespace WikipediaReferences.Services
         }
 
         private string RemoveSubLists(string text)
-        {            
+        {
             if (!text.Contains("**[["))
                 return text;
 
@@ -121,7 +122,7 @@ namespace WikipediaReferences.Services
 
             entries.ForEach(entry => 
             {
-                if (entry.Substring(0,2) != "[[")
+                if (entry.Substring(0,2) != "[[") // Will fail regarding occurences of M*A*S*H* !
                     throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article");
             });                
         }
@@ -429,8 +430,8 @@ namespace WikipediaReferences.Services
 
                 string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
 
+                //Thread.Sleep(100); // TODO lw?
                 Console.WriteLine($"Entry: {name}{redirectInfo}");
-
             }
             return name;
         }

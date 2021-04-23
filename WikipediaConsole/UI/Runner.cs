@@ -93,8 +93,8 @@ namespace WikipediaConsole.UI
                     GetDaynameFromDate();
                     break;
                 case Test:
-                    //articleAnalyzer.ShowRawArticleText(false);
-                    TestGetDeceasedFromWikipedia();
+                    articleAnalyzer.ShowRawArticleText(false);
+                    //TestGetDeceasedFromWikipedia();
                     break;
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
