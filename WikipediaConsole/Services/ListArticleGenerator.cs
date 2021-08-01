@@ -14,7 +14,7 @@ namespace WikipediaConsole.Services
 {
     public class ListArticleGenerator
     {
-        private const int MinimumNrOfNettoCharsBiography = 5000;
+        private const int MinimumNrOfNettoCharsBiography = 5500;
 
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
@@ -167,26 +167,56 @@ namespace WikipediaConsole.Services
                 reference.AccessDate = DateTime.Today;
                 entry.Reference = reference.GetNewsReference();
                 consoleColor = ConsoleColor.Green;
-
                 return "New NYT reference!";
             }
             else
             {
-                if (entry.Reference.Contains("New York Times") && !entry.Reference.Contains("paid notice", StringComparison.OrdinalIgnoreCase))
+                if (entry.Reference.Contains("nytimes.com/") && !entry.Reference.Contains("paid notice", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Entry has NYT obituary reference. Update the reference but keep the access date of the original ref.
+                    // Entry has NYT obituary reference. Update the reference but keep the access date of the original ref.                    
                     reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
                     entry.Reference = reference.GetNewsReference();
-                    consoleColor = ConsoleColor.Green;
-
-                    return $"Updateable NYT reference! Access date = {reference.AccessDate.ToShortDateString()}";
+                    consoleColor = ConsoleColor.DarkYellow;
+                    return $"Updateable NYT reference!"; // Access date = {reference.AccessDate.ToShortDateString()}";
                 }
                 else
                 {
-                    consoleColor = ConsoleColor.DarkGreen;
-                    return "Non-NYT reference";
+                    if (IsDurableSource(entry.Reference))
+                    {
+                        consoleColor = ConsoleColor.DarkGray;
+                        return "Durable source";
+                    }
+                    else
+                    {
+                        var source = entry.Reference;
+                        reference.AccessDate = DateTime.Today;
+                        entry.Reference = reference.GetNewsReference();
+                        consoleColor = ConsoleColor.Green;
+                        return "Durable source?: " + source;
+                    }                    
                 }
             }
+        }
+
+        private bool IsDurableSource(string reference)
+        {
+            // <ref>[http..
+            if (!reference.Contains("{{cite", StringComparison.OrdinalIgnoreCase) && !reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (reference.Contains("{{cite news", StringComparison.OrdinalIgnoreCase) || reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
+                return reference.Contains("latimes.com/") ||
+                    reference.Contains("independent.co.uk/") ||
+                    reference.Contains("news.bbc.co.uk/") ||
+                    reference.Contains("telegraph.co.uk/") ||
+                    reference.Contains("washingtonpost.com/") ||
+                    reference.Contains("rollingstone.com/") ||
+                    reference.Contains("economist.com/") ||
+                    reference.Contains("irishtimes.com/") ||
+                    reference.Contains("theguardian.com/");
+            else
+                // books and journals are preferable over news sources
+                return true;
         }
 
         private void PrintMismatchDateOfDeaths(Reference reference, Entry entry)
