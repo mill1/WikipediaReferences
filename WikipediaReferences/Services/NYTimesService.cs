@@ -127,11 +127,11 @@ namespace WikipediaReferences.Services
 
         private IEnumerable<Reference> GetReferencesFromArchive(int monthId, int year, IEnumerable<Doc> obituaryDocs)
         {
-            List<Reference> articles = new List<Reference>();
+            List<Reference> references = new List<Reference>();
 
             foreach (Doc obituaryDoc in obituaryDocs)
             {
-                string[] nameVersions = GetDeceasedNames(obituaryDoc);
+                string[] nameVersions = ResolveNameVersions(obituaryDoc);
 
                 if (nameVersions == null)
                     continue;
@@ -144,12 +144,12 @@ namespace WikipediaReferences.Services
 
                     if (articleTitle != null)
                     {
-                        articles.Add(CreateReference(monthId, year, obituaryDoc, articleTitle));
+                        references.Add(CreateReference(monthId, year, obituaryDoc, articleTitle));
                         break;
                     }
                 }
             }
-            return articles;
+            return references;
         }
 
         private string CheckIfNameVersionExistsAsArticle(int monthId, int year, string articleTitle, string nameVersion)
@@ -170,27 +170,27 @@ namespace WikipediaReferences.Services
             return articleTitle;
         }
 
-        private string[] GetDeceasedNames(Doc doc)
+        private string[] ResolveNameVersions(Doc doc)
         {
-            string deceased = DetermineDeceasedValue(doc);
+            string name = ResolveNameValue(doc);
 
-            if (deceased == null)
+            if (name == null)
                 return null;
 
-            int i = deceased.IndexOf(",");
+            int i = name.IndexOf(",");
 
             if (i == -1) // Just one name
-                return new string[] { Capitalize(deceased) };
+                return new string[] { Capitalize(name) };
 
-            string surnames = Capitalize(deceased.Substring(0, i));
+            string surnames = Capitalize(name.Substring(0, i));
 
-            string firstnames = Capitalize(deceased.Substring(i + 1).Trim());
+            string firstnames = Capitalize(name.Substring(i + 1).Trim());
             firstnames = AdjustFirstNames(firstnames, out string suffix);
 
             return GetNameVersions(firstnames, surnames, suffix);
         }
 
-        private string DetermineDeceasedValue(Doc doc)
+        private string ResolveNameValue(Doc doc)
         {
             var person = doc.keywords.Where(k => k.name == "persons").FirstOrDefault();
 
@@ -241,8 +241,8 @@ namespace WikipediaReferences.Services
         {
             return new string[]
             {
-                        $"{firstnames} {surnames} {suffix}",
-                        $"{firstnames} {surnames}"
+                $"{firstnames} {surnames} {suffix}",
+                $"{firstnames} {surnames}"
             };
         }
 
@@ -250,10 +250,10 @@ namespace WikipediaReferences.Services
         {
             return new string[]
             {
-                        $"{FixNameInitials(firstnames, false)} {surnames} {suffix}",
-                        $"{FixNameInitials(firstnames, true)} {surnames} {suffix}",
-                        $"{FixNameInitials(firstnames, false)} {surnames}",
-                        $"{FixNameInitials(firstnames, true)} {surnames}"
+                $"{FixNameInitials(firstnames, false)} {surnames} {suffix}",
+                $"{FixNameInitials(firstnames, true)} {surnames} {suffix}",
+                $"{FixNameInitials(firstnames, false)} {surnames}",
+                $"{FixNameInitials(firstnames, true)} {surnames}"
             };
         }
 
@@ -351,7 +351,7 @@ namespace WikipediaReferences.Services
                 AccessDate = DateTime.Now.Date,
                 Date = obituaryDoc.pub_date.Date,
                 Page = $"{obituaryDoc.print_section} {obituaryDoc.print_page}",
-                DeathDate = GetDateOfDeath(obituaryDoc, monthId, year),
+                DeathDate = ResolveDateOfDeath(obituaryDoc, monthId, year),
                 ArchiveDate = GetArchiveDate(year, monthId)
             };
         }
@@ -421,7 +421,7 @@ namespace WikipediaReferences.Services
             }
         }
 
-        private DateTime GetDateOfDeath(Doc obituaryDoc, int monthId, int year)
+        public DateTime ResolveDateOfDeath(Doc obituaryDoc, int monthId, int year)
         {
             // No date:
             // died earlier this month                              [DoD unknown]
@@ -516,6 +516,9 @@ namespace WikipediaReferences.Services
 
             foreach (var excerpt in new string[] { obituaryDoc.lead_paragraph, obituaryDoc.@abstract })
             {
+                if (excerpt == null)
+                    break; 
+
                 var matches = regex.Match(excerpt);
 
                 if (matches.Success)
@@ -614,7 +617,7 @@ namespace WikipediaReferences.Services
             var monthArray = GetMonthsArray(monthId);
 
             // month name (abbrevation) will be followed by the day (f.i.: died on Oct. 4)
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < monthArray.Count; i++)
             {
                 // died Aug. 8
                 // died at his home in Fort Lauderdale, Fla., on Oct. 23
@@ -639,11 +642,18 @@ namespace WikipediaReferences.Services
             switch (monthId)
             {
                 case 1:
-                    return new List<string> { monthNames.ElementAt(0), monthNames.ElementAt(11), monthNames.ElementAt(10) };
+                    return new List<string> { monthNames.ElementAt(0), monthNames.ElementAt(11), monthNames.ElementAt(10), monthNames.ElementAt(9), monthNames.ElementAt(8), monthNames.ElementAt(7) };
                 case 2:
-                    return new List<string> { monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11) };
+                    return new List<string> { monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11), monthNames.ElementAt(10), monthNames.ElementAt(9), monthNames.ElementAt(8) };
+                case 3:
+                    return new List<string> { monthNames.ElementAt(2), monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11), monthNames.ElementAt(10), monthNames.ElementAt(9) };
+                case 4:
+                    return new List<string> { monthNames.ElementAt(3), monthNames.ElementAt(2), monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11), monthNames.ElementAt(10) };
+                case 5:
+                    return new List<string> { monthNames.ElementAt(4), monthNames.ElementAt(3), monthNames.ElementAt(2), monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11) };
                 default:
-                    return new List<string> { monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2), monthNames.ElementAt(monthId - 3) };
+                    return new List<string> { monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2), monthNames.ElementAt(monthId - 3), 
+                                              monthNames.ElementAt(monthId - 4), monthNames.ElementAt(monthId - 5), monthNames.ElementAt(monthId - 6) };
             }
         }
 
