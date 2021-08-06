@@ -432,7 +432,7 @@ namespace WikipediaReferences.Services
             // leaped to his death from a rooftop late Saturday     [see 'death' beneath here]
             // committed suicide on Thursday
 
-            // Do not use 'death' as once of the regex expressions. Not utilized in obits +:
+            // Do not use 'death' as one of the regex expressions. Not utilized in obits +:
             // https://www.nytimes.com/2018/03/27/obituaries/delores-taylor-85-dies-writer-and-star-in-billy-jack-films.html
             // - do not look in doc.snippet: is identical to doc.abstract or is empty.
 
