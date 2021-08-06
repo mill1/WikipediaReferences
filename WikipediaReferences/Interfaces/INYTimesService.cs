@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using WikipediaReferences.Models;
+using WikipediaReferences.Sources;
 
 namespace WikipediaReferences.Interfaces
 {
@@ -13,5 +12,6 @@ namespace WikipediaReferences.Interfaces
         public string AddObituaryReferences(int year, int month, string apiKey);
         public IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle);
         public Reference UpdateDeathDate(IEnumerable<Reference> references, Dtos.UpdateDeathDate updateDeathDateDto);
+        public DateTime ResolveDateOfDeath(Doc obituaryDoc, int monthId, int year);
     }
 }
