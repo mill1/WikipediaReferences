@@ -200,12 +200,7 @@ namespace WikipediaConsole.Services
 
         private bool IsDurableSource(string reference)
         {
-            // <ref>[http..
-            if (!reference.Contains("{{cite", StringComparison.OrdinalIgnoreCase) && !reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            if (reference.Contains("{{cite news", StringComparison.OrdinalIgnoreCase) || reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
-                return reference.Contains("latimes.com/") ||
+            if (reference.Contains("latimes.com/") ||
                     reference.Contains("independent.co.uk/") ||
                     reference.Contains("news.bbc.co.uk/") ||
                     reference.Contains("telegraph.co.uk/") ||
@@ -213,7 +208,16 @@ namespace WikipediaConsole.Services
                     reference.Contains("rollingstone.com/") ||
                     reference.Contains("economist.com/") ||
                     reference.Contains("irishtimes.com/") ||
-                    reference.Contains("theguardian.com/");
+                    reference.Contains("theguardian.com/"))
+                return true;
+
+
+            // <ref>[http..
+            if (!reference.Contains("{{cite", StringComparison.OrdinalIgnoreCase) && !reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (reference.Contains("{{cite news", StringComparison.OrdinalIgnoreCase) || reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
+                return false;
             else
                 // books and journals are preferable over news sources
                 return true;

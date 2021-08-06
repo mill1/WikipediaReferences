@@ -276,6 +276,9 @@ namespace WikipediaReferences.Services
             posEndList = posEndList.Where(pos => pos != -1).ToList();
 
             if (posEndList.Count() == 0)
+                // If rawText points to ambiguation page then next situation probably occurred:
+                // the ambiguation page was created aftr the NYT-json was processed. Fix:
+                // Update the db. Example: Gary Jennings (author)
                 throw new Exception("Invalid article end. Edit the article");
 
             int posEnd = posEndList.Min();            
@@ -490,8 +493,8 @@ namespace WikipediaReferences.Services
 
         private bool IsHumaneNameDisambiguationPage(string rawText)
         {
-            return rawText.Contains("{{hndis|") ||
-                   rawText.Contains("|hndis}}") ||
+            return rawText.Contains("{{hndis|", StringComparison.OrdinalIgnoreCase) ||
+                   rawText.Contains("|hndis}}", StringComparison.OrdinalIgnoreCase) ||
                    rawText.Contains("[[Category: Human name disambiguation pages", StringComparison.OrdinalIgnoreCase);
         }
 
