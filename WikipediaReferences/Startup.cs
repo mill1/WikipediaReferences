@@ -25,9 +25,12 @@ namespace WikipediaReferences
         {
             string webApiConnectionString = Configuration.GetConnectionString("WikipediaReferencesDBConnection");
 
+            webApiConnectionString = webApiConnectionString.Replace(@"\\", @"\");
+            //webApiConnectionString = "Server=(localdb)\\mssqllocaldb;Database=WikipediaReferences;Integrated Security=True";
+
             Action<DbContextOptionsBuilder> optionActionCreator(string connectionString)
             {
-                return options => options.UseSqlServer(connectionString);
+                return options => options.UseSqlServer(webApiConnectionString);
             }
 
             services.AddDbContext<WRContext>(optionActionCreator(webApiConnectionString));
@@ -45,9 +48,7 @@ namespace WikipediaReferences
             }
 
             app.UseHttpsRedirection();
-
             app.UseRouting();
-
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

@@ -458,6 +458,10 @@ namespace WikipediaReferences.Services
 
             //Trim left
             pos = Math.Max(daySection.IndexOf($"==={day}==="), daySection.IndexOf($"=== {day} ==="));
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"Invalid day section header found. Day: {day}");
+
             daySection = daySection.Substring(pos);
 
             if (trimHeader)

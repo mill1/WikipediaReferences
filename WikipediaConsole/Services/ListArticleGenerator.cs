@@ -167,7 +167,7 @@ namespace WikipediaConsole.Services
                 reference.AccessDate = DateTime.Today;
                 entry.Reference = reference.GetNewsReference();
                 consoleColor = ConsoleColor.Green;
-                return "New NYT reference!";
+                return "Added NYT reference!";
             }
             else
             {
@@ -177,22 +177,21 @@ namespace WikipediaConsole.Services
                     reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
                     entry.Reference = reference.GetNewsReference();
                     consoleColor = ConsoleColor.DarkYellow;
-                    return $"Updateable NYT reference!"; // Access date = {reference.AccessDate.ToShortDateString()}";
+                    return $"Updated NYT reference."; 
                 }
                 else
                 {
                     if (IsDurableSource(entry.Reference))
                     {
                         consoleColor = ConsoleColor.DarkGray;
-                        return "Durable source";
+                        return "Has durable source.";
                     }
                     else
                     {
-                        var source = entry.Reference;
                         reference.AccessDate = DateTime.Today;
                         entry.Reference = reference.GetNewsReference();
                         consoleColor = ConsoleColor.Green;
-                        return "Durable source?: " + source;
+                        return "Replaced with NYT reference.";
                     }                    
                 }
             }
