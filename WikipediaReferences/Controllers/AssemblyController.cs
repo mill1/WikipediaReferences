@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace VersionReferences.Controllers
@@ -12,13 +13,23 @@ namespace VersionReferences.Controllers
     [Route("[controller]")]
     public class AssemblyController : ControllerBase
     {
+        private readonly IConfiguration configuration;
         private readonly ILogger<AssemblyController> logger;
         public readonly Assembly ExecutingAssembly;
 
-        public AssemblyController(ILogger<AssemblyController> logger)
+        public AssemblyController(IConfiguration configuration, ILogger<AssemblyController> logger)
         {
+            this.configuration = configuration;
             this.logger = logger;
             ExecutingAssembly = Assembly.GetExecutingAssembly();
+        }
+
+        [HttpGet]
+        public ContentResult GetAssemblyInfo()
+        {
+            var assemblyName = ExecutingAssembly.GetName();
+
+            return Content($"{assemblyName.Name}\r\nVersion: { assemblyName.Version}");
         }
 
         [HttpGet("properties")]
