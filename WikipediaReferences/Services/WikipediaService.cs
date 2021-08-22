@@ -483,10 +483,18 @@ namespace WikipediaReferences.Services
 
             //Trim left
             pos = Math.Max(trimmedText.IndexOf($"=={month} {year}=="), trimmedText.IndexOf($"== {month} {year} =="));
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"Not found:  ==[]{ month } { year}[]== ");
+
             trimmedText = trimmedText.Substring(pos);
 
             // Trim right
             pos = Math.Max(trimmedText.IndexOf("==References=="), trimmedText.IndexOf("== References =="));
+
+            if (pos == -1)    
+                throw new InvalidWikipediaPageException($"Not found:  ==[]References[]== ");
+
             trimmedText = trimmedText.Substring(0, pos);
 
             // Loose '\n'
