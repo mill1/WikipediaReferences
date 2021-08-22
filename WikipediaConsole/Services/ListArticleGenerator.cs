@@ -9,12 +9,13 @@ using Newtonsoft.Json;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using Microsoft.Extensions.Configuration;
 
 namespace WikipediaConsole.Services
 {
     public class ListArticleGenerator
     {
-        private const int MinimumNrOfNettoCharsBiography = 5500;
+        private readonly int minimumNrOfNettoCharsBiography;
 
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
@@ -22,10 +23,12 @@ namespace WikipediaConsole.Services
         private IEnumerable<Entry> entries;
         private  IEnumerable<Reference> references;
 
-        public ListArticleGenerator(Util util, ArticleAnalyzer articleAnalyzer)
+        public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer)
         {
             this.util = util;
             this.articleAnalyzer = articleAnalyzer;
+
+            minimumNrOfNettoCharsBiography = int.Parse(configuration.GetValue<string>("Minimum number of netto chars wiki biography"));
         }
 
         public void PrintDeathsPerMonthArticle(int year, int monthId)
@@ -117,7 +120,7 @@ namespace WikipediaConsole.Services
             {
                 int nettoNrOfChars = DetermineNumberOfCharactersBiography(reference);
 
-                if (nettoNrOfChars >= MinimumNrOfNettoCharsBiography)
+                if (nettoNrOfChars >= minimumNrOfNettoCharsBiography)
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
             }
             else
