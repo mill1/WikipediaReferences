@@ -84,6 +84,7 @@ namespace WikipediaConsole.Services
             text = text.Replace("\\\"", "\""); // WHY DOES THIS HAPPEN??
 
             text = RemoveEntriesWithoutArticle(text);
+            text = RemoveCitationNeededTags(text);
 
             PrintTmpOutputPhase1(month, text);
         }
@@ -107,6 +108,23 @@ namespace WikipediaConsole.Services
                 }
             }
             return  string.Join(string.Empty, list);
+        }
+
+        private string RemoveCitationNeededTags(string text)
+        {
+            while (true)
+            {
+                var pos1 = text.IndexOf("{{citation needed");
+                if (pos1 == -1)
+                    break;
+
+                var pos2 = text.IndexOf("}}", pos1 + 1);
+
+                var tmp = text.Substring(pos1, pos2 - pos1);
+
+                text = text.Substring(0, pos1) + text.Substring(pos2 + "}}".Length);
+            }
+            return text;
         }
 
         public void Fix1995Phase2(int monthId)
