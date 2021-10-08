@@ -73,9 +73,11 @@ namespace WikipediaReferences.Services
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
 
             using (WebClient client = new WebClient())
-                text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                //TODO https://en.wikipedia.org/w/index.php?action=raw&title=User:Mill_1/Months/December
+                //text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
 
-            text = TrimWikiText(text, month, deathDate.Year);
+                text = TrimWikiText(text, month, deathDate.Year);
             text = RemoveSubLists(text);
 
             CheckEntyPrefixes(text);
@@ -125,8 +127,11 @@ namespace WikipediaReferences.Services
 
             entries.ForEach(entry =>
             {
+                if (entry.Length == 1)
+                    throw new InvalidWikipediaPageException($"Invalid markup content found: '*{entry}*'. Fix the article or the code");
+
                 if (entry.Substring(0, 2) != "[[")
-                    throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article");
+                    throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article or the code");
             });
         }
 
