@@ -85,6 +85,10 @@ namespace WikipediaConsole.UI
 
             switch (answer)
             {
+                case Test:
+                    string s = ((char)150).ToString();
+                    System.Console.WriteLine(s);
+                    break;
                 case PrintDeathMonth:                    
                     util.GetDeathMontArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
@@ -108,13 +112,7 @@ namespace WikipediaConsole.UI
                 case Fix1995Phase2:
                     Console.WriteLine("Death month id:");
                     listArticleGenerator.Fix1995Phase2(int.Parse(Console.ReadLine()));
-                    break;
-                case Test:
-                    string delimiter = "";
-                    List<string> items = new List<string>() { "foo", "boo", "john", "doe" };
-                    //Console.WriteLine(items.Aggregate((i, j) => i + delimiter + j));
-                    System.Console.WriteLine(string.Join(string.Empty, items));
-                    break;
+                    break;               
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
                     break;

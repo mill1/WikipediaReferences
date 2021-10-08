@@ -57,14 +57,109 @@ namespace WikipediaReferences.Services
 
         private Entry ParseEntry(string rawEntry, DateTime deathDate)
         {
+            var linkedName = GetNameFromRawEntry(rawEntry, true, out string articleText);
+            var name = GetNameFromRawEntry(rawEntry, false, out string dummy);
+
+            var information = GetInformationFromRawEntry(rawEntry);
+            information = TransformInformation(information, articleText, linkedName);
+
             return new Entry
             {
-                LinkedName = GetNameFromRawEntry(rawEntry, true),
-                Name = GetNameFromRawEntry(rawEntry, false),
-                Information = GetInformationFromRawEntry(rawEntry),
+                LinkedName = linkedName,
+                Name = name,
+                Information = information,
                 Reference = GetReferencesFromRawEntry(rawEntry),
                 DeathDate = deathDate
             };
+        }
+
+        private string TransformInformation(string information, string articleText, string linkedName)
+        {
+            // No date of birth?
+            if (information.IndexOf("(b. 1") == -1)
+                if (articleText.IndexOf("''' (died ") == -1)
+                    throw new Exception($"Discrepancy between no year of birth in entry and info in article; should say: '(died ..'. Article: {linkedName}");
+                else
+                    return information;
+
+
+
+            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName);
+
+            // TODO hierzoods
+
+            return information;
+        }
+
+        private DateTime ResolveDateOfBirth(string articleText, string linkedName)
+        {
+            articleText = articleText.Replace("&nbsp;", " ");
+            articleText = RemoveRefInfo(articleText);
+
+            const string startBio = "''' (";            
+
+            var pos1 = articleText.IndexOf(startBio);
+
+            if (pos1 == -1)
+                throw new Exception($"Not found:  {startBio} , Article: {linkedName}");
+            int pos2 = ResolveDashPosition(articleText, pos1);
+
+            if (pos2 == -1)
+                throw new Exception($"Not valid dash type found, Article: {linkedName}");
+
+            var birthdateString = articleText.Substring(pos1 + startBio.Length, pos2 - (pos1 + startBio.Length) - 1);
+            Console.WriteLine(birthdateString); // ###############################################
+
+
+            int delta = pos2 - pos1;
+            if (delta > 23)
+                throw new Exception($"Investigate please, Article: {linkedName}");
+
+            DateTime birthdate;
+            try
+            {
+                birthdate = DateTime.Parse(birthdateString);
+            }
+            catch (Exception)
+            {
+                throw new Exception($"Date could not be parsed. birthdateString: '{birthdateString}'");
+            }
+
+            return birthdate;
+        }
+
+        private int ResolveDashPosition(string articleText, int pos1)
+        {
+            // 'Loop through the dashes..  Asc("-") = 45 btw
+            var dashTypes = new string[] { ((char)45).ToString(), "&ndash;", "{{snd}}", "{{spaced ndash}}", "–", ((char)151).ToString() };
+
+            int pos2 = -1;
+            foreach (var dashType in dashTypes)
+            {
+                int posCandidate = articleText.IndexOf(dashType, pos1 + 1);
+
+                if (posCandidate != -1)
+                    if (pos2 == -1)
+                        pos2 = posCandidate;
+                    else
+                        if (posCandidate < pos2)
+                        pos2 = posCandidate;
+            }
+            return pos2;
+        }
+
+        private string RemoveRefInfo(string text)
+        {
+            while (true)
+            {
+                var pos1 = text.IndexOf("<ref ");
+                if (pos1 == -1)
+                    break;
+
+                var pos2 = text.IndexOf(">", pos1 + 1);
+                text = text.Substring(0, pos1) + text.Substring(pos2 + ">".Length);
+            }
+            return text;
         }
 
         private string GetRawTextDeathsPerMonthList(DateTime deathDate)
@@ -405,13 +500,10 @@ namespace WikipediaReferences.Services
             if (posStart < 0)
                 return null;
             else
-            {
-                string x = rawEntry.Substring(posStart);
-                return x;
-            }
+                return rawEntry.Substring(posStart);
         }
 
-        private string GetNameFromRawEntry (string rawEntry, bool linkedName)
+        private string GetNameFromRawEntry (string rawEntry, bool linkedName, out string articleText)
         {
             string namePart = rawEntry.Substring("[[".Length, rawEntry.IndexOf("]]") - "]]".Length);
             int pos = namePart.IndexOf('|');
@@ -427,12 +519,12 @@ namespace WikipediaReferences.Services
                     name = namePart.Substring(pos + "|".Length);
             }
 
-            name = CheckRedirection(linkedName, name);
+            name = CheckRedirection(linkedName, name, out articleText);
 
             return name;
         }
 
-        private string CheckRedirection(bool linkedName, string name)
+        private string CheckRedirection(bool linkedName, string name, out string articleText)
         {
             bool isRedirect;
 
@@ -440,13 +532,19 @@ namespace WikipediaReferences.Services
             if (linkedName)
             {
                 string originalName = name;
-                GetRawArticleMarkup(ref name, out isRedirect);
+
+                // TODO: wait what?: met bio text wordt niet gedaan! Waarom ook eigenlijk?
+                // GetRawArticleMarkup(ref name, out isRedirect);
+                articleText = GetRawArticleMarkup(ref name, out isRedirect);
 
                 string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
 
                 //Thread.Sleep(100); // TODO lw?
                 Console.WriteLine($"Entry: {name}{redirectInfo}");
             }
+            else
+                articleText = string.Empty;
+
             return name;
         }
 

@@ -54,7 +54,7 @@ namespace WikipediaConsole.Services
             DEV:
             - Standardize entry prefix: '* '  ->  '*'  loose trailing space for both '* [[Entry]]' and '* Entry'
             - Entries without article:         *Kurt Lindner, German born American mutual funds manager (b. 1912)             
-            - All the cn's                     {{citation needed|date=June 2021}}
+            - All the cn's: overkill           {{citation needed|date=June 2021}}
 
             -----------------------------------
             Phase 2. Fixing the article
@@ -119,9 +119,6 @@ namespace WikipediaConsole.Services
                     break;
 
                 var pos2 = text.IndexOf("}}", pos1 + 1);
-
-                var tmp = text.Substring(pos1, pos2 - pos1);
-
                 text = text.Substring(0, pos1) + text.Substring(pos2 + "}}".Length);
             }
             return text;
