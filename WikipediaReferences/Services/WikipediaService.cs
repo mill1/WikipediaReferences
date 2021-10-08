@@ -91,8 +91,15 @@ namespace WikipediaReferences.Services
             return information;
         }
 
+
+
         private DateTime ResolveDateOfBirth(string articleText, string linkedName)
         {
+            DateTime dateOfBirth = CheckIfIsException(linkedName, out bool isException);
+
+            if (isException)
+                return dateOfBirth;
+
             articleText = articleText.Replace("&nbsp;", " ");
             articleText = RemoveRefInfo(articleText);
 
@@ -115,17 +122,65 @@ namespace WikipediaReferences.Services
             if (delta > 23)
                 throw new Exception($"Investigate please, Article: {linkedName}");
 
-            DateTime birthdate;
+            
             try
             {
-                birthdate = DateTime.Parse(birthdateString);
+                dateOfBirth = DateTime.Parse(birthdateString);
             }
             catch (Exception)
             {
                 throw new Exception($"Date could not be parsed. birthdateString: '{birthdateString}'");
             }
 
-            return birthdate;
+            return dateOfBirth;
+        }
+
+        // Why bother?
+        private DateTime CheckIfIsException(string linkedName, out bool isException)
+        {
+            isException = true;
+
+            if (linkedName == "Eugene Wigner")
+                return DateTime.Parse("November 17, 1902");
+            else if(linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+
+            isException = false;
+            return DateTime.Now;
         }
 
         private int ResolveDashPosition(string articleText, int pos1)
