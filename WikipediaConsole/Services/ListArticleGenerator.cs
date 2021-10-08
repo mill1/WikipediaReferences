@@ -31,6 +31,136 @@ namespace WikipediaConsole.Services
             minimumNrOfNettoCharsBiography = int.Parse(configuration.GetValue<string>("Minimum number of netto chars wiki biography"));
         }
 
+        /*
+         *  TMP CODE regarding the 1995 month articles
+         * 
+            STEPS:
+            -----------------------------------
+            Phase 1. Cleaning the article
+            -----------------------------------
+            - Initialize page https://en.wikipedia.org/wiki/User:Mill_1/tmp : paste contents https://en.wikipedia.org/wiki/Deaths_in_January_1995 WITHOUT CATEGORIES
+
+            Manual changes:
+            - Remove images:                        [[File:Wigner.jpg|thumb|120px|[[Eugene Wigner]]]]
+            - Remove entries with foreign article:  search for '*[[:'    *[[:de:George Eells|George Eells]], American writer and editor 
+            - Remove unknown day section
+
+            Automated changes:    
+            - In this app select menu option '1' 
+            This will generate the cleaned article in text file (see DEV):
+            ..\netcoreapp3.1\output1995\Deaths in [month] 1995.txt
+            - Paste the contents of the file in https://en.wikipedia.org/wiki/User:Mill_1/tmp and analyse the diffs.
+
+            DEV:
+            - Standardize entry prefix: '* '  ->  '*'  loose trailing space for both '* [[Entry]]' and '* Entry'
+            - Entries without article:         *Kurt Lindner, German born American mutual funds manager (b. 1912)             
+            - All the cn's                     {{citation needed|date=June 2021}}
+
+            -----------------------------------
+            Phase 2. Fixing the article
+            -----------------------------------
+            Fix the entry format:            * [[Fred West]], English serial killer (b. 1941)<ref>..</ref>  ->  * [[Fred West]], 65, English serial killer.<ref>..</ref>
+            - In this app select menu option '2' 
+            This will entail changing a lot of bio's in order to determine the age from the opening sentence.
+            
+            - Publish the changes in the actual month article WITH THE CATEGORIES
+            - Add and update the references with this tool (menu item p).
+
+         */
+
+        public void Fix1995Phase1(int monthId)
+        {
+            string month = GetMonthNames().ElementAt(monthId - 1);
+            string articleTitle = $"Deaths_in_{month}_1995"; // Oh nee..
+            articleTitle = "User:Mill_1~~tmp";
+
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/false";
+            HttpResponseMessage response = util.SendGetRequest(uri);
+
+            string text = util.HandleResponse(response, articleTitle);
+
+            text = TrimWikiText1995(text, month);
+            text = text.Replace("* ", "*");
+            text = text.Replace("\\\"", "\""); // WHY DOES THIS HAPPEN??
+
+            text = RemoveEntriesWithoutArticle(text);
+
+            PrintTmpOutputPhase1(month, text);
+        }
+
+        private string RemoveEntriesWithoutArticle(string text)
+        {           
+            List<string> list = new List<string>();
+
+            var chunks = text.Split("*");
+
+            foreach (string chunk in chunks)
+            {
+                if (chunk.Substring(0, 2) == "[[")
+                    list.Add("*" + chunk);
+                else
+                {
+                    var pos = chunk.IndexOf("==");
+
+                    if (pos != -1)
+                        list.Add("\\n" + chunk.Substring(pos) ); // WHY ?!?
+                }
+            }
+            return  string.Join(string.Empty, list);
+        }
+
+        public void Fix1995Phase2(int monthId)
+        {
+            UI.Console.WriteLine("Hold on..");
+
+            entries = GetEntriesPermonth(1995, monthId);
+        }
+
+        private void PrintTmpOutputPhase1(string month, string text)
+        {
+            Directory.CreateDirectory("output1995");
+            string fileName = $"Deaths in {month} 1995.txt";
+            string file = Path.Combine("output1995", fileName);
+
+            var lines = text.Split("\\n");
+
+            using (var writer = File.CreateText(file))
+            {
+                foreach (var line in lines)
+                {
+                    writer.WriteLine(line);
+                }
+            }
+
+            UI.Console.WriteLine($"Phase 1 complete. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output1995")}");
+        }
+
+        // TODO verwijderen; gekopieerd van API, WikipediaService
+        private string TrimWikiText1995(string wikiText, string month)
+        {
+            string trimmedText = wikiText;
+            int pos;
+
+            //Trim left
+            pos = Math.Max(trimmedText.IndexOf($"=={month} 1995=="), trimmedText.IndexOf($"== {month} 1995 =="));
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"Not found:  ==[]{ month } 1995[]== ");
+
+            trimmedText = trimmedText.Substring(pos);
+
+            // Trim right
+            pos = Math.Max(trimmedText.IndexOf("==References=="), trimmedText.IndexOf("== References =="));
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"Not found:  ==[]References[]== ");
+
+            trimmedText = trimmedText.Substring(0, pos);
+
+            return trimmedText;
+        }
+
+
         public void PrintDeathsPerMonthArticle(int year, int monthId)
         {
             try

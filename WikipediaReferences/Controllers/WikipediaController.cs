@@ -27,6 +27,9 @@ namespace WikipediaReferences.Controllers
         {
             try
             {
+                // TODO lw
+                articleTitle = articleTitle.Replace("~~", "/");
+
                 return Ok(wikipediaService.GetRawArticleText(ref articleTitle, nettoContent));
             }
             catch (Exception e)

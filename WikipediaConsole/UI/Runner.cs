@@ -14,6 +14,9 @@ namespace WikipediaConsole.UI
         private const string UpdateNYTDeathDate = "u";
         private const string ShowNYTUrl = "s";
         private const string DayCheck = "d";
+        private const string RawArticletext = "r";
+        private const string Fix1995Phase1 = "1";
+        private const string Fix1995Phase2 = "2";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
         private const string Quit = "q";
@@ -67,7 +70,10 @@ namespace WikipediaConsole.UI
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
                 $"{ShowNYTUrl}:\tShow NYT Url of article",
                 $"{DayCheck}:\tDay name of date",
+                $"{RawArticletext}:\tDisplay raw text of article",
                 $"{Test}:\tTest stuff",
+                $"{Fix1995Phase1}:\tTemp: Fix 1995 Phase 1",
+                $"{Fix1995Phase2}:\tTemp: Fix 1995 Phase 2",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
                 $"{Quit}:\tQuit application"
             };
@@ -92,9 +98,22 @@ namespace WikipediaConsole.UI
                 case DayCheck:
                     GetDaynameFromDate();
                     break;
-                case Test:
+                case RawArticletext:
                     articleAnalyzer.ShowRawArticleText(false);
-                    //TestGetDeceasedFromWikipedia();
+                    break;
+                case Fix1995Phase1:
+                    Console.WriteLine("Death month id:");
+                    listArticleGenerator.Fix1995Phase1(int.Parse(Console.ReadLine()));
+                    break;
+                case Fix1995Phase2:
+                    Console.WriteLine("Death month id:");
+                    listArticleGenerator.Fix1995Phase2(int.Parse(Console.ReadLine()));
+                    break;
+                case Test:
+                    string delimiter = "";
+                    List<string> items = new List<string>() { "foo", "boo", "john", "doe" };
+                    //Console.WriteLine(items.Aggregate((i, j) => i + delimiter + j));
+                    System.Console.WriteLine(string.Join(string.Empty, items));
                     break;
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
@@ -115,23 +134,6 @@ namespace WikipediaConsole.UI
 
             Console.WriteLine(ConsoleColor.Blue, date.DayOfWeek.ToString());
         }
-
-        private void TestGetDeceasedFromWikipedia()
-        {
-            string uri = $"wikipedia/deceased/1999-5-8";
-            HttpResponseMessage response = util.SendGetRequest(uri);
-            string result = response.Content.ReadAsStringAsync().Result;
-
-            IEnumerable<Entry> entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
-            var refs = entries.Where(e => e.Reference != null);
-            
-            int maxLength = entries.Max(e => e.Information.Length);
-            Entry entry = entries.Where(e => e.Information.Length == maxLength).First();
-
-            Console.WriteLine($"Nr of entries: {entries.Count()}");
-            Console.WriteLine($"Nr of entries with references: {refs.Count()}");
-            Console.WriteLine($"Longest entry (excl. ref): {entry.Name}");
-            Console.WriteLine($"Longest entry value:\r\n{entry}");
-        }              
+             
     }
 }

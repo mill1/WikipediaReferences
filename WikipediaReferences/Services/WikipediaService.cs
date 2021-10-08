@@ -72,12 +72,13 @@ namespace WikipediaReferences.Services
             string text;
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
 
-            using (WebClient client = new WebClient())
-                //TODO https://en.wikipedia.org/w/index.php?action=raw&title=User:Mill_1/Months/December
-                //text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
-                text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
+            using (WebClient client = new WebClient())                
+                // TODO text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                // TODO text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
+                text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/tmp");
 
-                text = TrimWikiText(text, month, deathDate.Year);
+            text = TrimWikiText(text, month, deathDate.Year);
+
             text = RemoveSubLists(text);
 
             CheckEntyPrefixes(text);
@@ -87,7 +88,7 @@ namespace WikipediaReferences.Services
 
         private string RemoveSubLists(string text)
         {
-            if (!text.Contains("**[["))
+            if (!text.Contains(" * *[["))
                 return text;
 
             text = text.Replace("**[[", "~~[[");
@@ -125,6 +126,7 @@ namespace WikipediaReferences.Services
 
             var entries = text.Split('*').Skip(1).ToList();
 
+            // TODO; dit zit niet in de oude master
             entries.ForEach(entry =>
             {
                 if (entry.Length == 1)
@@ -133,6 +135,7 @@ namespace WikipediaReferences.Services
                 if (entry.Substring(0, 2) != "[[")
                     throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article or the code");
             });
+            // TOT HIER
         }
 
         public string GetArticleTitle(string nameVersion, int year, int monthId)
