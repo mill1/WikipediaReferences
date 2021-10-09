@@ -61,7 +61,7 @@ namespace WikipediaReferences.Services
             var name = GetNameFromRawEntry(rawEntry, false, out string dummy);
 
             var information = GetInformationFromRawEntry(rawEntry);
-            information = TransformInformation(information, articleText, linkedName);
+            information = TransformInformation(information, articleText, linkedName, deathDate);
 
             return new Entry
             {
@@ -73,56 +73,101 @@ namespace WikipediaReferences.Services
             };
         }
 
-        private string TransformInformation(string information, string articleText, string linkedName)
+        private string TransformInformation(string information, string articleText, string linkedName, DateTime dateOfDeath)
         {
             // No date of birth?
             if (information.IndexOf("(b. 1") == -1)
                 if (articleText.IndexOf("''' (died ") == -1)
-                    throw new Exception($"Discrepancy between no year of birth in entry and info in article; should say: '(died ..'. Article: {linkedName}");
+                    throw new Exception($"Discrepancy between no year of birth in entry and info in article; should say: '(died ..'. Article: {linkedName}"); // of ifs andersom?
                 else
                     return information;
 
+            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName, out bool yearOfBirthOnly);
 
+            string age = GetAgeAsString(dateOfBirth, dateOfDeath, yearOfBirthOnly);
+                
 
-            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName);
-
-            // TODO hierzoods
 
             return information;
         }
 
-
-
-        private DateTime ResolveDateOfBirth(string articleText, string linkedName)
+        private string GetAgeAsString(DateTime dateOfBirth, DateTime dateOfDeath, bool yearOfBirthOnly)
         {
+            if (yearOfBirthOnly)
+            {
+                return ResolveAge(new DateTime(dateOfBirth.Year, 12, 31), dateOfDeath).ToString() + "-" +
+                       ResolveAge(new DateTime(dateOfBirth.Year, 1, 1), dateOfDeath).ToString();
+            }
+            else
+                return ResolveAge(dateOfBirth, dateOfDeath).ToString();
+
+        }
+
+        private int ResolveAge(DateTime dateOfBirth, DateTime date)
+        {
+            // Calculate the age.
+            var age = date.Year - dateOfBirth.Year;
+
+            // Go back to the year in which the person was born in case of a leap year
+            if (dateOfBirth.Date > date.AddYears(-age)) age--;
+
+            return age;
+        }
+
+        // Get the text preceding the day of birth in the opening sentence.
+        private int GetStartPositionDoB(string articleText, string linkedName, out string startOpeningSentence)
+        {
+            startOpeningSentence = "''' (";
+            var pos1 = articleText.IndexOf(startOpeningSentence);
+            
+            if (pos1 == -1)
+                throw new Exception($"Not found: ''' ([born] , Article: {linkedName}");
+            
+
+            int pos0 = articleText.LastIndexOf("'''", pos1 - 1);
+
+            if (pos0 == -1)
+                throw new Exception($"Corresponding ''' not found in opening sentence!, Article: {linkedName}");
+
+            startOpeningSentence = articleText.Substring(pos0, pos1 - (pos0 - startOpeningSentence.Length));
+
+            return pos0; // Is pos1 in calling method
+        }
+
+
+        private DateTime ResolveDateOfBirth(string articleText, string linkedName, out bool yearOfBirthOnly)
+        {
+            yearOfBirthOnly = false;
             DateTime dateOfBirth = CheckIfIsException(linkedName, out bool isException);
 
             if (isException)
                 return dateOfBirth;
 
             articleText = articleText.Replace("&nbsp;", " ");
+            articleText = articleText.Replace("''' (born ", "''' (");
             articleText = RemoveRefInfo(articleText);
 
-            const string startBio = "''' (";            
+            int pos1 = GetStartPositionDoB(articleText, linkedName, out string startOpeningSentence);
+            int pos2 = ResolvePositionYearOfBirth(articleText, pos1 + startOpeningSentence.Length) + 4;
 
-            var pos1 = articleText.IndexOf(startBio);
-
-            if (pos1 == -1)
-                throw new Exception($"Not found:  {startBio} , Article: {linkedName}");
-            int pos2 = ResolveDashPosition(articleText, pos1);
-
-            if (pos2 == -1)
-                throw new Exception($"Not valid dash type found, Article: {linkedName}");
-
-            var birthdateString = articleText.Substring(pos1 + startBio.Length, pos2 - (pos1 + startBio.Length) - 1);
-            Console.WriteLine(birthdateString); // ###############################################
+            startOpeningSentence = ResolveStartOpeningSentence(articleText, pos1, pos2, startOpeningSentence);
 
 
-            int delta = pos2 - pos1;
-            if (delta > 23)
-                throw new Exception($"Investigate please, Article: {linkedName}");
+            string birthdateString = articleText.Substring(pos1 + startOpeningSentence.Length, pos2 - (pos1 + startOpeningSentence.Length) - 1);
 
-            
+            Console.WriteLine(birthdateString); // ######q1#########################################
+
+            birthdateString = birthdateString.Trim();
+
+            if (birthdateString.Length == 4 && IsNumeric(birthdateString))
+            {
+                yearOfBirthOnly = true;
+                return new DateTime(int.Parse(birthdateString), 1, 1);
+            }
+
+            if (birthdateString.Length > 18)
+                throw new Exception($"Investigate please, birthdateString = '{birthdateString}', Article: {linkedName}");
+
             try
             {
                 dateOfBirth = DateTime.Parse(birthdateString);
@@ -135,12 +180,53 @@ namespace WikipediaReferences.Services
             return dateOfBirth;
         }
 
+        private string ResolveStartOpeningSentence(string articleText, int pos1, int pos2, string startOpeningSentence)
+        {
+            // Re-evaluate start position DoB by looking back from encountered year of birth; look for preceding '(' (which in most cases is the same char follwing ''' ) and look for ';' 
+            int posSemiColon = articleText.LastIndexOf(";", pos2);
+            int posOpeningParentheses = articleText.LastIndexOf("(", pos2);
+
+            int posCandidate = Math.Max(posSemiColon, posOpeningParentheses);
+
+            if (posCandidate == -1)
+                throw new Exception("WTF? No '(' and ';' ???");
+            else
+            {
+                if (posCandidate < pos1)
+                    return startOpeningSentence;
+                else
+                    return articleText.Substring(pos1, posCandidate - (pos1 - ";".Length));
+            }
+        }
+
+        private int ResolvePositionYearOfBirth(string articleText, int pos1)
+        {
+            while (true)
+            {
+                if (IsNumeric(articleText.Substring(pos1, 4)))
+                {
+                    int yearOfBirth = int.Parse(articleText.Substring(pos1, 4));
+                    if (yearOfBirth > 1875 && yearOfBirth <= 1995 && !IsNumeric(articleText.Substring(pos1 - 1, 1)) && !IsNumeric(articleText.Substring(pos1 + 4, 1)))
+                        return pos1 + 1;
+                }
+                pos1++;
+
+                if (pos1 > 10000)
+                    throw new Exception("No year (of birth) found");
+            }
+        }
+
+        private bool IsNumeric(string value)
+        {
+            return int.TryParse(value, out _);
+        }
+
         // Why bother?
         private DateTime CheckIfIsException(string linkedName, out bool isException)
         {
             isException = true;
 
-            if (linkedName == "Eugene Wigner")
+            if (linkedName == "Eujhgjhgene Wigner")
                 return DateTime.Parse("November 17, 1902");
             else if(linkedName == "XXX")
                 return DateTime.Parse("some_date");
@@ -183,6 +269,26 @@ namespace WikipediaReferences.Services
             return DateTime.Now;
         }
 
+        private string RemoveRefInfo(string text)
+        {
+            while (true)
+            {
+                var pos1 = text.IndexOf("<ref");
+                if (pos1 == -1)
+                    break;
+
+                // closing tag of <ref ..
+                var pos2 = text.IndexOf(">", pos1 + 1);
+
+                if(text.Substring(pos2 - 1, 2) != "/>" )
+                    pos2 = text.IndexOf(">", pos2 + 1);
+
+                text = text.Substring(0, pos1) + text.Substring(pos2 + ">".Length);
+            }
+            return text;
+        }
+
+        // Obsolete
         private int ResolveDashPosition(string articleText, int pos1)
         {
             // 'Loop through the dashes..  Asc("-") = 45 btw
@@ -203,19 +309,7 @@ namespace WikipediaReferences.Services
             return pos2;
         }
 
-        private string RemoveRefInfo(string text)
-        {
-            while (true)
-            {
-                var pos1 = text.IndexOf("<ref ");
-                if (pos1 == -1)
-                    break;
-
-                var pos2 = text.IndexOf(">", pos1 + 1);
-                text = text.Substring(0, pos1) + text.Substring(pos2 + ">".Length);
-            }
-            return text;
-        }
+        // #######################################################################################################################################
 
         private string GetRawTextDeathsPerMonthList(DateTime deathDate)
         {
