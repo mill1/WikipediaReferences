@@ -89,16 +89,6 @@ namespace WikipediaReferences.Services
 
         private string TransformInformation(string information, string articleText, string linkedName, DateTime dateOfDeath)
         {
-            //// Determine if we need to tranform at all
-            //if (information.Contains(" (b. c.") || information.Contains(" (b.c."))
-            //    return RemoveBornPartFromInformation(information, linkedName);
-
-            //if (!information.Contains(" (b. 1"))
-            //    if (!articleText.Contains("''' (died ")) // best wel specifiek. Wellicht aanpassen
-            //        throw new Exception($"Discrepancy between no year of birth in entry and info in article; should say: '''' (died ..'. Article: {linkedName}"); // of ifs andersom?
-            //    else
-            //        return information;
-            
             var dateOfBirth = ResolveDateOfBirth(articleText, linkedName, out bool dateOfBirthUnknown, out bool yearOfBirthOnly);
 
             if (dateOfBirthUnknown)
@@ -217,7 +207,7 @@ namespace WikipediaReferences.Services
             // Re-evaluate start position DoB by looking back from encountered year of birth; look for preceding '(' (which in most cases is the same char follwing ''' ) and look for ';' 
             int posSemiColon = articleText.LastIndexOf(";", pos2);
             int posOpeningParentheses = articleText.LastIndexOf("(", pos2);
-            int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 10); // 4 = len year, 10 : December 24, 1969
+            int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 8); // 4 = len year, 8 : }}, May 1, 1969
 
             int posCandidate = Math.Max(posSemiColon, posOpeningParentheses);
             posCandidate = Math.Max(posCandidate, posCommaBeforeDate);
