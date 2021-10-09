@@ -73,22 +73,41 @@ namespace WikipediaReferences.Services
             };
         }
 
+        private string RemoveBornPartFromInformation(string information, string linkedName)
+        {
+            int pos1 = information.IndexOf(" (b.");
+
+            if (pos1 == -1)
+                return information;
+
+            int pos2 = information.IndexOf(")", pos1 + 1);
+            if (pos1 == -1)
+                throw new Exception($" ')' not found after ' (b.'. Article: {linkedName}");
+
+            return information.Substring(0, pos1) + information.Substring(pos2 + ")".Length);
+        }
+
         private string TransformInformation(string information, string articleText, string linkedName, DateTime dateOfDeath)
         {
-            // No date of birth?
-            if (information.IndexOf("(b. 1") == -1)
-                if (articleText.IndexOf("''' (died ") == -1)
-                    throw new Exception($"Discrepancy between no year of birth in entry and info in article; should say: '(died ..'. Article: {linkedName}"); // of ifs andersom?
-                else
-                    return information;
+            //// Determine if we need to tranform at all
+            //if (information.Contains(" (b. c.") || information.Contains(" (b.c."))
+            //    return RemoveBornPartFromInformation(information, linkedName);
 
-            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName, out bool yearOfBirthOnly);
+            //if (!information.Contains(" (b. 1"))
+            //    if (!articleText.Contains("''' (died ")) // best wel specifiek. Wellicht aanpassen
+            //        throw new Exception($"Discrepancy between no year of birth in entry and info in article; should say: '''' (died ..'. Article: {linkedName}"); // of ifs andersom?
+            //    else
+            //        return information;
+            
+            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName, out bool dateOfBirthUnknown, out bool yearOfBirthOnly);
 
-            string age = GetAgeAsString(dateOfBirth, dateOfDeath, yearOfBirthOnly);
-                
+            if (dateOfBirthUnknown)
+                return RemoveBornPartFromInformation(information, linkedName);
 
+            string age = GetAgeAsString(dateOfBirth, dateOfDeath, yearOfBirthOnly);                
+            information = RemoveBornPartFromInformation(information, linkedName);
 
-            return information;
+            return age + ", " + information;
         }
 
         private string GetAgeAsString(DateTime dateOfBirth, DateTime dateOfDeath, bool yearOfBirthOnly)
@@ -117,12 +136,17 @@ namespace WikipediaReferences.Services
         // Get the text preceding the day of birth in the opening sentence.
         private int GetStartPositionDoB(string articleText, string linkedName, out string startOpeningSentence)
         {
-            startOpeningSentence = "''' (";
+            startOpeningSentence = "''' ";
             var pos1 = articleText.IndexOf(startOpeningSentence);
-            
+
             if (pos1 == -1)
-                throw new Exception($"Not found: ''' ([born] , Article: {linkedName}");
-            
+            {
+                startOpeningSentence = "''',";
+                pos1 = articleText.IndexOf(startOpeningSentence);
+
+            }
+            if (pos1 == -1)
+                throw new Exception($"Not found: ['''*], Article: {linkedName}");
 
             int pos0 = articleText.LastIndexOf("'''", pos1 - 1);
 
@@ -135,16 +159,18 @@ namespace WikipediaReferences.Services
         }
 
 
-        private DateTime ResolveDateOfBirth(string articleText, string linkedName, out bool yearOfBirthOnly)
+        private DateTime ResolveDateOfBirth(string articleText, string linkedName, out bool dateOfBirthUnknown,  out bool yearOfBirthOnly)
         {
             yearOfBirthOnly = false;
+            dateOfBirthUnknown = false;
             DateTime dateOfBirth = CheckIfIsException(linkedName, out bool isException);
 
             if (isException)
                 return dateOfBirth;
 
             articleText = articleText.Replace("&nbsp;", " ");
-            articleText = articleText.Replace("''' (born ", "''' (");
+            articleText = articleText.Replace("born ", "");
+            articleText = articleText.Replace("b. ", "");
             articleText = RemoveRefInfo(articleText);
 
             int pos1 = GetStartPositionDoB(articleText, linkedName, out string startOpeningSentence);
@@ -152,12 +178,18 @@ namespace WikipediaReferences.Services
 
             startOpeningSentence = ResolveStartOpeningSentence(articleText, pos1, pos2, startOpeningSentence);
 
-
             string birthdateString = articleText.Substring(pos1 + startOpeningSentence.Length, pos2 - (pos1 + startOpeningSentence.Length) - 1);
 
             Console.WriteLine(birthdateString); // ######q1#########################################
 
             birthdateString = birthdateString.Trim();
+
+            // Died?
+            if(birthdateString.Contains("died ") || birthdateString.Contains("d. ") || birthdateString.Contains("circa ") || birthdateString.Contains("c. ") || birthdateString.Contains("ca "))
+            {
+                dateOfBirthUnknown = true;
+                return DateTime.MinValue;
+            }
 
             if (birthdateString.Length == 4 && IsNumeric(birthdateString))
             {
@@ -185,8 +217,10 @@ namespace WikipediaReferences.Services
             // Re-evaluate start position DoB by looking back from encountered year of birth; look for preceding '(' (which in most cases is the same char follwing ''' ) and look for ';' 
             int posSemiColon = articleText.LastIndexOf(";", pos2);
             int posOpeningParentheses = articleText.LastIndexOf("(", pos2);
+            int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 10); // 4 = len year, 10 : December 24, 1969
 
             int posCandidate = Math.Max(posSemiColon, posOpeningParentheses);
+            posCandidate = Math.Max(posCandidate, posCommaBeforeDate);
 
             if (posCandidate == -1)
                 throw new Exception("WTF? No '(' and ';' ???");
@@ -226,8 +260,8 @@ namespace WikipediaReferences.Services
         {
             isException = true;
 
-            if (linkedName == "Eujhgjhgene Wigner")
-                return DateTime.Parse("November 17, 1902");
+            if (linkedName == "Josef Gingold")
+                return DateTime.Parse("October 28 1909"); // OldStyleDate
             else if(linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
