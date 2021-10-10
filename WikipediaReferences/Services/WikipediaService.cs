@@ -30,9 +30,9 @@ namespace WikipediaReferences.Services
 
             if (linkedName == "Josef Gingold")
                 return DateTime.Parse("October 28 1909"); // OldStyleDate
+            else if (linkedName == "Mehr Abdul Haq")
+                return DateTime.Parse("1 June 1915"); // {{birth date|1915|6|1|df=yes}}
             else if (linkedName == "XXX")
-                return DateTime.Parse("Mehr Abdul Haq"); // {{birth date|1915|6|1|df=yes}}
-            else if (linkedName == "1 June 1915")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
@@ -145,60 +145,75 @@ namespace WikipediaReferences.Services
 
         // Get the text preceding the day of birth in the opening sentence.
         private int GetStartPositionDoB(string articleText, string linkedName, out string startOpeningSentence)
-        {            
-            var pos1 = -1;
-            var posCandidate1 = articleText.IndexOf("''' ");
-            var posCandidate2 = articleText.IndexOf("''',");
+        {
+            // Find first '''
+            var pos0 = articleText.IndexOf("'''");
+            var pos1 = articleText.IndexOf("'''", pos0 + 1);
 
-            if (posCandidate1 != -1 && posCandidate2 != -1) // both found!  
-            {
-                pos1 = Math.Min(posCandidate1, posCandidate2);              
-                startOpeningSentence = (posCandidate1 < posCandidate2) ? "''' " : "''',";
-            }
-            else // at least one of them is -1 (not found)
-            {
-                pos1 = Math.Max(posCandidate1, posCandidate2);
-                startOpeningSentence = (posCandidate1 > posCandidate2) ? "''' " : "''',";
-            }
+            if (pos1 == -1)
+                throw new Exception($"Article {linkedName}: Corresponding ''' not found in opening sentence!");
 
             // yeah yeah
             if (pos1 >= 21)
                 if (articleText.Substring(pos1 - 21, 24) == "DavisCupresult = '''W'''")
-                    pos1 = articleText.IndexOf(startOpeningSentence, pos1 + 1);
+                {
+                    pos0 = articleText.IndexOf("'''", pos1 + 1);
+                    pos1 = articleText.IndexOf("'''", pos0 + 1);
+                }                    
 
             if (pos1 == -1)
                 throw new Exception($"Not found: ['''*], Article: {linkedName}");
 
-            int pos0 = articleText.LastIndexOf("'''", pos1 - 1);
 
-            if (pos0 == -1)
-                throw new Exception($"Article {linkedName}: Corresponding ''' not found in opening sentence!");
-
-            startOpeningSentence = articleText.Substring(pos0, pos1 - (pos0 - startOpeningSentence.Length));
+            startOpeningSentence = articleText.Substring(pos0, pos1 - (pos0 - "'''".Length));
 
             return pos0; // Is pos1 in calling method
         }
 
         private string ResolveStartOpeningSentence(string articleText, int pos1, int pos2, string startOpeningSentence)
         {
-            // Re-evaluate start position DoB by looking back from encountered year of birth; look for preceding '(' (which in most cases is the same char follwing ''' ) and look for ';' 
+            // Re-evaluate start position DoB by looking back from encountered year of birth; look for specific preceding chars.
             int posSemiColon = articleText.LastIndexOf(";", pos2);
             int posOpeningParentheses = articleText.LastIndexOf("(", pos2);
+            int posOpeningEqualsSign = articleText.LastIndexOf("=", pos2); //[[Hideko Maehata]]
             int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 8); // 4 = len year, 8 : }}, May 1, 1969
 
+            // extra=
+
             int posCandidate = Math.Max(posSemiColon, posOpeningParentheses);
+            posCandidate = Math.Max(posCandidate, posOpeningEqualsSign);
             posCandidate = Math.Max(posCandidate, posCommaBeforeDate);
 
             if (posCandidate == -1)
-                throw new Exception("WTF? No '(' and ';' ???");
+                throw new Exception($"Opening sentence {startOpeningSentence}: WTF? No '(' and ';' ?!?1");
             else
             {
                 if (posCandidate < pos1)
                     return startOpeningSentence;
                 else
-                    return articleText.Substring(pos1, posCandidate - (pos1 - ";".Length));
+                    return articleText.Substring(pos1, posCandidate - (pos1 - "c".Length));  // c = single char. like ; and (
             }
         }
+
+        //private int ResolveBirthDatePrefixPosition(string articleText, int pos1)
+        //{
+        //    // 'Loop through the prefixes. Thanks to [[Hideko Maehata]]
+        //    var prefixes = new string[] {";","(" }; NO: problems with ',' maybe later
+
+        //    int pos2 = -1;
+        //    foreach (var prefix in prefixes)
+        //    {
+        //        int posCandidate = articleText.IndexOf(prefix, pos1 + 1);
+
+        //        if (posCandidate != -1)
+        //            if (pos2 == -1)
+        //                pos2 = posCandidate;
+        //            else
+        //                if (posCandidate < pos2)
+        //                pos2 = posCandidate;
+        //    }
+        //    return pos2;
+        //}
 
         private int ResolvePositionYearOfBirth(string articleText, int pos1)
         {

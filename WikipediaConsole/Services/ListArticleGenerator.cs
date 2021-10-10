@@ -61,8 +61,9 @@ namespace WikipediaConsole.Services
             -----------------------------------
             Fix the entry format:            * [[Fred West]], English serial killer (b. 1941)<ref>..</ref>  ->  * [[Fred West]], 65, English serial killer.<ref>..</ref>
             - In this app select menu option '2' 
-            This will entail changing a lot of bio's in order to determine the age from the opening sentence.
+            This will entail changing bio's in order to determine the age from the opening sentence.
             
+            - MANUALLY CHECK ALL the 'year only'-entries in the corresponding article.
             - Publish the changes in the actual month article
             - Add and update the references with this tool (menu item p).
 
