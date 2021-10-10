@@ -126,9 +126,24 @@ namespace WikipediaConsole.Services
 
         public void Fix1995Phase2(int monthId)
         {
-            UI.Console.WriteLine("Hold on..");
+            try
+            {
+                UI.Console.WriteLine("Hold on..");
 
-            entries = GetEntriesPermonth(1995, monthId);
+                entries = GetEntriesPermonth(1995, monthId);
+                CheckIfArticleContainsSublist(1995, monthId);
+                PrintOutput(1995, monthId);
+
+                UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+            }
+            catch (WikipediaReferencesException e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
+            }
+            catch (Exception e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
         }
 
         private void PrintTmpOutputPhase1(string month, string text)

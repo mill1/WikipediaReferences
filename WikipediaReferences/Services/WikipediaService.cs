@@ -73,6 +73,22 @@ namespace WikipediaReferences.Services
             };
         }
 
+        private string TransformInformation(string information, string articleText, string linkedName, DateTime dateOfDeath)
+        {
+            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName, out bool dateOfBirthUnknown, out bool yearOfBirthOnly);
+
+            if (dateOfBirthUnknown)
+                return RemoveBornPartFromInformation(information, linkedName);
+
+            string age = GetAgeAsString(dateOfBirth, dateOfDeath, yearOfBirthOnly);
+            information = RemoveBornPartFromInformation(information, linkedName);
+
+            if (!information.EndsWith("."))
+                information += ".";
+
+            return age + ", " + information;
+        }
+
         private string RemoveBornPartFromInformation(string information, string linkedName)
         {
             int pos1 = information.IndexOf(" (b.");
@@ -85,19 +101,6 @@ namespace WikipediaReferences.Services
                 throw new Exception($" ')' not found after ' (b.'. Article: {linkedName}");
 
             return information.Substring(0, pos1) + information.Substring(pos2 + ")".Length);
-        }
-
-        private string TransformInformation(string information, string articleText, string linkedName, DateTime dateOfDeath)
-        {
-            var dateOfBirth = ResolveDateOfBirth(articleText, linkedName, out bool dateOfBirthUnknown, out bool yearOfBirthOnly);
-
-            if (dateOfBirthUnknown)
-                return RemoveBornPartFromInformation(information, linkedName);
-
-            string age = GetAgeAsString(dateOfBirth, dateOfDeath, yearOfBirthOnly);                
-            information = RemoveBornPartFromInformation(information, linkedName);
-
-            return age + ", " + information;
         }
 
         private string GetAgeAsString(DateTime dateOfBirth, DateTime dateOfDeath, bool yearOfBirthOnly)
