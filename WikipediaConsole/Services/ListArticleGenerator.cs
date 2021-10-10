@@ -38,7 +38,7 @@ namespace WikipediaConsole.Services
             -----------------------------------
             Phase 1. Cleaning the article
             -----------------------------------
-            - Initialize page https://en.wikipedia.org/wiki/User:Mill_1/tmp : paste contents https://en.wikipedia.org/wiki/Deaths_in_January_1995 WITHOUT CATEGORIES
+            - Initialize page https://en.wikipedia.org/wiki/User:Mill_1/tmp : paste contents main section of https://en.wikipedia.org/wiki/Deaths_in_January_1995 (so WITHOUT CATEGORIES)
 
             Manual changes:
             - Remove images:                        [[File:Wigner.jpg|thumb|120px|[[Eugene Wigner]]]]
@@ -63,7 +63,7 @@ namespace WikipediaConsole.Services
             - In this app select menu option '2' 
             This will entail changing a lot of bio's in order to determine the age from the opening sentence.
             
-            - Publish the changes in the actual month article WITH THE CATEGORIES
+            - Publish the changes in the actual month article
             - Add and update the references with this tool (menu item p).
 
          */

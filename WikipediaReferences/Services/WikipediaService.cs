@@ -21,40 +21,41 @@ namespace WikipediaReferences.Services
         public WikipediaService(ILogger<WikipediaService> logger)
         {
             this.logger = logger;
-    }
-
-        public IEnumerable<Entry> GetDeceased(DateTime deathDate)
-        {
-            string text = GetRawTextDeathsPerMonthList(deathDate);
-
-            text = GetDaySection(text, deathDate.Day, false);
-
-            IEnumerable<string> rawDeceased = GetRawDeceased(text);
-            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
-
-            return deceased;
         }
 
-        public IEnumerable<Entry> GetDeceased(int year, int month)
+        // Why bother?
+        private DateTime CheckIfIsException(string linkedName, out bool isException)
         {
-            DateTime deathDate = new DateTime(year, month, 1);
-            List<Entry> deceased = new List<Entry>();
+            isException = true;
 
-            string deathsPerMonthText = GetRawTextDeathsPerMonthList(deathDate);
+            if (linkedName == "Josef Gingold")
+                return DateTime.Parse("October 28 1909"); // OldStyleDate
+            else if (linkedName == "XXX")
+                return DateTime.Parse("Mehr Abdul Haq"); // {{birth date|1915|6|1|df=yes}}
+            else if (linkedName == "1 June 1915")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
 
-            for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
-            {
-                string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
-
-                IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
-                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, month, day)));
-
-                deceased.AddRange(deceasedPerDay);
-            }
-
-            return deceased;
+            isException = false;
+            return DateTime.Now;
         }
 
+        
         private Entry ParseEntry(string rawEntry, DateTime deathDate)
         {
             var linkedName = GetNameFromRawEntry(rawEntry, true, out string articleText);
@@ -88,69 +89,6 @@ namespace WikipediaReferences.Services
 
             return age + ", " + information;
         }
-
-        private string RemoveBornPartFromInformation(string information, string linkedName)
-        {
-            int pos1 = information.IndexOf(" (b.");
-
-            if (pos1 == -1)
-                return information;
-
-            int pos2 = information.IndexOf(")", pos1 + 1);
-            if (pos1 == -1)
-                throw new Exception($" ')' not found after ' (b.'. Article: {linkedName}");
-
-            return information.Substring(0, pos1) + information.Substring(pos2 + ")".Length);
-        }
-
-        private string GetAgeAsString(DateTime dateOfBirth, DateTime dateOfDeath, bool yearOfBirthOnly)
-        {
-            if (yearOfBirthOnly)
-            {
-                return ResolveAge(new DateTime(dateOfBirth.Year, 12, 31), dateOfDeath).ToString() + "-" +
-                       ResolveAge(new DateTime(dateOfBirth.Year, 1, 1), dateOfDeath).ToString();
-            }
-            else
-                return ResolveAge(dateOfBirth, dateOfDeath).ToString();
-
-        }
-
-        private int ResolveAge(DateTime dateOfBirth, DateTime date)
-        {
-            // Calculate the age.
-            var age = date.Year - dateOfBirth.Year;
-
-            // Go back to the year in which the person was born in case of a leap year
-            if (dateOfBirth.Date > date.AddYears(-age)) age--;
-
-            return age;
-        }
-
-        // Get the text preceding the day of birth in the opening sentence.
-        private int GetStartPositionDoB(string articleText, string linkedName, out string startOpeningSentence)
-        {
-            startOpeningSentence = "''' ";
-            var pos1 = articleText.IndexOf(startOpeningSentence);
-
-            if (pos1 == -1)
-            {
-                startOpeningSentence = "''',";
-                pos1 = articleText.IndexOf(startOpeningSentence);
-
-            }
-            if (pos1 == -1)
-                throw new Exception($"Not found: ['''*], Article: {linkedName}");
-
-            int pos0 = articleText.LastIndexOf("'''", pos1 - 1);
-
-            if (pos0 == -1)
-                throw new Exception($"Corresponding ''' not found in opening sentence!, Article: {linkedName}");
-
-            startOpeningSentence = articleText.Substring(pos0, pos1 - (pos0 - startOpeningSentence.Length));
-
-            return pos0; // Is pos1 in calling method
-        }
-
 
         private DateTime ResolveDateOfBirth(string articleText, string linkedName, out bool dateOfBirthUnknown,  out bool yearOfBirthOnly)
         {
@@ -191,7 +129,7 @@ namespace WikipediaReferences.Services
             }
 
             if (birthdateString.Length > 18)
-                throw new Exception($"Investigate please, birthdateString = '{birthdateString}', Article: {linkedName}");
+                throw new Exception($"Article {linkedName}: birthdateString is too long: '{birthdateString}'");
 
             try
             {
@@ -199,10 +137,46 @@ namespace WikipediaReferences.Services
             }
             catch (Exception)
             {
-                throw new Exception($"Date could not be parsed. birthdateString: '{birthdateString}'");
+                throw new Exception($"Article {linkedName}: Date could not be parsed. birthdateString: '{birthdateString}'");
             }
 
             return dateOfBirth;
+        }
+
+        // Get the text preceding the day of birth in the opening sentence.
+        private int GetStartPositionDoB(string articleText, string linkedName, out string startOpeningSentence)
+        {            
+            var pos1 = -1;
+            var posCandidate1 = articleText.IndexOf("''' ");
+            var posCandidate2 = articleText.IndexOf("''',");
+
+            if (posCandidate1 != -1 && posCandidate2 != -1) // both found!  
+            {
+                pos1 = Math.Min(posCandidate1, posCandidate2);              
+                startOpeningSentence = (posCandidate1 < posCandidate2) ? "''' " : "''',";
+            }
+            else // at least one of them is -1 (not found)
+            {
+                pos1 = Math.Max(posCandidate1, posCandidate2);
+                startOpeningSentence = (posCandidate1 > posCandidate2) ? "''' " : "''',";
+            }
+
+            // yeah yeah
+            if (pos1 >= 21)
+                if (articleText.Substring(pos1 - 21, 24) == "DavisCupresult = '''W'''")
+                    pos1 = articleText.IndexOf(startOpeningSentence, pos1 + 1);
+
+            if (pos1 == -1)
+                throw new Exception($"Not found: ['''*], Article: {linkedName}");
+
+            int pos0 = articleText.LastIndexOf("'''", pos1 - 1);
+
+            if (pos0 == -1)
+                throw new Exception($"Article {linkedName}: Corresponding ''' not found in opening sentence!");
+
+            startOpeningSentence = articleText.Substring(pos0, pos1 - (pos0 - startOpeningSentence.Length));
+
+            return pos0; // Is pos1 in calling method
         }
 
         private string ResolveStartOpeningSentence(string articleText, int pos1, int pos2, string startOpeningSentence)
@@ -248,52 +222,73 @@ namespace WikipediaReferences.Services
             return int.TryParse(value, out _);
         }
 
-        // Why bother?
-        private DateTime CheckIfIsException(string linkedName, out bool isException)
+        private string RemoveBornPartFromInformation(string information, string linkedName)
         {
-            isException = true;
+            int pos1 = information.IndexOf(" (b.");
 
-            if (linkedName == "Josef Gingold")
-                return DateTime.Parse("October 28 1909"); // OldStyleDate
-            else if(linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
+            if (pos1 == -1)
+                return information;
 
-            isException = false;
-            return DateTime.Now;
+            int pos2 = information.IndexOf(")", pos1 + 1);
+            if (pos1 == -1)
+                throw new Exception($" ')' not found after ' (b.'. Article: {linkedName}");
+
+            return information.Substring(0, pos1) + information.Substring(pos2 + ")".Length);
+        }
+
+        private string GetAgeAsString(DateTime dateOfBirth, DateTime dateOfDeath, bool yearOfBirthOnly)
+        {
+            if (yearOfBirthOnly)
+            {
+                return ResolveAge(new DateTime(dateOfBirth.Year, 12, 31), dateOfDeath).ToString() + "-" +
+                       ResolveAge(new DateTime(dateOfBirth.Year, 1, 1), dateOfDeath).ToString();
+            }
+            else
+                return ResolveAge(dateOfBirth, dateOfDeath).ToString();
+
+        }
+
+        private int ResolveAge(DateTime dateOfBirth, DateTime date)
+        {
+            // Calculate the age.
+            var age = date.Year - dateOfBirth.Year;
+
+            // Go back to the year in which the person was born in case of a leap year
+            if (dateOfBirth.Date > date.AddYears(-age)) age--;
+
+            return age;
+        }
+
+        public IEnumerable<Entry> GetDeceased(DateTime deathDate)
+        {
+            string text = GetRawTextDeathsPerMonthList(deathDate);
+
+            text = GetDaySection(text, deathDate.Day, false);
+
+            IEnumerable<string> rawDeceased = GetRawDeceased(text);
+            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
+
+            return deceased;
+        }
+
+        public IEnumerable<Entry> GetDeceased(int year, int month)
+        {
+            DateTime deathDate = new DateTime(year, month, 1);
+            List<Entry> deceased = new List<Entry>();
+
+            string deathsPerMonthText = GetRawTextDeathsPerMonthList(deathDate);
+
+            for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
+            {
+                string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
+
+                IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
+                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, month, day)));
+
+                deceased.AddRange(deceasedPerDay);
+            }
+
+            return deceased;
         }
 
         private string RemoveRefInfo(string text)
