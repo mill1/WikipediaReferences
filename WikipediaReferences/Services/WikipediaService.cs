@@ -119,14 +119,17 @@ namespace WikipediaReferences.Services
                 throw new InvalidWikipediaPageException($"Invalid markup style found: '* '. Fix the article");
 
             text = text.Replace("M*A*S*H", "M+A+S+H");
-            text = text.Replace("NOC*NSF", "NOC+NSF");            
+            text = text.Replace("NOC*NSF", "NOC+NSF");
 
             var entries = text.Split('*').Skip(1).ToList();
 
             entries.ForEach(entry =>
             {
+                if (entry.Length == 1)
+                    throw new InvalidWikipediaPageException($"Invalid markup content found: '*{entry}*'. Fix the article or the code");
+
                 if (entry.Substring(0, 2) != "[[")
-                    throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article");
+                    throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article or the code");
             });
         }
 
