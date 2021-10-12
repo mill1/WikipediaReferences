@@ -32,6 +32,14 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("October 28 1909"); // OldStyleDate
             else if (linkedName == "Mehr Abdul Haq")
                 return DateTime.Parse("1 June 1915"); // {{birth date|1915|6|1|df=yes}}
+            else if (linkedName == "Rafael Aguilar")
+                return DateTime.Parse("24 December 1929");
+            else if (linkedName == "Howard W. Hunter")
+                return DateTime.Parse("November 14, 1907"); //  | signature_alt       = Signature of '''Howard W. Hunter'''
+            else if (linkedName == "Yisrael Galili (inventor)")          
+                return DateTime.Parse("October 23, 1923");
+            else if (linkedName == "Kray twins")
+                return DateTime.Parse("24 October 1933");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
@@ -50,7 +58,8 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
-
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
             isException = false;
             return DateTime.Now;
         }
@@ -102,6 +111,7 @@ namespace WikipediaReferences.Services
             articleText = articleText.Replace("&nbsp;", " ");
             articleText = articleText.Replace("born ", "");
             articleText = articleText.Replace("b. ", "");
+            articleText = articleText.Replace("'''W'''", "~~~W~~~");
             articleText = RemoveRefInfo(articleText);
 
             int pos1 = GetStartPositionDoB(articleText, linkedName, out string startOpeningSentence);
@@ -176,6 +186,7 @@ namespace WikipediaReferences.Services
             int posSemiColon = articleText.LastIndexOf(";", pos2);
             int posOpeningParentheses = articleText.LastIndexOf("(", pos2);
             int posOpeningEqualsSign = articleText.LastIndexOf("=", pos2); //[[Hideko Maehata]]
+            int posOpeningAccolade = articleText.LastIndexOf("}", pos2); //[[Rafael Aguilar]]
             int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 8); // 4 = len year, 8 : }}, May 1, 1969
 
             // extra=

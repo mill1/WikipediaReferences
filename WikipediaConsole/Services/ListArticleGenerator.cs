@@ -82,6 +82,7 @@ namespace WikipediaConsole.Services
 
             text = TrimWikiText1995(text, month);
             text = text.Replace("* ", "*");
+            text = text.Replace(" * ", " ");  // *[[Juanin Clay]], American actress and director (b. 1949)<ref>{{cite news|last1=Brady|first1=David E.|title=Obituaries : * Juanin Clay; Actress, Director
             text = text.Replace("\\\"", "\""); // WHY DOES THIS HAPPEN??
 
             text = RemoveEntriesWithoutArticle(text);
