@@ -40,10 +40,10 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("October 23, 1923");
             else if (linkedName == "Kray twins")
                 return DateTime.Parse("24 October 1933");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
+            else if (linkedName == "Paul A. Catlin")
+                return DateTime.Parse("June 25, 1948");
+            else if (linkedName == "Iosif Kheifits")
+                return DateTime.Parse("12 April 1905");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
@@ -161,7 +161,7 @@ namespace WikipediaReferences.Services
             var pos1 = articleText.IndexOf("'''", pos0 + 1);
 
             if (pos1 == -1)
-                throw new Exception($"Article {linkedName}: Corresponding ''' not found in opening sentence!");
+                throw new Exception($"Article {linkedName}: Corresponding ''' not found in opening sentence! Redirect??");
 
             // yeah yeah
             if (pos1 >= 21)
@@ -185,14 +185,17 @@ namespace WikipediaReferences.Services
             // Re-evaluate start position DoB by looking back from encountered year of birth; look for specific preceding chars.
             int posSemiColon = articleText.LastIndexOf(";", pos2);
             int posOpeningParentheses = articleText.LastIndexOf("(", pos2);
-            int posOpeningEqualsSign = articleText.LastIndexOf("=", pos2); //[[Hideko Maehata]]
-            int posOpeningAccolade = articleText.LastIndexOf("}", pos2); //[[Rafael Aguilar]]
+            int posEqualsSign = articleText.LastIndexOf("=", pos2); //[[Hideko Maehata]]
+            int posClosingAccolade = articleText.LastIndexOf("}", pos2); //[[Rafael Aguilar]]
+            int posPipe = articleText.LastIndexOf("|", pos2);// Hideyuki Ashihara
             int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 8); // 4 = len year, 8 : }}, May 1, 1969
 
-            // extra=
+            // extra= Ioannis Alevras
 
             int posCandidate = Math.Max(posSemiColon, posOpeningParentheses);
-            posCandidate = Math.Max(posCandidate, posOpeningEqualsSign);
+            posCandidate = Math.Max(posCandidate, posEqualsSign);
+            posCandidate = Math.Max(posCandidate, posClosingAccolade);
+            posCandidate = Math.Max(posCandidate, posPipe);
             posCandidate = Math.Max(posCandidate, posCommaBeforeDate);
 
             if (posCandidate == -1)
