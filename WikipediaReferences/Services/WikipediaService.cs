@@ -44,10 +44,10 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("June 25, 1948");
             else if (linkedName == "Iosif Kheifits")
                 return DateTime.Parse("12 April 1905");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
+            else if (linkedName == "Louis Krasner")
+                return DateTime.Parse("21 June 1903");
+            else if (linkedName == "Mikhail Botvinnik")
+                return DateTime.Parse("August 17 1911");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
@@ -738,6 +738,9 @@ namespace WikipediaReferences.Services
                 articleText = GetRawArticleMarkup(ref name, out isRedirect);
 
                 string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
+
+                if (isRedirect)
+                    throw new Exception( $"First correct REDIRECT from  '{originalName}' to '{name}'");
 
                 //Thread.Sleep(100); // TODO lw?
                 Console.WriteLine($"Entry: {name}{redirectInfo}");
