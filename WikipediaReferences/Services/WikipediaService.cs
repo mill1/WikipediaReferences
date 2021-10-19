@@ -48,10 +48,10 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("21 June 1903");
             else if (linkedName == "Mikhail Botvinnik")
                 return DateTime.Parse("August 17 1911");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
+            else if (linkedName == "Francesco Camusso")
+                return DateTime.Parse("9 March 1908");
+            else if (linkedName == "Lana Turner")
+                return DateTime.Parse("February 8, 1921");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
@@ -188,6 +188,7 @@ namespace WikipediaReferences.Services
             int posEqualsSign = articleText.LastIndexOf("=", pos2); //[[Hideko Maehata]]
             int posClosingAccolade = articleText.LastIndexOf("}", pos2); //[[Rafael Aguilar]]
             int posPipe = articleText.LastIndexOf("|", pos2);// Hideyuki Ashihara
+            int posClosingSquareBrackets = articleText.LastIndexOf("]", pos2);// Julius Bürger
             int posCommaBeforeDate = articleText.LastIndexOf(",", pos2 - 4 - 8); // 4 = len year, 8 : }}, May 1, 1969
 
             // extra= Ioannis Alevras
@@ -196,6 +197,7 @@ namespace WikipediaReferences.Services
             posCandidate = Math.Max(posCandidate, posEqualsSign);
             posCandidate = Math.Max(posCandidate, posClosingAccolade);
             posCandidate = Math.Max(posCandidate, posPipe);
+            posCandidate = Math.Max(posCandidate, posClosingSquareBrackets);
             posCandidate = Math.Max(posCandidate, posCommaBeforeDate);
 
             if (posCandidate == -1)
