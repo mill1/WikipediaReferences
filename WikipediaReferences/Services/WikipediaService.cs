@@ -52,8 +52,8 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("9 March 1908");
             else if (linkedName == "Lana Turner")
                 return DateTime.Parse("February 8, 1921");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
+            else if (linkedName == "Margaret F. Ackroyd")
+                return DateTime.Parse("January 15, 1908");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
@@ -120,8 +120,6 @@ namespace WikipediaReferences.Services
             startOpeningSentence = ResolveStartOpeningSentence(articleText, pos1, pos2, startOpeningSentence);
 
             string birthdateString = articleText.Substring(pos1 + startOpeningSentence.Length, pos2 - (pos1 + startOpeningSentence.Length) - 1);
-
-            Console.WriteLine(birthdateString); // ######q1#########################################
 
             birthdateString = birthdateString.Trim();
 
@@ -311,6 +309,8 @@ namespace WikipediaReferences.Services
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
             {
+                Console.WriteLine($"######### Day {day} ###########");
+
                 string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
 
                 IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
