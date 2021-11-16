@@ -73,7 +73,8 @@ namespace WikipediaReferences.Services
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
 
             using (WebClient client = new WebClient())
-                text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                // TODO text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
 
             text = TrimWikiText(text, month, deathDate.Year);
             text = RemoveSubLists(text);
