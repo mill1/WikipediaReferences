@@ -64,7 +64,7 @@ namespace WikipediaConsole.Services
             This will entail changing bio's in order to determine the age from the opening sentence.
             
             - MANUALLY CHECK ALL the 'year only'-entries in the corresponding article.
-            - MANUALLY Shorten description of entries; look for 'who' and 'known' (for)
+            - MANUALLY Shorten description of entries; look for 'who' and 'known' (for), noted for, notable
             - Publish the changes in the actual month article            
 
          */

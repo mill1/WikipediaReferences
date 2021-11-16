@@ -54,6 +54,34 @@ namespace WikipediaReferences.Services
                 return DateTime.Parse("February 8, 1921");
             else if (linkedName == "Margaret F. Ackroyd")
                 return DateTime.Parse("January 15, 1908");
+            else if (linkedName == "Fred Campbell (Australian politician)")
+                return DateTime.Parse("17 January 1911");
+            else if (linkedName == "Catherine Cobb")
+                return DateTime.Parse("28 March 1903");
+            else if (linkedName == "Eileen Chang")
+                return DateTime.Parse("September 30, 1920");
+            else if (linkedName == "Col Austen")
+                return DateTime.Parse("2 December 1920");
+            else if (linkedName == "The Andrews Sisters")
+                return DateTime.Parse("October 21, 1995");
+            else if (linkedName == "Anastasios Balkos")
+                return DateTime.Parse("1 May 1916");
+            else if (linkedName == "Sergei Grinkov")
+                return DateTime.Parse("4 February 1967");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
+            else if (linkedName == "XXX")
+                return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
