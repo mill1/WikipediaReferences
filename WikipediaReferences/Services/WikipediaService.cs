@@ -63,27 +63,27 @@ namespace WikipediaReferences.Services
             else if (linkedName == "Col Austen")
                 return DateTime.Parse("2 December 1920");
             else if (linkedName == "The Andrews Sisters")
-                return DateTime.Parse("October 21, 1995");
+                return DateTime.Parse("January 3, 1916");
             else if (linkedName == "Anastasios Balkos")
                 return DateTime.Parse("1 May 1916");
             else if (linkedName == "Sergei Grinkov")
                 return DateTime.Parse("4 February 1967");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
-            else if (linkedName == "XXX")
-                return DateTime.Parse("some_date");
+            else if (linkedName == "Jeffrey Lynn")
+                return DateTime.Parse("December 24, 1905");
+            else if (linkedName == "Sydney D. Bailey")
+                return DateTime.Parse("2 September 1916");
+            else if (linkedName == "Severo Antonelli")
+                return DateTime.Parse(" July 17, 1907");
+            else if (linkedName == "Ike Altgens")
+                return DateTime.Parse("April 28, 1919");
+            else if (linkedName == "Nicolas Slonimsky")
+                return DateTime.Parse("April 15 1894");
+            else if (linkedName == "Ángel Sauce")
+                return DateTime.Parse("August 2, 1911");
+            else if (linkedName == "Thomas C. Chalmers")
+                return DateTime.Parse("December 8, 1917");
+            else if (linkedName == "Francis Woodman Cleaves")
+                return DateTime.Parse("1 May 1911");
             else if (linkedName == "XXX")
                 return DateTime.Parse("some_date");
             else if (linkedName == "XXX")
