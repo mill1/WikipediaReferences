@@ -59,7 +59,7 @@ namespace WikipediaConsole.Services
 
         private void CheckIfArticleContainsSublist(int year, int monthId)
         {
-            // TODO string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+            // string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
             string articleTitle =  @"User:Mill_1/Months/December";
 
             articleTitle = articleTitle.Replace(":", "%3A");
@@ -188,10 +188,10 @@ namespace WikipediaConsole.Services
                 }
                 else
                 {
-                    if (IsDurableSource(entry.Reference))
+                    if (KeepExistingReference(entry.Reference))
                     {
                         consoleColor = ConsoleColor.DarkGray;
-                        return "Has durable source.";
+                        return "Existing source is ok.";
                     }
                     else
                     {
@@ -204,17 +204,18 @@ namespace WikipediaConsole.Services
             }
         }
 
-        private bool IsDurableSource(string reference)
+        private bool KeepExistingReference(string reference)
         {
             if (reference.Contains("latimes.com/") ||
-                    reference.Contains("independent.co.uk/") ||
-                    reference.Contains("news.bbc.co.uk/") ||
-                    reference.Contains("telegraph.co.uk/") ||
-                    reference.Contains("washingtonpost.com/") ||
-                    reference.Contains("rollingstone.com/") ||
-                    reference.Contains("economist.com/") ||
-                    reference.Contains("irishtimes.com/") ||
-                    reference.Contains("theguardian.com/"))
+                reference.Contains("independent.co.uk/") ||
+                reference.Contains("news.bbc.co.uk/") ||
+                reference.Contains("telegraph.co.uk/") ||
+                reference.Contains("washingtonpost.com/") ||
+                reference.Contains("rollingstone.com/") ||
+                reference.Contains("economist.com/") ||
+                reference.Contains("irishtimes.com/") ||
+                reference.Contains("britannica.com/") ||
+                reference.Contains("theguardian.com/"))
                 return true;
 
 
@@ -222,7 +223,8 @@ namespace WikipediaConsole.Services
             if (!reference.Contains("{{cite", StringComparison.OrdinalIgnoreCase) && !reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (reference.Contains("{{cite news", StringComparison.OrdinalIgnoreCase) || reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
+            // Other news, web citations
+            if (reference.Contains("{{cite news", StringComparison.OrdinalIgnoreCase) || reference.Contains("{{cite web", StringComparison.OrdinalIgnoreCase) || reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))
                 return false;
             else
                 // books and journals are preferable over news sources
