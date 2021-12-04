@@ -280,10 +280,21 @@ namespace WikipediaReferences.Services
             posEndList = posEndList.Where(pos => pos != -1).ToList();
 
             if (posEndList.Count() == 0)
-                // If rawText points to ambiguation page then next situation probably occurred:
-                // the ambiguation page was created aftr the NYT-json was processed. Fix:
-                // Update the db. Example: Gary Jennings (author)
-                throw new Exception("Invalid article end. Edit the article");
+            {
+                int pos = rawText.IndexOf("''' may refer to");
+
+                if(pos == -1)
+                    throw new Exception("Invalid article end. Edit the article");
+                else
+                {
+                    // If rawText points to disambiguation page then next situation probably occurred:
+                    // the disambiguation page was created aftr the NYT-json was processed. Fix:
+                    // Update the db. Example: Gary Jennings (author) or Bob Flanagan (author)
+                    var disambiguation = rawText.Substring(0, pos+3); // = '''
+                    throw new Exception($"Matched article name is now part of a disambiguation page: {disambiguation}... Update the db with the new WP name");
+                }
+
+            }
 
             int posEnd = posEndList.Min();            
 
