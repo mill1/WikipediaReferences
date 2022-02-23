@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Net.Http;
 using WikipediaConsole.Services;
 using WikipediaConsole.UI;
@@ -19,7 +18,7 @@ namespace WikipediaConsole
         }
 
         public void ConfigureServices(IServiceCollection services)
-        {           
+        {
             services.AddSingleton(Configuration);
             services.AddSingleton<HttpClient>();
             services.AddSingleton<Util>();

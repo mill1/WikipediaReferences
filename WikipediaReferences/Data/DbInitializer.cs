@@ -1,8 +1,6 @@
-﻿using System.IO;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
-using System;
 
 namespace WikipediaReferences.Data
 {

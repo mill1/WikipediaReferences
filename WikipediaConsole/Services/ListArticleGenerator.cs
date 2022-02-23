@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using WikipediaReferences;
-using System.Text;
-using WikipediaReferences.Models;
-using System.Linq;
+﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Reflection;
-using Microsoft.Extensions.Configuration;
+using WikipediaReferences;
+using WikipediaReferences.Models;
 
 namespace WikipediaConsole.Services
 {
@@ -21,7 +20,7 @@ namespace WikipediaConsole.Services
         private readonly ArticleAnalyzer articleAnalyzer;
 
         private IEnumerable<Entry> entries;
-        private  IEnumerable<Reference> references;
+        private IEnumerable<Reference> references;
 
         public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer)
         {
@@ -60,7 +59,7 @@ namespace WikipediaConsole.Services
         private void CheckIfArticleContainsSublist(int year, int monthId)
         {
             // TODO string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
-            string articleTitle =  @"User:Mill_1/Months/December";
+            string articleTitle = @"User:Mill_1/Months/December";
 
             articleTitle = articleTitle.Replace(":", "%3A");
             articleTitle = articleTitle.Replace("/", "%2F");
@@ -166,7 +165,7 @@ namespace WikipediaConsole.Services
                 PrintMismatchDateOfDeaths(reference, entry);
         }
 
-        private string HandleMatchingDatesOfDeath(Entry entry, Reference reference,  out ConsoleColor consoleColor)
+        private string HandleMatchingDatesOfDeath(Entry entry, Reference reference, out ConsoleColor consoleColor)
         {
             if (entry.Reference == null)
             {
@@ -184,7 +183,7 @@ namespace WikipediaConsole.Services
                     reference.AccessDate = GetAccessDateFromEntryReference(entry.Reference, reference.AccessDate);
                     entry.Reference = reference.GetNewsReference();
                     consoleColor = ConsoleColor.DarkYellow;
-                    return $"Updated NYT reference."; 
+                    return $"Updated NYT reference.";
                 }
                 else
                 {
@@ -199,7 +198,7 @@ namespace WikipediaConsole.Services
                         entry.Reference = reference.GetNewsReference();
                         consoleColor = ConsoleColor.Green;
                         return "Replaced with NYT reference.";
-                    }                    
+                    }
                 }
             }
         }
@@ -273,6 +272,8 @@ namespace WikipediaConsole.Services
 
         private int GetNumberOfCharactersBiography(string articleTitle, bool netto)
         {
+            articleTitle = articleTitle.Replace("/", "%2F"); // https://en.wikipedia.org/wiki/Bob_Carroll_(singer/actor)
+
             // page redirects have been handled
             string uri = $"wikipedia/rawarticle/{articleTitle}/netto/{netto}";
             HttpResponseMessage response = util.SendGetRequest(uri);
@@ -284,7 +285,7 @@ namespace WikipediaConsole.Services
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
         {
-            IEnumerable<Entry> entries;            
+            IEnumerable<Entry> entries;
             string uri = $"wikipedia/deceased/{year}/{monthId}";
             HttpResponseMessage response = util.SendGetRequest(uri);
 
@@ -316,7 +317,7 @@ namespace WikipediaConsole.Services
 
         private IEnumerable<Reference> GetReferencesPermonth(int year, int monthId)
         {
-            IEnumerable<Reference> references;            
+            IEnumerable<Reference> references;
             string uri = $"nytimes/references/{year}/{monthId}";
             HttpResponseMessage response = util.SendGetRequest(uri);
             string result = response.Content.ReadAsStringAsync().Result;

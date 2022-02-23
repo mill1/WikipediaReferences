@@ -1,9 +1,8 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using WikipediaReferences.Interfaces;
 //using WikipediaReferences.Models;
 
@@ -146,7 +145,7 @@ namespace WikipediaReferences.Controllers
 
             foreach (var reference in references)
                 referencesDto.Add(MapModelToDto(reference));
-            
+
             return referencesDto;
         }
 
@@ -176,6 +175,6 @@ namespace WikipediaReferences.Controllers
                 DeathDate = reference.DeathDate,
                 ArchiveDate = reference.ArchiveDate,
             };
-        }       
+        }
     }
 }

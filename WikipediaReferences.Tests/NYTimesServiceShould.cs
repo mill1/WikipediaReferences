@@ -5,11 +5,11 @@ using WikipediaReferences.Sources;
 using Xunit;
 
 namespace WikipediaReferences.Tests
-{   
+{
     public class NYTimesServiceShould
     {
 
-        [Theory (DisplayName = "get the death date from the document")]
+        [Theory(DisplayName = "get the death date from the document")]
         [InlineData("2006-1-31", "Nam June Paik..., died Sunday at his winter home in Miami Beach.", "2006-1-29")]
         [InlineData("1900-1-9", "John Doe died Jan. 2", "1900-1-2")]
         [InlineData("1901-1-1", "John Doe died Dec. 26", "1900-12-26")]

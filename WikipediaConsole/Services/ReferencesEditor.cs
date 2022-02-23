@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using WikipediaReferences.Dtos;
 
 namespace WikipediaConsole.Services
@@ -12,12 +11,12 @@ namespace WikipediaConsole.Services
     public class ReferencesEditor
     {
         private readonly IConfiguration configuration;
-        private readonly Util util;        
+        private readonly Util util;
 
         public ReferencesEditor(IConfiguration configuration, Util util)
         {
             this.configuration = configuration;
-            this.util = util;            
+            this.util = util;
         }
 
         public void ShowNYTimesUrlOfArticle()
@@ -29,13 +28,13 @@ namespace WikipediaConsole.Services
 
                 IEnumerable<Reference> references = GetReferencesByArticleTitle(articleTitle);
 
-                references.ToList().ForEach(r =>                 
+                references.ToList().ForEach(r =>
                     {
                         var reference = MapDtoToModel(r);
 
-                        UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());                    
-                    });  
-                
+                        UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());
+                    });
+
 
             }
             catch (WikipediaReferencesException e)
@@ -50,7 +49,7 @@ namespace WikipediaConsole.Services
 
         private IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle)
         {
-            string uri = $"nytimes/referencebyarticletitle/{ articleTitle.Replace(" ", "_") }";
+            string uri = $"nytimes/referencebyarticletitle/{articleTitle.Replace(" ", "_")}";
             HttpResponseMessage response = util.SendGetRequest(uri);
 
             string result = response.Content.ReadAsStringAsync().Result;

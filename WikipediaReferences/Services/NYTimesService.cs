@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Query;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -395,7 +394,7 @@ namespace WikipediaReferences.Services
         }
 
         private string GetAuthor(string author, bool authorlink)
-        {  
+        {
             if (author == null)
                 return null;
             else
@@ -417,7 +416,11 @@ namespace WikipediaReferences.Services
                         return author;
                 }
                 else
-                    throw new Exception($"Invalid doc.byline.original: {author}");
+                {
+                    // bugfix: https://timesmachine.nytimes.com/timesmachine/1994/05/16/108898.html?pageNumber=26
+                    Console.WriteLine($"Invalid doc.byline.original: {author}");
+                    return null;
+                }
             }
         }
 
@@ -438,7 +441,7 @@ namespace WikipediaReferences.Services
 
             DateTime dateOfDeath = DateTime.MinValue;
 
-           // if (obituaryDoc.)
+            // if (obituaryDoc.)
 
             dateOfDeath = GetDateOfDeathFromMonthInformation(obituaryDoc, monthId, year, dateOfDeath);
 
@@ -517,7 +520,7 @@ namespace WikipediaReferences.Services
             foreach (var excerpt in new string[] { obituaryDoc.lead_paragraph, obituaryDoc.@abstract })
             {
                 if (excerpt == null)
-                    break; 
+                    break;
 
                 var matches = regex.Match(excerpt);
 
@@ -554,7 +557,7 @@ namespace WikipediaReferences.Services
             // https://www.nytimes.com/1995/02/11/obituaries/dr-eli-robins-73-challenger-of-freudian-psychiatry-is-dead.html
             switch (monthName)
             {
-                case "Oct": 
+                case "Oct":
                 case "Nov":
                 case "Dec":
                     if (publicationDate.Month <= 3)
@@ -562,7 +565,7 @@ namespace WikipediaReferences.Services
                     break;
             }
 
-            return DateTime.Parse($"{day} {monthName} {year}"); 
+            return DateTime.Parse($"{day} {monthName} {year}");
         }
 
         private string GetValueInBetweenSeparators(string text, string separator, int startIndex)
@@ -577,7 +580,7 @@ namespace WikipediaReferences.Services
             if (pos2 == -1)
                 // We're at the end.
                 pos2 = text.Length;
-            
+
             string value = text.Substring(pos1 + 1, pos2 - pos1 - 1);
 
             return value.Replace(".", string.Empty);
@@ -652,7 +655,7 @@ namespace WikipediaReferences.Services
                 case 5:
                     return new List<string> { monthNames.ElementAt(4), monthNames.ElementAt(3), monthNames.ElementAt(2), monthNames.ElementAt(1), monthNames.ElementAt(0), monthNames.ElementAt(11) };
                 default:
-                    return new List<string> { monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2), monthNames.ElementAt(monthId - 3), 
+                    return new List<string> { monthNames.ElementAt(monthId - 1), monthNames.ElementAt(monthId - 2), monthNames.ElementAt(monthId - 3),
                                               monthNames.ElementAt(monthId - 4), monthNames.ElementAt(monthId - 5), monthNames.ElementAt(monthId - 6) };
             }
         }
@@ -706,7 +709,7 @@ namespace WikipediaReferences.Services
             client.DefaultRequestHeaders.Add("User-Agent", agent);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            string uri = @"https://api.nytimes.com/svc/archive/v1/" +  @$"{year}/{monthId}.json?api-key={apiKey}";
+            string uri = @"https://api.nytimes.com/svc/archive/v1/" + @$"{year}/{monthId}.json?api-key={apiKey}";
 
             Console.WriteLine("####### JSON is being retrieved from the NYTimes archive. #######");
             // by calling .Result you are synchronously reading the result

@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
@@ -13,7 +11,7 @@ namespace WikipediaReferences.Services
     public class WikipediaService : IWikipediaService
     {
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
-        private const string EntryDelimiter = "*[[";        
+        private const string EntryDelimiter = "*[[";
         private const int NoInfobox = -1;
 
         private readonly ILogger logger;
@@ -21,7 +19,7 @@ namespace WikipediaReferences.Services
         public WikipediaService(ILogger<WikipediaService> logger)
         {
             this.logger = logger;
-    }
+        }
 
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
@@ -73,7 +71,7 @@ namespace WikipediaReferences.Services
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
 
             using (WebClient client = new WebClient())
-                // TODO text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                // text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
                 text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
 
             text = TrimWikiText(text, month, deathDate.Year);
@@ -99,7 +97,7 @@ namespace WikipediaReferences.Services
                     text = RemoveSubList(entry, text);
             });
 
-            return text;                
+            return text;
         }
 
         private string RemoveSubList(string subList, string text)
@@ -171,10 +169,10 @@ namespace WikipediaReferences.Services
         {
             bool isRedirect;
 
-            string rawText = GetRawArticleMarkup(ref article, out isRedirect);            
+            string rawText = GetRawArticleMarkup(ref article, out isRedirect);
 
             if (isRedirect)
-                rawText = GetRawWikiPageText(article);           
+                rawText = GetRawWikiPageText(article);
 
             if (nettoContent)
                 rawText = GetNettoContentRawArticleText(rawText);
@@ -186,7 +184,7 @@ namespace WikipediaReferences.Services
         {
             // Article size is an pragmatic yet arbitrary indicator regarding a biography's notability.
             // In the end it cannot be helped that fanboys create large articles for their idols.
-            // However, the indicator can be improved by looking at the 'netto content' of the article;
+            // However, the indicator can be improved somewhat by looking at the 'netto content' of the article;
             // Articles can become quite verbose because of the use of infobox-templates and the addition of many categories.
             // Stripping those elements from the markup text results in a more realistic article size.
             int posContentStart = GetContentStart(rawText);
@@ -207,7 +205,7 @@ namespace WikipediaReferences.Services
         }
 
         private int GetStartPositionInfobox(string rawText)
-        {            
+        {
             int pos = rawText.IndexOf("infobox", StringComparison.OrdinalIgnoreCase);
 
             if (pos == -1)
@@ -239,7 +237,7 @@ namespace WikipediaReferences.Services
             return rawText.Substring(posStart, posEnd - posStart + "}}".Length);
         }
 
-        private  bool ClosingAccoladesFound(string rawText, ref int count, int posEnd)
+        private bool ClosingAccoladesFound(string rawText, ref int count, int posEnd)
         {
             if (rawText.Substring(posEnd, 2) == "}}")
             {
@@ -270,7 +268,7 @@ namespace WikipediaReferences.Services
 
         private int GetContentEnd(string rawText)
         {
-           List<int> posEndList = new List<int>
+            List<int> posEndList = new List<int>
            {
                 rawText.IndexOf("{{Authority control", StringComparison.OrdinalIgnoreCase),
                 rawText.IndexOf("{{DEFAULTSORT", StringComparison.OrdinalIgnoreCase),
@@ -279,24 +277,24 @@ namespace WikipediaReferences.Services
 
             posEndList = posEndList.Where(pos => pos != -1).ToList();
 
-            if (posEndList.Count() == 0)
+            if (posEndList.Any())
             {
                 int pos = rawText.IndexOf("''' may refer to");
 
-                if(pos == -1)
-                    throw new Exception("Invalid article end. Edit the article");
+                if (pos == -1)
+                    throw new InvalidWikipediaPageException("Invalid article end. Edit the article");
                 else
                 {
                     // If rawText points to disambiguation page then next situation probably occurred:
                     // the disambiguation page was created aftr the NYT-json was processed. Fix:
                     // Update the db. Example: Gary Jennings (author) or Bob Flanagan (author)
-                    var disambiguation = rawText.Substring(0, pos+3); // = '''
-                    throw new Exception($"Matched article name is now part of a disambiguation page: {disambiguation}... Update the db with the new WP name");
+                    var disambiguation = rawText.Substring(0, pos + 3); // = '''
+                    throw new WikipediaPageNotFoundException($"Matched article name is now part of a disambiguation page: {disambiguation}... Update the db with the new WP name");
                 }
 
             }
 
-            int posEnd = posEndList.Min();            
+            int posEnd = posEndList.Min();
 
             return posEnd;
         }
@@ -308,13 +306,10 @@ namespace WikipediaReferences.Services
 
             string disambiguationEntry = GetDisambiguationEntry(articleTitle, rawText, searchValues);
 
-            if (disambiguationEntry == null)
+            if (disambiguationEntry == null && monthId <= 2)
             {
-                if (monthId <= 2)
-                {
-                    searchValues = new string[] { $"–{year - 1})", $"-{year - 1})", $"&ndash;{year - 1})", $"died {year - 1})" };
-                    disambiguationEntry = GetDisambiguationEntry(articleTitle, rawText, searchValues);
-                }
+                searchValues = new string[] { $"–{year - 1})", $"-{year - 1})", $"&ndash;{year - 1})", $"died {year - 1})" };
+                disambiguationEntry = GetDisambiguationEntry(articleTitle, rawText, searchValues);
             }
             return disambiguationEntry;
         }
@@ -325,28 +320,10 @@ namespace WikipediaReferences.Services
 
             valid = rawText.Contains($"[[Category:{year} deaths", StringComparison.OrdinalIgnoreCase);
 
-            if (!valid)
-                if (monthId <= 2)
-                    valid = rawText.Contains($"[[Category:{year - 1} deaths", StringComparison.OrdinalIgnoreCase);
+            if (!valid && monthId <= 2)
+                valid = rawText.Contains($"[[Category:{year - 1} deaths", StringComparison.OrdinalIgnoreCase);
 
             return valid;
-        }
-
-        private string GetDisambiguationEntry(string articleTitle, string rawText, string[] searchValues)
-        {
-            string disambiguationEntry = null;
-
-            foreach (string searchValue in searchValues)
-            {
-                disambiguationEntry = InspectDisambiguationPage(rawText, articleTitle, searchValue);
-
-                if (disambiguationEntry != null)
-                {
-                    Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
-                    break;
-                }
-            }
-            return disambiguationEntry;
         }
 
         public string GetAuthorsArticle(string author, string source)
@@ -384,10 +361,6 @@ namespace WikipediaReferences.Services
             {
                 return null;
             }
-            catch (Exception)
-            {
-                throw;
-            }
         }
 
         private string GetInformationFromRawEntry(string rawEntry)
@@ -418,11 +391,11 @@ namespace WikipediaReferences.Services
             }
         }
 
-        private string GetNameFromRawEntry (string rawEntry, bool linkedName)
+        private string GetNameFromRawEntry(string rawEntry, bool linkedName)
         {
             string namePart = rawEntry.Substring("[[".Length, rawEntry.IndexOf("]]") - "]]".Length);
             int pos = namePart.IndexOf('|');
-            string name;            
+            string name;
 
             if (pos < 0)
                 name = namePart;
@@ -451,7 +424,6 @@ namespace WikipediaReferences.Services
 
                 string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
 
-                //Thread.Sleep(100); // TODO lw?
                 Console.WriteLine($"Entry: {name}{redirectInfo}");
             }
             return name;
@@ -461,7 +433,7 @@ namespace WikipediaReferences.Services
         {
             string[] array = daySection.Split(EntryDelimiter);
 
-            IEnumerable<string> rawDeceased = array.Select( e => "[[" +  e);
+            IEnumerable<string> rawDeceased = array.Select(e => "[[" + e);
 
             return rawDeceased.Skip(1);
         }
@@ -507,7 +479,7 @@ namespace WikipediaReferences.Services
             // Trim right
             pos = Math.Max(trimmedText.IndexOf("==References=="), trimmedText.IndexOf("== References =="));
 
-            if (pos == -1)    
+            if (pos == -1)
                 throw new InvalidWikipediaPageException($"Not found:  ==[]References[]== ");
 
             trimmedText = trimmedText.Substring(0, pos);
@@ -561,6 +533,23 @@ namespace WikipediaReferences.Services
             return article.Substring(0, pos);
         }
 
+        private string GetDisambiguationEntry(string articleTitle, string rawText, string[] searchValues)
+        {
+            string disambiguationEntry = null;
+
+            foreach (string searchValue in searchValues)
+            {
+                disambiguationEntry = InspectDisambiguationPage(rawText, articleTitle, searchValue);
+
+                if (disambiguationEntry != null)
+                {
+                    Console.WriteLine($"{disambiguationEntry}: SUCCESS (via disambiguation page)");
+                    break;
+                }
+            }
+            return disambiguationEntry;
+        }
+
         private string CompareArticleWithNameVersion(string article, string nameVersion)
         {
             if (article.Contains(nameVersion, StringComparison.OrdinalIgnoreCase))
@@ -581,7 +570,7 @@ namespace WikipediaReferences.Services
                         return null;
                 }
             }
-        }       
+        }
 
         private string GetRawWikiPageText(string wikiPage)
         {
@@ -595,10 +584,6 @@ namespace WikipediaReferences.Services
             catch (WebException) // article does not exist (anymore) in Wikipedia
             {
                 throw new WikipediaPageNotFoundException($"{wikiPage}: FAIL: no such wiki page");
-            }
-            catch (Exception)
-            {
-                throw;
             }
         }
 
