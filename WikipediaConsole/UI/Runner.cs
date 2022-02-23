@@ -7,9 +7,9 @@ using WikipediaConsole.Services;
 using WikipediaReferences;
 
 namespace WikipediaConsole.UI
-{    
+{
     public class Runner
-    {       
+    {
         private const string PrintDeathMonth = "p";
         private const string UpdateNYTDeathDate = "u";
         private const string ShowNYTUrl = "s";
@@ -18,7 +18,7 @@ namespace WikipediaConsole.UI
         private const string AddNYTObitRefs = "a";
         private const string Quit = "q";
         private bool quit;
-       
+
         private readonly Util util;
         private readonly ListArticleGenerator listArticleGenerator;
         private readonly ReferencesEditor referencesEditor;
@@ -79,7 +79,7 @@ namespace WikipediaConsole.UI
 
             switch (answer)
             {
-                case PrintDeathMonth:                    
+                case PrintDeathMonth:
                     util.GetDeathMontArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
                     break;
@@ -124,7 +124,7 @@ namespace WikipediaConsole.UI
 
             IEnumerable<Entry> entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
             var refs = entries.Where(e => e.Reference != null);
-            
+
             int maxLength = entries.Max(e => e.Information.Length);
             Entry entry = entries.Where(e => e.Information.Length == maxLength).First();
 
@@ -132,6 +132,6 @@ namespace WikipediaConsole.UI
             Console.WriteLine($"Nr of entries with references: {refs.Count()}");
             Console.WriteLine($"Longest entry (excl. ref): {entry.Name}");
             Console.WriteLine($"Longest entry value:\r\n{entry}");
-        }              
+        }
     }
 }

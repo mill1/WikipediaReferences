@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using SysConsole = System.Console;
 
 namespace WikipediaConsole.UI
@@ -14,10 +13,10 @@ namespace WikipediaConsole.UI
         public static ConsoleColor ForegroundColor
         {
             get { return foregroundColor; }
-            set 
+            set
             {
                 SysConsole.ForegroundColor = value;
-                foregroundColor = value; 
+                foregroundColor = value;
             }
         }
 

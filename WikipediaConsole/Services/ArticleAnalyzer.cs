@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
 
 namespace WikipediaConsole.Services
 {
@@ -29,6 +27,8 @@ namespace WikipediaConsole.Services
             {
                 UI.Console.WriteLine("Article title:");
                 string articleTitle = Console.ReadLine();
+
+                articleTitle = articleTitle.Replace("/", "%2F");
 
                 string uri = $"wikipedia/rawarticle/{articleTitle}/netto/{netto}";
                 HttpResponseMessage response = util.SendGetRequest(uri);

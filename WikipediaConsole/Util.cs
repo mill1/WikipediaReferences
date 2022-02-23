@@ -1,12 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using Newtonsoft.Json;
-using System.Text;
-using WikipediaReferences.Dtos;
 using WikipediaReferences;
+using WikipediaReferences.Dtos;
 
 namespace WikipediaConsole
 {
@@ -26,7 +23,7 @@ namespace WikipediaConsole
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
                     throw new WikipediaReferencesException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
                 else
-                    throw new Exception(result);
+                    throw new Exception($"Article: {articleTitle} result: '{result}'");
             }
         }
 

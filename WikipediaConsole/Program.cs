@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using WikipediaConsole.UI;
 using System;
+using WikipediaConsole.UI;
 
 namespace WikipediaConsole
 {

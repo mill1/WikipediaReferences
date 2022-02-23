@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace WikipediaReferences.Models
 {
@@ -20,10 +17,10 @@ namespace WikipediaReferences.Models
         public string UrlAccess { get; set; }
         public string Quote { get; set; }
         public string Work { get; set; }
-        public string Agency { get; set; }        
-        public string Publisher { get; set; }        
-        public string Language { get; set; }        
-        public string Location { get; set; }        
+        public string Agency { get; set; }
+        public string Publisher { get; set; }
+        public string Language { get; set; }
+        public string Location { get; set; }
         public DateTime AccessDate { get; set; }
         public DateTime Date { get; set; }
         public string Page { get; set; }
