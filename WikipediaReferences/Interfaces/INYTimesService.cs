@@ -9,7 +9,7 @@ namespace WikipediaReferences.Interfaces
     {
         public IEnumerable<Reference> GetReferencesPerDeathDate(DateTime deathDate);
         public IEnumerable<Reference> GetReferencesPerMonthOfDeath(int year, int monthId);
-        public string AddObituaryReferences(int year, int month, string apiKey);
+        public string AddObituaryReferences(int year, int monthId, string apiKey);
         public IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle);
         public Reference UpdateDeathDate(IEnumerable<Reference> references, Dtos.UpdateDeathDate updateDeathDateDto);
         public DateTime ResolveDateOfDeath(Doc obituaryDoc, int monthId, int year);

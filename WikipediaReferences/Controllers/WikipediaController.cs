@@ -52,15 +52,15 @@ namespace WikipediaReferences.Controllers
         }
 
         [HttpGet("deceased/{year}/{month}")]
-        public IActionResult GetDeceasedByMonth(int year, int month)
+        public IActionResult GetDeceasedByMonth(int year, int monthId)
         {
             try
             {
-                return Ok(wikipediaService.GetDeceased(year, month));
+                return Ok(wikipediaService.GetDeceased(year, monthId));
             }
             catch (Exception e)
             {
-                string message = $"Getting the deceased by month failed. Requested month of death: {month} {year}.\r\n" +
+                string message = $"Getting the deceased by month failed. Requested month of death: {monthId} {year}.\r\n" +
                                  $"Exception:\r\n{e}";
                 logger.LogError($"{message}", e);
                 return BadRequest(message);

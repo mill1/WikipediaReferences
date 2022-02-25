@@ -33,19 +33,19 @@ namespace WikipediaReferences.Services
             return deceased;
         }
 
-        public IEnumerable<Entry> GetDeceased(int year, int month)
+        public IEnumerable<Entry> GetDeceased(int year, int monthId)
         {
-            DateTime deathDate = new DateTime(year, month, 1);
+            DateTime deathDate = new DateTime(year, monthId, 1);
             List<Entry> deceased = new List<Entry>();
 
             string deathsPerMonthText = GetRawTextDeathsPerMonthList(deathDate);
 
-            for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
+            for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
                 string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
 
                 IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
-                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, month, day)));
+                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, monthId, day)));
 
                 deceased.AddRange(deceasedPerDay);
             }
@@ -71,7 +71,7 @@ namespace WikipediaReferences.Services
             string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
 
             using (WebClient client = new WebClient())
-                // text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
+                // TODO text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}")
                 text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
 
             text = TrimWikiText(text, month, deathDate.Year);
@@ -184,7 +184,7 @@ namespace WikipediaReferences.Services
         {
             // Article size is an pragmatic yet arbitrary indicator regarding a biography's notability.
             // In the end it cannot be helped that fanboys create large articles for their idols.
-            // However, the indicator can be improved somewhat by looking at the 'netto content' of the article;
+            // However, the indicator can be improved somewhat by looking at the 'netto content' of the article:
             // Articles can become quite verbose because of the use of infobox-templates and the addition of many categories.
             // Stripping those elements from the markup text results in a more realistic article size.
             int posContentStart = GetContentStart(rawText);
