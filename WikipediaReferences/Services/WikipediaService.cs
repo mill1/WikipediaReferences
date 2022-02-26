@@ -12,6 +12,7 @@ namespace WikipediaReferences.Services
 {
     public class WikipediaService : IWikipediaService
     {
+        private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
         private const int NoInfobox = -1;
         private readonly IWikiTextService wikiTextService;
         private readonly IWikipediaWebClient wikipediaWebClient;
@@ -27,12 +28,11 @@ namespace WikipediaReferences.Services
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
             // TODO
-            const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";        
             // text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
             // text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Sandbox2");
             string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/Sandbox2");
 
-            text = GetDaySection(text, deathDate.Day, false);
+            text = GetDaySection(text, deathDate.Day);
 
             IEnumerable<string> rawDeceased = GetDeceasedTextAsList(text);
             IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
