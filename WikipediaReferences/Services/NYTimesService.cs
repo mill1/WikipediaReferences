@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Models;
@@ -57,8 +58,8 @@ namespace WikipediaReferences.Services
         {
             IEnumerable<Reference> references = GetReferencesPerArchiveMonth(year, monthId);
 
-            if (references.Count() > 0)
-                throw new Exception($"NYT archive month has already been added; {references.Count()} refs found. " +
+            if (references.Any())
+                throw new ArgumentException($"NYT archive month has already been added; {references.Count()} refs found. " +
                                     $"Month: {GetMonthNames(false).ElementAt(monthId - 1)} {year}");
 
             string json = GetJSONFromUrl(year, monthId, apiKey);
@@ -87,7 +88,7 @@ namespace WikipediaReferences.Services
         {
             NYTimesArchive archive = JsonConvert.DeserializeObject<NYTimesArchive>(json);
             var articleDocs = archive.response.docs.GroupBy(d => d._id).Select(grp => grp.First());
-            // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)"))); 
+            // false positives: var obituaryDocs = archive.response.docs.Where(d => d.keywords.Any(k => k.value.Equals("Deaths (Obituaries)")))
             return articleDocs;
         }
 
@@ -95,7 +96,7 @@ namespace WikipediaReferences.Services
         {
             try
             {
-                return articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).ToList().OrderBy(d => d.pub_date);
+                return articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).AsEnumerable().OrderBy(d => d.pub_date);
             }
             catch (Exception) // Not every articleDoc has a property type_of_material
             {
@@ -119,7 +120,7 @@ namespace WikipediaReferences.Services
                     Console.WriteLine($"Doc object has no property type_of_material. Year: {year} Month: {monthId} doc Id: {doc._id}");
                 }
             }
-            obituaryDocs.OrderBy(d => d.pub_date);
+            _ = obituaryDocs.OrderBy(d => d.pub_date);
 
             return obituaryDocs;
         }
@@ -139,7 +140,7 @@ namespace WikipediaReferences.Services
 
                 foreach (var nameVersion in nameVersions)
                 {
-                    articleTitle = CheckIfNameVersionExistsAsArticle(monthId, year, articleTitle, nameVersion);
+                    articleTitle = CheckIfNameVersionExistsAsArticle(monthId, year, nameVersion);
 
                     if (articleTitle != null)
                     {
@@ -151,8 +152,9 @@ namespace WikipediaReferences.Services
             return references;
         }
 
-        private string CheckIfNameVersionExistsAsArticle(int monthId, int year, string articleTitle, string nameVersion)
+        private string CheckIfNameVersionExistsAsArticle(int monthId, int year, string nameVersion)
         {
+            string articleTitle = null;
             try
             {
                 articleTitle = wikipediaService.GetArticleTitle(nameVersion, year, monthId);
@@ -160,10 +162,6 @@ namespace WikipediaReferences.Services
             catch (WikipediaPageNotFoundException e)
             {
                 Console.WriteLine(e.Message);
-            }
-            catch (Exception)
-            {
-                throw;
             }
 
             return articleTitle;
@@ -174,7 +172,7 @@ namespace WikipediaReferences.Services
             string name = ResolveNameValue(doc);
 
             if (name == null)
-                return null;
+                return new string[0];
 
             int i = name.IndexOf(",");
 
@@ -191,7 +189,7 @@ namespace WikipediaReferences.Services
 
         private string ResolveNameValue(Doc doc)
         {
-            var person = doc.keywords.Where(k => k.name == "persons").FirstOrDefault();
+            var person = doc.keywords.FirstOrDefault(k => k.name == "persons");
 
             if (person != null)
                 return person.value;
@@ -305,9 +303,7 @@ namespace WikipediaReferences.Services
 
         private bool HasNameInitial(string firstnames)
         {
-            var names = firstnames.Split(" ");
-
-            foreach (string name in names)
+            foreach (string name in firstnames.Split(" "))
                 if (IsNameInitial(name))
                     return true;
 
@@ -316,9 +312,8 @@ namespace WikipediaReferences.Services
 
         private bool IsNameInitial(string name)
         {
-            if (name.Length == 1)
-                if (name.Equals(name.ToUpper()))
-                    return true;
+            if (name.Length == 1 && name.Equals(name.ToUpper()))
+                return true;
 
             return false;
         }
@@ -573,7 +568,7 @@ namespace WikipediaReferences.Services
             int pos1 = text.IndexOf(separator, startIndex);
 
             if (pos1 == -1)
-                throw new Exception($"pos1; value not found: '{separator}'");
+                throw new ArgumentException($"pos1; value not found: '{separator}'");
 
             int pos2 = text.IndexOf(separator, pos1 + 1);
 
@@ -599,7 +594,7 @@ namespace WikipediaReferences.Services
                 // Sanity check to prevent endless loop.
                 i++;
                 if (i > 7)
-                    throw new Exception($"Day name not found: {dayName}");
+                    throw new ArgumentException($"Day name not found: {dayName}");
             }
 
             return dateOfDeath;

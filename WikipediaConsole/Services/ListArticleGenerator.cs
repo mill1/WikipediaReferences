@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences;
 using WikipediaReferences.Models;
 
@@ -19,8 +20,7 @@ namespace WikipediaConsole.Services
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
 
-        private IEnumerable<Entry> entries;
-        private IEnumerable<Reference> references;
+        private IEnumerable<Entry> entries;        
 
         public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer)
         {
@@ -58,8 +58,11 @@ namespace WikipediaConsole.Services
 
         private void CheckIfArticleContainsSublist(int year, int monthId)
         {
-            // TODO string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
-            string articleTitle = @"User:Mill_1/Months/December";
+            // TODO 3 of 3
+            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
+            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
+            // 'default': string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}"
+            string articleTitle = @"User:Mill_1/sandbox2";
 
             articleTitle = articleTitle.Replace(":", "%3A");
             articleTitle = articleTitle.Replace("/", "%2F");
@@ -75,7 +78,7 @@ namespace WikipediaConsole.Services
             UI.Console.WriteLine("Getting things ready. This may take a minute..");
 
             entries = GetEntriesPermonth(year, monthId);
-            references = GetReferencesPermonth(year, monthId);
+            var references = GetReferencesPermonth(year, monthId);
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
@@ -117,7 +120,7 @@ namespace WikipediaConsole.Services
         private void HandleReference(Reference reference, IEnumerable<Entry> entries)
         {
             //Get matching entry 
-            Entry entry = entries.Where(e => e.LinkedName == reference.ArticleTitle).FirstOrDefault();
+            Entry entry = entries.FirstOrDefault(e => e.LinkedName == reference.ArticleTitle);
 
             if (entry == null)
             {
@@ -143,10 +146,6 @@ namespace WikipediaConsole.Services
             {
                 UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
             }
-            catch (Exception)
-            {
-                throw;
-            }
 
             return nettoNrOfChars;
         }
@@ -155,8 +154,7 @@ namespace WikipediaConsole.Services
         {
             if (entry.DeathDate == reference.DeathDate)
             {
-                ConsoleColor consoleColor = ConsoleColor.White;
-
+                ConsoleColor consoleColor;
                 string refInfo = HandleMatchingDatesOfDeath(entry, reference, out consoleColor);
 
                 UI.Console.WriteLine(consoleColor, $"{entry.LinkedName}: {refInfo}");
@@ -238,7 +236,7 @@ namespace WikipediaConsole.Services
                 UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
             else
                 if (entry.Reference.Contains("New York Times"))
-                UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
+                    UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
         }
 
         private DateTime GetAccessDateFromEntryReference(string entryReference, DateTime defaultAccessDate)
@@ -285,34 +283,28 @@ namespace WikipediaConsole.Services
 
         private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
         {
-            IEnumerable<Entry> entries;
+            IEnumerable<Entry> entriesPerMonth;
             string uri = $"wikipedia/deceased/{year}/{monthId}";
             HttpResponseMessage response = util.SendGetRequest(uri);
 
             string result = response.Content.ReadAsStringAsync().Result;
 
             if (response.IsSuccessStatusCode)
-                entries = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
+                entriesPerMonth = JsonConvert.DeserializeObject<IEnumerable<Entry>>(result);
             else
             {
-                HandleResultException(result);
-                return null;
-            }
-
-            return entries;
-        }
-
-        private void HandleResultException(string result)
-        {
-            if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
-                throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
-            else
-            {
-                if (result.Contains(typeof(InvalidWikipediaPageException).Name))
-                    throw new WikipediaReferencesException(result);
+                if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
+                    throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
                 else
-                    throw new Exception(result);
+                {
+                    if (result.Contains(typeof(InvalidWikipediaPageException).Name))
+                        throw new WikipediaReferencesException(result);
+                    else
+                        throw new ArithmeticException(result);
+                }
             }
+
+            return entriesPerMonth;
         }
 
         private IEnumerable<Reference> GetReferencesPermonth(int year, int monthId)

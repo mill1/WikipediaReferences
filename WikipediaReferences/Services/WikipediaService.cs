@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using Wikimedia.Utilities.Interfaces;
+using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
@@ -11,41 +13,49 @@ namespace WikipediaReferences.Services
     public class WikipediaService : IWikipediaService
     {
         private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
-        private const string EntryDelimiter = "*[[";
         private const int NoInfobox = -1;
-
+        private readonly IWikiTextService wikiTextService;
+        private readonly IWikipediaWebClient wikipediaWebClient;
         private readonly ILogger logger;
 
-        public WikipediaService(ILogger<WikipediaService> logger)
+        public WikipediaService(IWikiTextService wikiTextService, IWikipediaWebClient wikipediaWebClient, ILogger<WikipediaService> logger)
         {
+            this.wikiTextService = wikiTextService;
+            this.wikipediaWebClient = wikipediaWebClient;
             this.logger = logger;
         }
 
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
-            string text = GetRawTextDeathsPerMonthList(deathDate);
+            // TODO 1 of 3
+            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
+            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/sandbox2");
 
-            text = GetDaySection(text, deathDate.Day, false);
+            text = wikiTextService.GetDaySectionOfMonthList(text, deathDate.Day);
 
-            IEnumerable<string> rawDeceased = GetRawDeceased(text);
+            IEnumerable<string> rawDeceased = wikiTextService.GetDeceasedTextAsList(text);
             IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
 
             return deceased;
         }
 
-        public IEnumerable<Entry> GetDeceased(int year, int month)
+        public IEnumerable<Entry> GetDeceased(int year, int monthId)
         {
-            DateTime deathDate = new DateTime(year, month, 1);
+            DateTime deathDate = new DateTime(year, monthId, 1);
             List<Entry> deceased = new List<Entry>();
 
-            string deathsPerMonthText = GetRawTextDeathsPerMonthList(deathDate);
+            // TODO 2 of 3
+            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
+            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/sandbox2");
 
-            for (int day = 1; day <= DateTime.DaysInMonth(year, month); day++)
+            for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
-                string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
+                string deathsPerDayText = wikiTextService.GetDaySectionOfMonthList(text, day);
 
-                IEnumerable<string> rawDeceased = GetRawDeceased(deathsPerDayText);
-                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, month, day)));
+                IEnumerable<string> rawDeceased = wikiTextService.GetDeceasedTextAsList(deathsPerDayText);
+                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, monthId, day)));
 
                 deceased.AddRange(deceasedPerDay);
             }
@@ -53,89 +63,22 @@ namespace WikipediaReferences.Services
             return deceased;
         }
 
-        private Entry ParseEntry(string rawEntry, DateTime deathDate)
+        private Entry ParseEntry(string entryText, DateTime deathDate)
         {
             return new Entry
             {
-                LinkedName = GetNameFromRawEntry(rawEntry, true),
-                Name = GetNameFromRawEntry(rawEntry, false),
-                Information = GetInformationFromRawEntry(rawEntry),
-                Reference = GetReferencesFromRawEntry(rawEntry),
+                LinkedName = wikiTextService.GetNameFromEntryText(entryText, true),
+                Name = wikiTextService.GetNameFromEntryText(entryText, false),
+                Information = wikiTextService.GetInformationFromEntryText(entryText),
+                Reference = wikiTextService.GetReferencesFromEntryText(entryText),
                 DeathDate = deathDate
             };
-        }
-
-        private string GetRawTextDeathsPerMonthList(DateTime deathDate)
-        {
-            string text;
-            string month = deathDate.ToString("MMMM", new CultureInfo("en-US"));
-
-            using (WebClient client = new WebClient())
-                // text = client.DownloadString(UrlWikipediaRawBase + $"Deaths_in_{month}_{deathDate.Year}");
-                text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
-
-            text = TrimWikiText(text, month, deathDate.Year);
-            text = RemoveSubLists(text);
-
-            CheckEntyPrefixes(text);
-
-            return text;
-        }
-
-        private string RemoveSubLists(string text)
-        {
-            if (!text.Contains("**[["))
-                return text;
-
-            text = text.Replace("**[[", "~~[[");
-
-            var entries = text.Split('*').Skip(1).ToList();
-
-            entries.ForEach(entry =>
-            {
-                if (entry.Substring(0, 2) != "[[")
-                    text = RemoveSubList(entry, text);
-            });
-
-            return text;
-        }
-
-        private string RemoveSubList(string subList, string text)
-        {
-            int pos = subList.IndexOf("==");
-
-            if (pos == -1)
-                throw new InvalidWikipediaPageException($"Invalid markup found: no section found after sub list. Fix the article");
-
-            subList = subList.Substring(0, pos);
-
-            return text.Replace($"*{subList}", string.Empty);
-        }
-
-        private void CheckEntyPrefixes(string text)
-        {
-            if (text.Contains("* "))
-                throw new InvalidWikipediaPageException($"Invalid markup style found: '* '. Fix the article");
-
-            text = text.Replace("M*A*S*H", "M+A+S+H");
-            text = text.Replace("NOC*NSF", "NOC+NSF");
-
-            var entries = text.Split('*').Skip(1).ToList();
-
-            entries.ForEach(entry =>
-            {
-                if (entry.Length == 1)
-                    throw new InvalidWikipediaPageException($"Invalid markup content found: '*{entry}*'. Fix the article or the code");
-
-                if (entry.Substring(0, 2) != "[[")
-                    throw new InvalidWikipediaPageException($"Invalid markup style found: '*{entry}'. Fix the article or the code");
-            });
         }
 
         public string GetArticleTitle(string nameVersion, int year, int monthId)
         {
             string articleTitle = nameVersion;
-            string rawText = GetRawArticleText(ref articleTitle, false);
+            string rawText = GetRawArticleText(articleTitle, false);
 
             if (ContainsValidDeathCategory(rawText, year, monthId))
             {
@@ -152,27 +95,9 @@ namespace WikipediaReferences.Services
             }
         }
 
-        private string GetRawArticleMarkup(ref string article, out bool isRedirect)
+        public string GetRawArticleText(string article, bool nettoContent)
         {
-            isRedirect = false;
-            string rawText = GetRawWikiPageText(article);
-
-            if (rawText.Contains("#REDIRECT"))
-            {
-                isRedirect = true;
-                article = GetRedirectPage(rawText);
-            }
-            return rawText;
-        }
-
-        public string GetRawArticleText(ref string article, bool nettoContent)
-        {
-            bool isRedirect;
-
-            string rawText = GetRawArticleMarkup(ref article, out isRedirect);
-
-            if (isRedirect)
-                rawText = GetRawWikiPageText(article);
+            string rawText = wikipediaWebClient.GetWikiTextArticle(article, out _);
 
             if (nettoContent)
                 rawText = GetNettoContentRawArticleText(rawText);
@@ -184,12 +109,13 @@ namespace WikipediaReferences.Services
         {
             // Article size is an pragmatic yet arbitrary indicator regarding a biography's notability.
             // In the end it cannot be helped that fanboys create large articles for their idols.
-            // However, the indicator can be improved somewhat by looking at the 'netto content' of the article;
+            // However, the indicator can be improved somewhat by looking at the 'netto content' of the article:
             // Articles can become quite verbose because of the use of infobox-templates and the addition of many categories.
             // Stripping those elements from the markup text results in a more realistic article size.
             int posContentStart = GetContentStart(rawText);
+            int posContentEnd = GetContentEnd(rawText);
 
-            return rawText.Substring(posContentStart, GetContentEnd(rawText) - posContentStart);
+            return rawText.Substring(posContentStart, posContentEnd - posContentStart);
         }
 
         private int GetContentStart(string rawText)
@@ -277,7 +203,7 @@ namespace WikipediaReferences.Services
 
             posEndList = posEndList.Where(pos => pos != -1).ToList();
 
-            if (posEndList.Any())
+            if (!posEndList.Any())
             {
                 int pos = rawText.IndexOf("''' may refer to");
 
@@ -355,139 +281,12 @@ namespace WikipediaReferences.Services
         {
             try
             {
-                return GetRawArticleText(ref authorsArticle, false);
+                return GetRawArticleText(authorsArticle, false);
             }
             catch (WikipediaPageNotFoundException)
             {
                 return null;
             }
-        }
-
-        private string GetInformationFromRawEntry(string rawEntry)
-        {
-            string info = rawEntry.Substring(rawEntry.IndexOf("]]") + "]]".Length);
-
-            // Loose the first comma
-            info = info.Substring(1).Trim();
-
-            int posRef = info.IndexOf("<ref>");
-
-            if (posRef < 0)
-                return info;
-            else
-                return info.Substring(0, posRef);
-        }
-
-        private string GetReferencesFromRawEntry(string rawEntry)
-        {
-            int posStart = rawEntry.IndexOf("<ref>");
-
-            if (posStart < 0)
-                return null;
-            else
-            {
-                string x = rawEntry.Substring(posStart);
-                return x;
-            }
-        }
-
-        private string GetNameFromRawEntry(string rawEntry, bool linkedName)
-        {
-            string namePart = rawEntry.Substring("[[".Length, rawEntry.IndexOf("]]") - "]]".Length);
-            int pos = namePart.IndexOf('|');
-            string name;
-
-            if (pos < 0)
-                name = namePart;
-            else
-            {
-                if (linkedName)
-                    name = namePart.Substring(0, pos);
-                else
-                    name = namePart.Substring(pos + "|".Length);
-            }
-
-            name = CheckRedirection(linkedName, name);
-
-            return name;
-        }
-
-        private string CheckRedirection(bool linkedName, string name)
-        {
-            bool isRedirect;
-
-            //if linked name make sure it is not a redirect.
-            if (linkedName)
-            {
-                string originalName = name;
-                GetRawArticleMarkup(ref name, out isRedirect);
-
-                string redirectInfo = isRedirect ? $". Corrected REDIRECT '{originalName}'" : string.Empty;
-
-                Console.WriteLine($"Entry: {name}{redirectInfo}");
-            }
-            return name;
-        }
-
-        private IEnumerable<string> GetRawDeceased(string daySection)
-        {
-            string[] array = daySection.Split(EntryDelimiter);
-
-            IEnumerable<string> rawDeceased = array.Select(e => "[[" + e);
-
-            return rawDeceased.Skip(1);
-        }
-
-        private string GetDaySection(string wikiText, int day, bool trimHeader)
-        {
-            string daySection = wikiText;
-            int pos;
-
-            //Trim left
-            pos = Math.Max(daySection.IndexOf($"==={day}==="), daySection.IndexOf($"=== {day} ==="));
-
-            if (pos == -1)
-                throw new InvalidWikipediaPageException($"Invalid day section header found. Day: {day}");
-
-            daySection = daySection.Substring(pos);
-
-            if (trimHeader)
-                daySection = daySection.Substring(daySection.IndexOf(EntryDelimiter));
-
-            // Trim right
-            pos = Math.Max(daySection.IndexOf($"==={day + 1}==="), daySection.IndexOf($"=== {day + 1} ==="));
-
-            if (pos < 0) // we reached the end
-                return daySection;
-            else
-                return daySection.Substring(0, pos);
-        }
-
-        private string TrimWikiText(string wikiText, string month, int year)
-        {
-            string trimmedText = wikiText;
-            int pos;
-
-            //Trim left
-            pos = Math.Max(trimmedText.IndexOf($"=={month} {year}=="), trimmedText.IndexOf($"== {month} {year} =="));
-
-            if (pos == -1)
-                throw new InvalidWikipediaPageException($"Not found:  ==[]{ month } { year}[]== ");
-
-            trimmedText = trimmedText.Substring(pos);
-
-            // Trim right
-            pos = Math.Max(trimmedText.IndexOf("==References=="), trimmedText.IndexOf("== References =="));
-
-            if (pos == -1)
-                throw new InvalidWikipediaPageException($"Not found:  ==[]References[]== ");
-
-            trimmedText = trimmedText.Substring(0, pos);
-
-            // Loose '\n'
-            trimmedText = trimmedText.Replace("\n", "");
-
-            return trimmedText;
         }
 
         private bool IsHumaneNameDisambiguationPage(string rawText)
@@ -570,31 +369,6 @@ namespace WikipediaReferences.Services
                         return null;
                 }
             }
-        }
-
-        private string GetRawWikiPageText(string wikiPage)
-        {
-            string uri = UrlWikipediaRawBase + wikiPage.Replace(" ", "_");
-
-            try
-            {
-                using WebClient client = new WebClient();
-                return client.DownloadString(uri);
-            }
-            catch (WebException) // article does not exist (anymore) in Wikipedia
-            {
-                throw new WikipediaPageNotFoundException($"{wikiPage}: FAIL: no such wiki page");
-            }
-        }
-
-        private string GetRedirectPage(string rawText)
-        {
-            // #REDIRECT[[Robert McG. Thomas Jr.]]
-            int pos = rawText.IndexOf("[[");
-            string redirectPage = rawText.Substring(pos + 2);
-            pos = redirectPage.IndexOf("]]");
-
-            return redirectPage.Substring(0, pos);
         }
     }
 }

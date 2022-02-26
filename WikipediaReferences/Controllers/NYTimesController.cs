@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using WikipediaReferences.Interfaces;
-//using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Controllers
 {
@@ -32,7 +31,7 @@ namespace WikipediaReferences.Controllers
 
             IEnumerable<Models.Reference> references = nyTimesService.GetReferencesByArticleTitle(articleTitle);
 
-            if (references.Count() == 0)
+            if (!references.Any())
                 return NotFound($"Reference(s) not found. Requested article title = {articleTitle}.");
             try
             {
@@ -72,7 +71,7 @@ namespace WikipediaReferences.Controllers
             {
                 IEnumerable<Models.Reference> references = nyTimesService.GetReferencesPerMonthOfDeath(year, monthId);
 
-                if (references.Count() == 0)
+                if (!references.Any())
                     return NotFound($"References not found. Requested month: {year} {monthId}");
 
                 return Ok(references);
@@ -112,7 +111,7 @@ namespace WikipediaReferences.Controllers
 
             IEnumerable<Models.Reference> references = nyTimesService.GetReferencesByArticleTitle(updateDeathDateDto.ArticleTitle);
 
-            if (references.Count() == 0)
+            if (!references.Any())
                 return NotFound($"Reference(s) not found. Requested article title = {updateDeathDateDto.ArticleTitle}.");
             try
             {

@@ -2,7 +2,7 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using WikipediaReferences;
+using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences.Dtos;
 
 namespace WikipediaConsole
