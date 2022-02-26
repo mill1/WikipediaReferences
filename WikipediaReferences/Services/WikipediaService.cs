@@ -27,14 +27,14 @@ namespace WikipediaReferences.Services
 
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
-            // TODO
-            // text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Months/December");
-            // text = client.DownloadString(UrlWikipediaRawBase + @"User:Mill_1/Sandbox2");
-            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/Sandbox2");
+            // TODO 1 of 3
+            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
+            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/sandbox2");
 
-            text = GetDaySection(text, deathDate.Day);
+            text = wikiTextService.GetDaySectionOfMonthList(text, deathDate.Day);
 
-            IEnumerable<string> rawDeceased = GetDeceasedTextAsList(text);
+            IEnumerable<string> rawDeceased = wikiTextService.GetDeceasedTextAsList(text);
             IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
 
             return deceased;
@@ -45,13 +45,16 @@ namespace WikipediaReferences.Services
             DateTime deathDate = new DateTime(year, monthId, 1);
             List<Entry> deceased = new List<Entry>();
 
-            string deathsPerMonthText = GetWikiTextDeathsPerMonth(deathDate);
+            // TODO 2 of 3
+            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
+            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/sandbox2");
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
-                string deathsPerDayText = GetDaySection(deathsPerMonthText, day, false);
+                string deathsPerDayText = wikiTextService.GetDaySectionOfMonthList(text, day);
 
-                IEnumerable<string> rawDeceased = GetDeceasedTextAsList(deathsPerDayText);
+                IEnumerable<string> rawDeceased = wikiTextService.GetDeceasedTextAsList(deathsPerDayText);
                 IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, monthId, day)));
 
                 deceased.AddRange(deceasedPerDay);
@@ -64,8 +67,8 @@ namespace WikipediaReferences.Services
         {
             return new Entry
             {
-                LinkedName = GetNameFromEntryText(entryText, true),
-                Name = GetNameFromEntryText(entryText, false),
+                LinkedName = wikiTextService.GetNameFromEntryText(entryText, true),
+                Name = wikiTextService.GetNameFromEntryText(entryText, false),
                 Information = wikiTextService.GetInformationFromEntryText(entryText),
                 Reference = wikiTextService.GetReferencesFromEntryText(entryText),
                 DeathDate = deathDate
@@ -284,15 +287,6 @@ namespace WikipediaReferences.Services
             {
                 return null;
             }
-        }
-
-        private IEnumerable<string> GetDeceasedTextAsList(string daySection)
-        {
-            string[] array = daySection.Split("*[[");
-
-            IEnumerable<string> rawDeceased = array.Select(e => "[[" + e);
-
-            return rawDeceased.Skip(1);
         }
 
         private bool IsHumaneNameDisambiguationPage(string rawText)

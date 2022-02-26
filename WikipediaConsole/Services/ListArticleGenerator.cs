@@ -58,8 +58,11 @@ namespace WikipediaConsole.Services
 
         private void CheckIfArticleContainsSublist(int year, int monthId)
         {
-            // TODO string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}"
-            string articleTitle = @"User:Mill_1/Months/December";
+            // TODO 3 of 3
+            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
+            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
+            // 'default': string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}"
+            string articleTitle = @"User:Mill_1/sandbox2";
 
             articleTitle = articleTitle.Replace(":", "%3A");
             articleTitle = articleTitle.Replace("/", "%2F");
