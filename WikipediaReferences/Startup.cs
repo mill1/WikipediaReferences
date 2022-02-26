@@ -8,6 +8,8 @@ using System;
 using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Services;
+using Wikimedia.Utilities.Interfaces;
+using Wikimedia.Utilities.Services;
 
 namespace WikipediaReferences
 {
@@ -34,6 +36,8 @@ namespace WikipediaReferences
             }
 
             services.AddDbContext<WRContext>(optionActionCreator(webApiConnectionString));
+            services.AddScoped<IWikiTextService, WikiTextService>();
+            services.AddScoped<IWikipediaWebClient, WikipediaWebClient>();
             services.AddScoped<IWikipediaService, WikipediaService>();
             services.AddScoped<INYTimesService, NYTimesService>();
             services.AddControllers();

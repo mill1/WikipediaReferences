@@ -24,7 +24,7 @@ namespace WikipediaReferences.Controllers
         {
             try
             {
-                return Ok(wikipediaService.GetRawArticleText(ref articleTitle, nettoContent));
+                return Ok(wikipediaService.GetRawArticleText(articleTitle, nettoContent));
             }
             catch (Exception e)
             {
@@ -51,7 +51,7 @@ namespace WikipediaReferences.Controllers
             }
         }
 
-        [HttpGet("deceased/{year}/{month}")]
+        [HttpGet("deceased/{year}/{monthId}")]
         public IActionResult GetDeceasedByMonth(int year, int monthId)
         {
             try

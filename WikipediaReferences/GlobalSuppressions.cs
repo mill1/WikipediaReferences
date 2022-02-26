@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "<Pending>", Scope = "member", Target = "~F:WikipediaReferences.Services.WikipediaService.UrlWikipediaRawBase")]
+[assembly: SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "<Pending>", Scope = "member", Target = "~M:WikipediaReferences.Services.NYTimesService.GetJSONFromUrl(System.Int32,System.Int32,System.String)~System.String")]

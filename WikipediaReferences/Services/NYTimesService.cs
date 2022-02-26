@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Models;

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences;
 using WikipediaReferences.Models;
 
