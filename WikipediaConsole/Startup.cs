@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
+using Wikimedia.Utilities.Interfaces;
+using Wikimedia.Utilities.Services;
 using WikipediaConsole.Services;
 using WikipediaConsole.UI;
 
@@ -26,7 +28,8 @@ namespace WikipediaConsole
             services.AddScoped<ListArticleGenerator>();
             services.AddScoped<ReferencesEditor>();
             services.AddScoped<ArticleAnalyzer>();
-            services.AddScoped<AssemblyInfo>();
+            services.AddScoped<AssemblyInfo>();            
+            services.AddScoped<IToolforgeService, ToolforgeService>();
         }
     }
 }
