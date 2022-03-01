@@ -16,6 +16,7 @@ namespace WikipediaConsole.UI
         private const string DayCheck = "d";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
+        private const string NumberOfNettoChars = "n";
         private const string Quit = "q";
         private bool quit;
 
@@ -69,6 +70,7 @@ namespace WikipediaConsole.UI
                 $"{DayCheck}:\tDay name of date",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
+                $"{NumberOfNettoChars}:\tNumber of netto chars of article",
                 $"{Quit}:\tQuit application"
             };
         }
@@ -98,6 +100,9 @@ namespace WikipediaConsole.UI
                     break;
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
+                    break;
+                case NumberOfNettoChars:
+                    listArticleGenerator.DetermineNumberOfCharactersBiography();
                     break;
                 case Quit:
                     quit = true;

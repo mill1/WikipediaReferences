@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using Wikimedia.Utilities.Exceptions;
+using Wikimedia.Utilities.Interfaces;
 using WikipediaReferences;
 using WikipediaReferences.Models;
 
@@ -15,19 +16,19 @@ namespace WikipediaConsole.Services
 {
     public class ListArticleGenerator
     {
-        private readonly int minimumNrOfNettoCharsBiography;
+        private readonly int minimumNumberOfLinksToArticle;
 
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
-
+        private readonly IToolforgeService toolforgeService;
         private IEnumerable<Entry> entries;        
 
-        public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer)
+        public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer, IToolforgeService toolforgeService)
         {
             this.util = util;
             this.articleAnalyzer = articleAnalyzer;
-
-            minimumNrOfNettoCharsBiography = int.Parse(configuration.GetValue<string>("Minimum number of netto chars wiki biography"));
+            this.toolforgeService = toolforgeService;
+            minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article"));
         }
 
         public void PrintDeathsPerMonthArticle(int year, int monthId)
@@ -59,10 +60,8 @@ namespace WikipediaConsole.Services
         private void CheckIfArticleContainsSublist(int year, int monthId)
         {
             // TODO 3 of 3
-            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
-            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
-            // 'default': string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}"
-            string articleTitle = @"User:Mill_1/sandbox2";
+            //string articleTitle = @"User:Mill_1/Months/December";
+            string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
 
             articleTitle = articleTitle.Replace(":", "%3A");
             articleTitle = articleTitle.Replace("/", "%2F");
@@ -124,30 +123,31 @@ namespace WikipediaConsole.Services
 
             if (entry == null)
             {
-                int nettoNrOfChars = DetermineNumberOfCharactersBiography(reference);
+                var directLinks = toolforgeService.GetWikilinksInfo(reference.ArticleTitle).direct;
 
-                if (nettoNrOfChars >= minimumNrOfNettoCharsBiography)
-                    UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (net # of chars bio: {nettoNrOfChars})");
+                if(directLinks >= minimumNumberOfLinksToArticle)
+                    UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (# of links: {directLinks})");
             }
             else
                 HandleExistingEntry(entry, reference);
         }
 
-        private int DetermineNumberOfCharactersBiography(Reference reference)
+        public void DetermineNumberOfCharactersBiography()
         {
-            int nettoNrOfChars = 0;
-
             try
             {
-                // An entry could've be left out of the list because of notabiltiy. Determine netto nr of chars article
-                nettoNrOfChars = GetNumberOfCharactersBiography(reference.ArticleTitle, netto: true);
+                //Determine netto nr of chars of article
+                Console.WriteLine("Article title:");
+                string articleTitle = Console.ReadLine();
+
+                int numberOfChars = GetNumberOfCharactersBiography(articleTitle, netto: true);
+
+                UI.Console.WriteLine(ConsoleColor.Green, $"Number of netto chars: {numberOfChars}");
             }
             catch (WikipediaReferencesException e)
             {
                 UI.Console.WriteLine(ConsoleColor.Blue, e.Message);
             }
-
-            return nettoNrOfChars;
         }
 
         private void HandleExistingEntry(Entry entry, Reference reference)
@@ -214,7 +214,6 @@ namespace WikipediaConsole.Services
                 reference.Contains("britannica.com/") ||
                 reference.Contains("theguardian.com/"))
                 return true;
-
 
             // <ref>[http..
             if (!reference.Contains("{{cite", StringComparison.OrdinalIgnoreCase) && !reference.Contains("{{citation", StringComparison.OrdinalIgnoreCase))

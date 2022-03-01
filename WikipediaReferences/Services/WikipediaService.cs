@@ -28,9 +28,8 @@ namespace WikipediaReferences.Services
         public IEnumerable<Entry> GetDeceased(DateTime deathDate)
         {
             // TODO 1 of 3
-            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
-            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
-            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/sandbox2");
+            //string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/Months/December");
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true);
 
             text = wikiTextService.GetDaySectionOfMonthList(text, deathDate.Day);
 
@@ -46,9 +45,8 @@ namespace WikipediaReferences.Services
             List<Entry> deceased = new List<Entry>();
 
             // TODO 2 of 3
-            // UrlWikipediaRawBase + @"User:Mill_1/Months/December"
-            // UrlWikipediaRawBase + @"User:Mill_1/sandbox2"
-            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/sandbox2");
+            //string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/Months/December");
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true);
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
