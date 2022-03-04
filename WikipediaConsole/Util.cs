@@ -9,8 +9,16 @@ namespace WikipediaConsole
 {
     public class Util
     {
-        private readonly IConfiguration configuration;
         private readonly HttpClient client;
+
+        public Util(IConfiguration configuration, HttpClient client)
+        {
+            this.client = client;
+            var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
+            this.client.BaseAddress = new Uri(uri);
+            this.client.DefaultRequestHeaders.Accept.Clear();
+            this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
 
         public string HandleResponse(HttpResponseMessage response, string articleTitle)
         {
@@ -25,17 +33,6 @@ namespace WikipediaConsole
                 else
                     throw new Exception($"Article: {articleTitle} result: '{result}'");
             }
-        }
-
-        public Util(IConfiguration configuration, HttpClient client)
-        {
-            this.configuration = configuration;
-
-            this.client = client;
-            var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
-            this.client.BaseAddress = new Uri(uri);
-            this.client.DefaultRequestHeaders.Accept.Clear();
-            this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public void GetDeathMontArgs(out int year, out int monthId)

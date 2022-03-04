@@ -15,9 +15,8 @@ using WikipediaReferences.Models;
 namespace WikipediaConsole.Services
 {
     public class ListArticleGenerator
-    {
-        private readonly int minimumNumberOfLinksToArticle;
-
+    {        
+        private readonly IConfiguration configuration;
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
         private readonly IToolforgeService toolforgeService;
@@ -25,22 +24,30 @@ namespace WikipediaConsole.Services
 
         public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer, IToolforgeService toolforgeService)
         {
+            this.configuration = configuration;
             this.util = util;
             this.articleAnalyzer = articleAnalyzer;
-            this.toolforgeService = toolforgeService;
-            minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article"));
+            this.toolforgeService = toolforgeService;           
         }
 
         public void PrintDeathsPerMonthArticle(int year, int monthId)
         {
             try
             {
-                EvaluateDeathsPerMonthArticle(year, monthId);
-                CheckIfArticleContainsSublist(year, monthId);
+                UI.Console.WriteLine("New article?  (y/n, q to quit)");
+                string newArticle = UI.Console.ReadLine();
+
+                if (newArticle.Equals("q", StringComparison.OrdinalIgnoreCase))
+                    return;
+
+                string articleTitle = GetArticleSource(year, monthId, newArticle);
+
+                EvaluateDeathsPerMonthArticle(year, monthId, articleTitle);
+                CheckIfArticleContainsSublist(articleTitle);
 
                 UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
 
-                if (UI.Console.ReadLine() != "y")
+                if (UI.Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
                     return;
 
                 PrintOutput(year, monthId);
@@ -57,14 +64,25 @@ namespace WikipediaConsole.Services
             }
         }
 
-        private void CheckIfArticleContainsSublist(int year, int monthId)
+        private string GetArticleSource(int year, int monthId, string newArticle)
         {
-            // TODO 3 of 3
-            //string articleTitle = @"User:Mill_1/Months/December";
-            string articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+            string newArticleSource;
+            
+            if (newArticle == "y")
+            {
+                newArticleSource = configuration.GetValue<string>("New list article source");
+                newArticleSource = newArticleSource.Replace(":", "%3A");
+                newArticleSource = newArticleSource.Replace("/", "%2F");
+            }
+            else
+            {
+                newArticleSource = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+            }
+            return newArticleSource;
+        }
 
-            articleTitle = articleTitle.Replace(":", "%3A");
-            articleTitle = articleTitle.Replace("/", "%2F");
+        private void CheckIfArticleContainsSublist(string articleTitle)
+        {
 
             bool articleContainsSublist = articleAnalyzer.ArticleContainsSublist(articleTitle);
 
@@ -72,11 +90,11 @@ namespace WikipediaConsole.Services
                 UI.Console.Write(ConsoleColor.Red, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
         }
 
-        private void EvaluateDeathsPerMonthArticle(int year, int monthId)
+        private void EvaluateDeathsPerMonthArticle(int year, int monthId, string newArticleSource)
         {
             UI.Console.WriteLine("Getting things ready. This may take a minute..");
 
-            entries = GetEntriesPermonth(year, monthId);
+            entries = GetEntriesPermonth(year, monthId, newArticleSource);
             var references = GetReferencesPermonth(year, monthId);
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
@@ -124,8 +142,9 @@ namespace WikipediaConsole.Services
             if (entry == null)
             {
                 var directLinks = toolforgeService.GetWikilinksInfo(reference.ArticleTitle).direct;
+                int minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article"));
 
-                if(directLinks >= minimumNumberOfLinksToArticle)
+                if (directLinks >= minimumNumberOfLinksToArticle)
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (# of links: {directLinks})");
             }
             else
@@ -280,10 +299,10 @@ namespace WikipediaConsole.Services
             return rawArticleText.Length;
         }
 
-        private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId)
+        private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId, string newArticleSource)
         {
             IEnumerable<Entry> entriesPerMonth;
-            string uri = $"wikipedia/deceased/{year}/{monthId}";
+            string uri = $"wikipedia/deceased/{year}/{monthId}/{newArticleSource}";
             HttpResponseMessage response = util.SendGetRequest(uri);
 
             string result = response.Content.ReadAsStringAsync().Result;
