@@ -13,10 +13,7 @@ namespace WikipediaConsole.Services
 
         public bool ArticleContainsSublist(string articleTitle)
         {
-            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/true";
-            HttpResponseMessage response = util.SendGetRequest(uri);
-
-            string rawArticleText = util.HandleResponse(response, articleTitle);
+            string rawArticleText = GetRawArticleText(articleTitle, true);
 
             return rawArticleText.Contains("**[[");
         }
@@ -27,13 +24,8 @@ namespace WikipediaConsole.Services
             {
                 UI.Console.WriteLine("Article title:");
                 string articleTitle = Console.ReadLine();
-
-                articleTitle = articleTitle.Replace("/", "%2F");
-
-                string uri = $"wikipedia/rawarticle/{articleTitle}/netto/{netto}";
-                HttpResponseMessage response = util.SendGetRequest(uri);
-
-                string rawArticleText = util.HandleResponse(response, articleTitle);
+                
+                string rawArticleText = GetRawArticleText(articleTitle, netto);
 
                 UI.Console.WriteLine(ConsoleColor.Green, rawArticleText);
             }
@@ -45,6 +37,18 @@ namespace WikipediaConsole.Services
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        private string GetRawArticleText(string articleTitle, bool netto)
+        {
+            // https://en.wikipedia.org/wiki/Help!:_A_Day_in_the_Life
+            articleTitle = articleTitle.Replace("/", "%2F");
+            articleTitle = articleTitle.Replace(":", "%3A");
+
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/{netto}";
+            HttpResponseMessage response = util.SendGetRequest(uri);
+
+            return util.HandleResponse(response, articleTitle);
         }
     }
 }

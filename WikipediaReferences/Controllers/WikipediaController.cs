@@ -35,12 +35,12 @@ namespace WikipediaReferences.Controllers
             }
         }
 
-        [HttpGet("deceased/{date}")]
-        public IActionResult GetDeceasedByDate(DateTime date)
+        [HttpGet("deceased/{date}/{articleTitle}")]
+        public IActionResult GetDeceasedByDate(DateTime date, string articleTitle)
         {
             try
-            {
-                return Ok(wikipediaService.GetDeceased(date));
+            {                
+                return Ok(wikipediaService.GetDeceased(date, articleTitle));
             }
             catch (Exception e)
             {
@@ -51,12 +51,12 @@ namespace WikipediaReferences.Controllers
             }
         }
 
-        [HttpGet("deceased/{year}/{monthId}")]
-        public IActionResult GetDeceasedByMonth(int year, int monthId)
+        [HttpGet("deceased/{year}/{monthId}/{articleTitle}")]
+        public IActionResult GetDeceasedByMonth(int year, int monthId, string articleTitle)
         {
             try
             {
-                return Ok(wikipediaService.GetDeceased(year, monthId));
+                return Ok(wikipediaService.GetDeceased(year, monthId, articleTitle));
             }
             catch (Exception e)
             {

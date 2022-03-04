@@ -11,8 +11,7 @@ using WikipediaReferences.Interfaces;
 namespace WikipediaReferences.Services
 {
     public class WikipediaService : IWikipediaService
-    {
-        private const string UrlWikipediaRawBase = "https://en.wikipedia.org/w/index.php?action=raw&title=";
+    {        
         private const int NoInfobox = -1;
         private readonly IWikiTextService wikiTextService;
         private readonly IWikipediaWebClient wikipediaWebClient;
@@ -25,11 +24,9 @@ namespace WikipediaReferences.Services
             this.logger = logger;
         }
 
-        public IEnumerable<Entry> GetDeceased(DateTime deathDate)
+        public IEnumerable<Entry> GetDeceased(DateTime deathDate, string articleTitle = null)
         {
-            // TODO 1 of 3
-            //string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/Months/December");
-            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true);
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, articleTitle);
 
             text = wikiTextService.GetDaySectionOfMonthList(text, deathDate.Day);
 
@@ -39,14 +36,12 @@ namespace WikipediaReferences.Services
             return deceased;
         }
 
-        public IEnumerable<Entry> GetDeceased(int year, int monthId)
+        public IEnumerable<Entry> GetDeceased(int year, int monthId, string articleTitle = null)
         {
             DateTime deathDate = new DateTime(year, monthId, 1);
             List<Entry> deceased = new List<Entry>();
 
-            // TODO 2 of 3
-            //string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, UrlWikipediaRawBase + @"User:Mill_1/Months/December");
-            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true);
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, articleTitle);
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
