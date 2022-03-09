@@ -2,24 +2,73 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using WikipediaReferences.Dtos;
 
 namespace WikipediaReferences.Console.Services
 {
-    public class NytReferencesEditor
+    public class ReferencesEditor
     {
         private readonly IConfiguration configuration;
         private readonly Util util;
 
-        public NytReferencesEditor(IConfiguration configuration, Util util)
+        public ReferencesEditor(IConfiguration configuration, Util util)
         {
             this.configuration = configuration;
             this.util = util;
         }
 
-        public void ShowNYTimesUrlOfArticle()
+        public void GenerateOlympediaReference()
+        {
+            UI.Console.WriteLine("Olympedia Id: (f.i.: 73711)");
+            string id = UI.Console.ReadLine();
+
+            using var webClient = new System.Net.WebClient();
+
+            var url = "http://www.olympedia.org/athletes/" + id;
+            var response = webClient.DownloadString(url);
+
+            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+            doc.LoadHtml(response);
+
+            var table = doc.DocumentNode.Descendants(0).First(n => n.HasClass("biodata"))
+                .Descendants("tr")
+                .Select(tr => {
+
+                    var key = tr.Elements("th").Select(td => td.InnerText).First();
+                    var value = tr.Elements("td").Select(td => td.InnerText).First();
+                    return new KeyValuePair<string, string>(key, value);
+                }
+                )
+                .ToList();
+
+            string usedName = table.First(kvp => kvp.Key == "Used name").Value;
+            var reference = GenerateWebReference($"Olympedia – {usedName}", url, "olympedia.org", DateTime.Today, DateTime.MinValue, publisher: "[[OlyMADMen]]");
+
+            UI.Console.WriteLine(ConsoleColor.Green, reference);
+        }
+
+        private string GenerateWebReference(string title, string url, string website, DateTime accessDate, DateTime date,
+                                       string last1 = "", string first1 = "", string publisher = "", string language = "")
+        {
+            var cultureInfo = new CultureInfo("en-US");
+
+            return "<ref>{{cite web" +
+                    $" |last1={last1}" +
+                    $" |first1={first1}" +
+                    $" |title={title}" +
+                    $" |url={url.Replace(@"\/", "/")}" + // unescape / (although never escaped)
+                    $" |website={website}" +
+                    $" |publisher={publisher}" +
+                    $" |access-date={accessDate.ToString("d MMMM yyyy", cultureInfo)}" +
+                    $" |language={language}" +
+                    $" |date={(date == DateTime.MinValue ? string.Empty : date.ToString("d MMMM yyyy", cultureInfo))}" +
+                   "}}</ref>";
+        }
+
+        public void GenerateReferenceNYT()
         {
             try
             {
@@ -29,13 +78,11 @@ namespace WikipediaReferences.Console.Services
                 IEnumerable<Reference> references = GetReferencesByArticleTitle(articleTitle);
 
                 references.ToList().ForEach(r =>
-                    {
-                        var reference = MapDtoToModel(r);
+                {
+                    var reference = MapDtoToModel(r);
 
-                        UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());
-                    });
-
-
+                    UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());
+                });
             }
             catch (WikipediaReferencesException e)
             {

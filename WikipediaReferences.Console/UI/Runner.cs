@@ -11,21 +11,22 @@ namespace WikipediaReferences.Console.UI
     public class Runner
     {
         private const string PrintDeathMonth = "p";
+        private const string GenerateRef = "r";
+        private const string GenerateRefNYT = "s";
+        private const string GenerateRefOlympedia = "o";
         private const string UpdateNYTDeathDate = "u";
-        private const string ShowNYTUrl = "s";
         private const string DayCheck = "d";
-        private const string OlympediaRef = "o";
-        private const string Test = "t";
         private const string AddNYTObitRefs = "a";
         private const string NumberOfNettoChars = "n";
+        private const string Test = "t";
         private const string Quit = "q";
         private bool quit;
 
         private readonly Util util;
         private readonly ListArticleGenerator listArticleGenerator;
-        private readonly NytReferencesEditor referencesEditor;
+        private readonly ReferencesEditor referencesEditor;
 
-        public Runner(ListArticleGenerator listArticleGenerator, NytReferencesEditor referencesEditor,
+        public Runner(ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor,
                       Util util, AssemblyInfo assemblyInfo)
         {
             this.util = util;
@@ -63,16 +64,57 @@ namespace WikipediaReferences.Console.UI
             return new List<string>
             {
                 $"{PrintDeathMonth}:\tPrint month of death",
+                $"{GenerateRef}:\tGenerate reference",
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
-                $"{ShowNYTUrl}:\tShow NYT Url of article",
                 $"{DayCheck}:\tDay name of date",
-                $"{OlympediaRef}:\tGenerate Olympedia ref",
-                $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
                 $"{NumberOfNettoChars}:\tNumber of netto chars of article",
-                $"{Quit}:\tQuit application"
+                $"{Test}:\tTest stuff",
+                $"{Quit}:\tQuit"
             };
         }
+
+        private void GenerateReference()
+        {
+            string answer = "";
+            do
+            {
+                Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItemsGenRefs());
+                answer = Console.ReadLine();
+                ProcessAnswerGenRef(answer);
+
+            }while(answer != Quit);
+        }
+
+        private List<string> GetMenuItemsGenRefs()
+        {
+            return new List<string>
+            {
+                $"{GenerateRefNYT}:\tShow NYT Url of article",
+                $"{GenerateRefOlympedia}:\tGenerate Olympedia ref",
+                $"{Quit}:\tExit"
+            };
+        }
+
+        private void ProcessAnswerGenRef(string answer)
+        {
+            switch (answer)
+            {
+                case GenerateRefNYT:
+                    referencesEditor.GenerateReferenceNYT();
+                    break;
+                case GenerateRefOlympedia:
+                    referencesEditor.GenerateOlympediaReference();
+                    break;
+                case Quit:
+                    System.Console.WriteLine();
+                    break;
+                default:
+                    Console.WriteLine($"Invalid choice: {answer}");
+                    break;
+            }
+        }
+
 
         private void ProcessAnswer(string answer)
         {
@@ -87,14 +129,14 @@ namespace WikipediaReferences.Console.UI
                 case UpdateNYTDeathDate:
                     referencesEditor.UpdateNYTDeathDateOfReference();
                     break;
-                case ShowNYTUrl:
-                    referencesEditor.ShowNYTimesUrlOfArticle();
+                case GenerateRef:
+                    GenerateReference();
                     break;
                 case DayCheck:
-                    GetDaynameFromDate();
+                    GetDayNameFromDate();
                     break;
-                case OlympediaRef:
-                    
+                case GenerateRefOlympedia:
+                    referencesEditor.GenerateOlympediaReference();
                     break;
                 case Test:
                     TestGetDeceasedFromWikipedia();
@@ -114,7 +156,7 @@ namespace WikipediaReferences.Console.UI
             }
         }
 
-        private void GetDaynameFromDate()
+        private void GetDayNameFromDate()
         {
             Console.WriteLine("Date: (yyyy-M-d)");
             DateTime date = DateTime.Parse(Console.ReadLine());

@@ -26,7 +26,7 @@ namespace WikipediaReferences.Console
             services.AddSingleton<Util>();
             services.AddSingleton<Runner>();
             services.AddScoped<ListArticleGenerator>();
-            services.AddScoped<NytReferencesEditor>();
+            services.AddScoped<ReferencesEditor>();
             services.AddScoped<ArticleAnalyzer>();
             services.AddScoped<AssemblyInfo>();            
             services.AddScoped<IToolforgeService, ToolforgeService>();
