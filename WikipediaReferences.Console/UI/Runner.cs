@@ -12,14 +12,16 @@ namespace WikipediaReferences.Console.UI
     {
         private const string PrintDeathMonth = "p";
         private const string GenerateRef = "r";
-        private const string GenerateRefNYT = "s";
-        private const string GenerateRefOlympedia = "o";
         private const string UpdateNYTDeathDate = "u";
         private const string DayCheck = "d";
         private const string AddNYTObitRefs = "a";
         private const string NumberOfNettoChars = "n";
         private const string Test = "t";
         private const string Quit = "q";
+        private const string GenerateRefNYT = "n";
+        private const string GenerateRefOlympedia = "o";
+        private const string GenerateRefBasketball = "b";
+
         private bool quit;
 
         private readonly Util util;
@@ -74,48 +76,6 @@ namespace WikipediaReferences.Console.UI
             };
         }
 
-        private void GenerateReference()
-        {
-            string answer = "";
-            do
-            {
-                Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItemsGenRefs());
-                answer = Console.ReadLine();
-                ProcessAnswerGenRef(answer);
-
-            }while(answer != Quit);
-        }
-
-        private List<string> GetMenuItemsGenRefs()
-        {
-            return new List<string>
-            {
-                $"{GenerateRefNYT}:\tShow NYT Url of article",
-                $"{GenerateRefOlympedia}:\tGenerate Olympedia ref",
-                $"{Quit}:\tExit"
-            };
-        }
-
-        private void ProcessAnswerGenRef(string answer)
-        {
-            switch (answer)
-            {
-                case GenerateRefNYT:
-                    referencesEditor.GenerateReferenceNYT();
-                    break;
-                case GenerateRefOlympedia:
-                    referencesEditor.GenerateOlympediaReference();
-                    break;
-                case Quit:
-                    System.Console.WriteLine();
-                    break;
-                default:
-                    Console.WriteLine($"Invalid choice: {answer}");
-                    break;
-            }
-        }
-
-
         private void ProcessAnswer(string answer)
         {
             int year, monthId;
@@ -155,6 +115,52 @@ namespace WikipediaReferences.Console.UI
                     break;
             }
         }
+
+        private void GenerateReference()
+        {
+            string answer = "";
+            do
+            {
+                Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItemsGenRefs());
+                answer = Console.ReadLine();
+                ProcessAnswerGenRef(answer);
+
+            } while (answer != Quit);
+        }
+
+        private List<string> GetMenuItemsGenRefs()
+        {
+            return new List<string>
+            {
+                $"{GenerateRefNYT}:\tGenerate NYT reference",
+                $"{GenerateRefOlympedia}:\tGenerate Olympedia ref",
+                $"{GenerateRefBasketball}:\tGenerate Basketball ref",
+                $"{Quit}:\tExit"
+            };
+        }
+
+        private void ProcessAnswerGenRef(string answer)
+        {
+            switch (answer)
+            {
+                case GenerateRefNYT:
+                    referencesEditor.GenerateReferenceNYT();
+                    break;
+                case GenerateRefOlympedia:
+                    referencesEditor.GenerateOlympediaReference();
+                    break;
+                case GenerateRefBasketball:
+                    referencesEditor.GenerateBasketballReference();
+                    break;
+                case Quit:
+                    System.Console.WriteLine();
+                    break;
+                default:
+                    Console.WriteLine($"Invalid choice: {answer}");
+                    break;
+            }
+        }
+
 
         private void GetDayNameFromDate()
         {

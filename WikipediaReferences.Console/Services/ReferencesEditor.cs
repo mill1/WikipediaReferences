@@ -1,9 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using WikipediaReferences.Dtos;
 
@@ -12,40 +14,62 @@ namespace WikipediaReferences.Console.Services
     public class ReferencesEditor
     {
         private readonly IConfiguration configuration;
+        private readonly WebClient webClient;
         private readonly Util util;
 
-        public ReferencesEditor(IConfiguration configuration, Util util)
+        public ReferencesEditor(IConfiguration configuration, WebClient webClient, Util util)
         {
             this.configuration = configuration;
+            this.webClient = webClient;
             this.util = util;
         }
 
         public void GenerateOlympediaReference()
         {
-            UI.Console.WriteLine("Olympedia Id: (f.i.: 73711)");
-            string id = UI.Console.ReadLine();
+            string url = GetReferenceUrl("http://www.olympedia.org/athletes/", "Olympedia Id: (f.i.: 73711)");
+            var rootNode = GetHtmlDocRootNode(url);
 
-            using var webClient = new System.Net.WebClient();
-
-            var url = "http://www.olympedia.org/athletes/" + id;
-            var response = webClient.DownloadString(url);
-
-            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-            doc.LoadHtml(response);
-
-            var table = doc.DocumentNode.Descendants(0).First(n => n.HasClass("biodata"))
+            var table = rootNode.Descendants(0).First(n => n.HasClass("biodata"))
                 .Descendants("tr")
-                .Select(tr => {
-
+                .Select(tr =>
+                {
                     var key = tr.Elements("th").Select(td => td.InnerText).First();
                     var value = tr.Elements("td").Select(td => td.InnerText).First();
                     return new KeyValuePair<string, string>(key, value);
                 }
-                )
-                .ToList();
+                ).ToList();
 
             string usedName = table.First(kvp => kvp.Key == "Used name").Value;
             var reference = GenerateWebReference($"Olympedia – {usedName}", url, "olympedia.org", DateTime.Today, DateTime.MinValue, publisher: "[[OlyMADMen]]");
+
+            UI.Console.WriteLine(ConsoleColor.Green, reference);
+        } 
+
+        private static string GetReferenceUrl(string urlBase, string message)
+        {
+            UI.Console.WriteLine(message);
+            string id = UI.Console.ReadLine();
+
+            return $"{urlBase}{id}";
+        }
+
+        private HtmlNode GetHtmlDocRootNode(string url)
+        {
+            var response = webClient.DownloadString(url);
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(response);
+            return doc.DocumentNode;
+        }
+
+        public void GenerateBasketballReference()
+        {
+            string url = GetReferenceUrl("https://www.basketball-reference.com/players/", "Basketball Id: (f.i.: 'h/hamilda01' )") + ".html";
+            var rootNode = GetHtmlDocRootNode(url);
+
+            var title = rootNode.SelectSingleNode("//head/title").InnerText;
+            title = title.Replace("|", "&ndash;");
+
+            var reference = GenerateWebReference(title, url, "basketball-reference.com", DateTime.Today, DateTime.MinValue);
 
             UI.Console.WriteLine(ConsoleColor.Green, reference);
         }
@@ -56,15 +80,15 @@ namespace WikipediaReferences.Console.Services
             var cultureInfo = new CultureInfo("en-US");
 
             return "<ref>{{cite web" +
-                    $" |last1={last1}" +
-                    $" |first1={first1}" +
+                    (last1 == "" ? "" : $" |last1={last1}") +
+                    (first1 == "" ? "" : $" |first1={first1}") +
                     $" |title={title}" +
                     $" |url={url.Replace(@"\/", "/")}" + // unescape / (although never escaped)
                     $" |website={website}" +
-                    $" |publisher={publisher}" +
+                    (publisher == "" ? "" : $" |publisher={publisher}") +
+                    (language == "" ? "" : $" |language={language}") +
+                    (date == DateTime.MinValue ? "" : $" |date={date.ToString("d MMMM yyyy", cultureInfo)}") +
                     $" |access-date={accessDate.ToString("d MMMM yyyy", cultureInfo)}" +
-                    $" |language={language}" +
-                    $" |date={(date == DateTime.MinValue ? string.Empty : date.ToString("d MMMM yyyy", cultureInfo))}" +
                    "}}</ref>";
         }
 
