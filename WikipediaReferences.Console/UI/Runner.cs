@@ -3,36 +3,40 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using WikipediaConsole.Services;
+using WikipediaReferences.Console.Services;
 using WikipediaReferences;
 
-namespace WikipediaConsole.UI
+namespace WikipediaReferences.Console.UI
 {
     public class Runner
     {
         private const string PrintDeathMonth = "p";
+        private const string GenerateRef = "r";
         private const string UpdateNYTDeathDate = "u";
-        private const string ShowNYTUrl = "s";
         private const string DayCheck = "d";
-        private const string Test = "t";
         private const string AddNYTObitRefs = "a";
         private const string NumberOfNettoChars = "n";
+        private const string Test = "t";
         private const string Quit = "q";
+        private const string GenerateRefNYT = "n";
+        private const string GenerateRefOlympedia = "o";
+        private const string GenerateRefBaseball = "b";
+        private const string GenerateRefBasketball = "a";
+        private const string GenerateRefFootball = "f";
+        private const string GenerateRefHockey = "h";
+
         private bool quit;
 
         private readonly Util util;
         private readonly ListArticleGenerator listArticleGenerator;
         private readonly ReferencesEditor referencesEditor;
-        private readonly ArticleAnalyzer articleAnalyzer;
 
-        public Runner(ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor, ArticleAnalyzer articleAnalyzer,
+        public Runner(ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor,
                       Util util, AssemblyInfo assemblyInfo)
         {
             this.util = util;
             this.listArticleGenerator = listArticleGenerator;
             this.referencesEditor = referencesEditor;
-            this.articleAnalyzer = articleAnalyzer;
-
             quit = false;
 
             var assemblyName = assemblyInfo.GetAssemblyName();
@@ -65,13 +69,13 @@ namespace WikipediaConsole.UI
             return new List<string>
             {
                 $"{PrintDeathMonth}:\tPrint month of death",
+                $"{GenerateRef}:\tGenerate reference",
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
-                $"{ShowNYTUrl}:\tShow NYT Url of article",
                 $"{DayCheck}:\tDay name of date",
-                $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
                 $"{NumberOfNettoChars}:\tNumber of netto chars of article",
-                $"{Quit}:\tQuit application"
+                $"{Test}:\tTest stuff",
+                $"{Quit}:\tQuit"
             };
         }
 
@@ -88,14 +92,16 @@ namespace WikipediaConsole.UI
                 case UpdateNYTDeathDate:
                     referencesEditor.UpdateNYTDeathDateOfReference();
                     break;
-                case ShowNYTUrl:
-                    referencesEditor.ShowNYTimesUrlOfArticle();
+                case GenerateRef:
+                    GenerateReference();
                     break;
                 case DayCheck:
-                    GetDaynameFromDate();
+                    GetDayNameFromDate();
+                    break;
+                case GenerateRefOlympedia:
+                    referencesEditor.GenerateOlympediaReference();
                     break;
                 case Test:
-                    //articleAnalyzer.ShowRawArticleText(false);
                     TestGetDeceasedFromWikipedia();
                     break;
                 case AddNYTObitRefs:
@@ -113,7 +119,65 @@ namespace WikipediaConsole.UI
             }
         }
 
-        private void GetDaynameFromDate()
+        private void GenerateReference()
+        {
+            string answer = "";
+            do
+            {
+                Console.DisplayMenu(ConsoleColor.Yellow, GetMenuItemsGenRefs());
+                answer = Console.ReadLine();
+                ProcessAnswerGenRef(answer);
+
+            } while (answer != Quit);
+        }
+
+        private List<string> GetMenuItemsGenRefs()
+        {
+            return new List<string>
+            {
+                $"{GenerateRefNYT}:\tGenerate NYT reference",
+                $"{GenerateRefOlympedia}:\tGenerate Olympedia ref",
+                $"{GenerateRefBaseball}:\tGenerate Baseball ref",
+                $"{GenerateRefBasketball}:\tGenerate Basketball ref",
+                $"{GenerateRefFootball}:\tGenerate Football ref",
+                $"{GenerateRefHockey}:\tGenerate Hockey ref",
+                $"{Quit}:\tExit"
+            };
+        }
+
+        private void ProcessAnswerGenRef(string answer)
+        {
+            switch (answer)
+            {
+                case GenerateRefNYT:
+                    referencesEditor.GenerateReferenceNYT();
+                    break;
+                case GenerateRefOlympedia:
+                    referencesEditor.GenerateOlympediaReference();
+                    break;
+                case GenerateRefBaseball:
+                    referencesEditor.GenerateBaseballReference();
+                    break;
+                case GenerateRefBasketball:
+                    referencesEditor.GenerateBasketballReference();
+                    break;
+                case GenerateRefFootball:
+                    referencesEditor.GenerateFootballReference();
+                    break;
+                case GenerateRefHockey:
+                    referencesEditor.GenerateHockeyReference();
+                    break;
+                case Quit:
+                    System.Console.WriteLine();
+                    break;
+                default:
+                    Console.WriteLine($"Invalid choice: {answer}");
+                    break;
+            }
+        }
+
+
+        private void GetDayNameFromDate()
         {
             Console.WriteLine("Date: (yyyy-M-d)");
             DateTime date = DateTime.Parse(Console.ReadLine());
@@ -131,7 +195,7 @@ namespace WikipediaConsole.UI
             var refs = entries.Where(e => e.Reference != null);
 
             int maxLength = entries.Max(e => e.Information.Length);
-            Entry entry = entries.Where(e => e.Information.Length == maxLength).First();
+            Entry entry = entries.First(e => e.Information.Length == maxLength);
 
             Console.WriteLine($"Nr of entries: {entries.Count()}");
             Console.WriteLine($"Nr of entries with references: {refs.Count()}");

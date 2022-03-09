@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using SysConsole = System.Console;
 
-namespace WikipediaConsole.UI
+namespace WikipediaReferences.Console.UI
 {
     // Wrapper for System.Console
     public static class Console

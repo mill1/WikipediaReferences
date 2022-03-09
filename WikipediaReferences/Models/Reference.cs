@@ -33,7 +33,7 @@ namespace WikipediaReferences.Models
 
             return "<ref>{{cite news" +
                     $" |author1={Author1}" +
-                    $" |author-link1={Authorlink1}" +
+                    (string.IsNullOrEmpty(Authorlink1) ? "" : $" |author-link1={Authorlink1}") +
                     $" |title={Title}" +
                     $" |url={Url.Replace(@"\/", "/")}" + // unescape / (although never escaped)
                     $" |url-access={UrlAccess}" +

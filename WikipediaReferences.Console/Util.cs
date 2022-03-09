@@ -5,7 +5,7 @@ using System.Net.Http.Headers;
 using Wikimedia.Utilities.Exceptions;
 using WikipediaReferences.Dtos;
 
-namespace WikipediaConsole
+namespace WikipediaReferences.Console
 {
     public class Util
     {
@@ -20,6 +20,18 @@ namespace WikipediaConsole
             this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        public string GetRawArticleText(string articleTitle, bool netto)
+        {
+            // https://en.wikipedia.org/wiki/Help!:_A_Day_in_the_Life
+            articleTitle = articleTitle.Replace("/", "%2F");
+            articleTitle = articleTitle.Replace(":", "%3A");
+
+            string uri = $"wikipedia/rawarticle/{articleTitle}/netto/{netto}";
+            HttpResponseMessage response = SendGetRequest(uri);
+
+            return HandleResponse(response, articleTitle);
+        }
+
         public string HandleResponse(HttpResponseMessage response, string articleTitle)
         {
             string result = response.Content.ReadAsStringAsync().Result;
@@ -31,16 +43,16 @@ namespace WikipediaConsole
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
                     throw new WikipediaReferencesException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
                 else
-                    throw new Exception($"Article: {articleTitle} result: '{result}'");
+                    throw new HttpRequestException($"Article: {articleTitle} result: '{result}'");
             }
         }
 
         public void GetDeathMontArgs(out int year, out int monthId)
         {
-            Console.WriteLine("Death year:");
-            year = int.Parse(Console.ReadLine());
-            Console.WriteLine("Death month id:");
-            monthId = int.Parse(Console.ReadLine());
+            UI.Console.WriteLine("Death year:");
+            year = int.Parse(UI.Console.ReadLine());
+            UI.Console.WriteLine("Death month id:");
+            monthId = int.Parse(UI.Console.ReadLine());
         }
 
         public HttpResponseMessage SendGetRequest(string uri)

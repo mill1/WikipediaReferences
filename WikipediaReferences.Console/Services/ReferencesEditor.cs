@@ -1,41 +1,133 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using WikipediaReferences.Dtos;
 
-namespace WikipediaConsole.Services
+namespace WikipediaReferences.Console.Services
 {
     public class ReferencesEditor
     {
         private readonly IConfiguration configuration;
+        private readonly WebClient webClient;
         private readonly Util util;
 
-        public ReferencesEditor(IConfiguration configuration, Util util)
+        public ReferencesEditor(IConfiguration configuration, WebClient webClient, Util util)
         {
             this.configuration = configuration;
+            this.webClient = webClient;
             this.util = util;
         }
 
-        public void ShowNYTimesUrlOfArticle()
+        public void GenerateOlympediaReference()
+        {
+            string url = GetReferenceUrl("http://www.olympedia.org/athletes/", "Olympedia Id: (f.i.: 73711)");
+            var rootNode = GetHtmlDocRootNode(url);
+
+            var table = rootNode.Descendants(0).First(n => n.HasClass("biodata"))
+                .Descendants("tr")
+                .Select(tr =>
+                {
+                    var key = tr.Elements("th").Select(td => td.InnerText).First();
+                    var value = tr.Elements("td").Select(td => td.InnerText).First();
+                    return new KeyValuePair<string, string>(key, value);
+                }
+                ).ToList();
+
+            string usedName = table.First(kvp => kvp.Key == "Used name").Value;
+            var reference = GenerateWebReference($"Olympedia – {usedName}", url, "olympedia.org", DateTime.Today, DateTime.MinValue, publisher: "[[OlyMADMen]]");
+
+            UI.Console.WriteLine(ConsoleColor.Green, reference);
+        } 
+
+        private string GetReferenceUrl(string urlBase, string message)
+        {
+            UI.Console.WriteLine(message);
+            string id = UI.Console.ReadLine();
+
+            return $"{urlBase}{id}";
+        }
+
+        private HtmlNode GetHtmlDocRootNode(string url)
+        {
+            var response = webClient.DownloadString(url);
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(response);
+            return doc.DocumentNode;
+        }
+
+        public void GenerateBaseballReference()
+        {
+            GenerateSportsReference("baseball-reference.com", "b/bellbu01", ".shtml");
+        }
+
+        public void GenerateBasketballReference()
+        {
+            GenerateSportsReference("basketball-reference.com", "b/bellra01", ".html");
+        }
+
+        public void GenerateFootballReference()
+        {
+            GenerateSportsReference("pro-football-reference.com", "B/BellBi21", ".htm");
+        }
+
+        public void GenerateHockeyReference()
+        {
+            GenerateSportsReference("hockey-reference.com", "b/bellbr01", ".html");
+        }
+
+        public void GenerateSportsReference(string domain, string playerIdExample, string urlSuffix)
+        {
+            string urlBase = "https://www." + domain + "/players/";
+            string url = GetReferenceUrl(urlBase, $"Player id: (f.i.: '{playerIdExample}' )") + urlSuffix;
+            var rootNode = GetHtmlDocRootNode(url);
+
+            var title = rootNode.SelectSingleNode("//head/title").InnerText;
+            title = title.Replace("|", "&ndash;");
+
+            var reference = GenerateWebReference(title, url, domain, DateTime.Today, DateTime.MinValue);
+
+            UI.Console.WriteLine(ConsoleColor.Green, reference);
+        }
+
+        private string GenerateWebReference(string title, string url, string website, DateTime accessDate, DateTime date,
+                                       string last1 = "", string first1 = "", string publisher = "", string language = "")
+        {
+            var cultureInfo = new CultureInfo("en-US");
+
+            return "<ref>{{cite web" +
+                    (last1 == "" ? "" : $" |last1={last1}") +
+                    (first1 == "" ? "" : $" |first1={first1}") +
+                    $" |title={title}" +
+                    $" |url={url.Replace(@"\/", "/")}" + // unescape / (although never escaped)
+                    $" |website={website}" +
+                    (publisher == "" ? "" : $" |publisher={publisher}") +
+                    (language == "" ? "" : $" |language={language}") +
+                    (date == DateTime.MinValue ? "" : $" |date={date.ToString("d MMMM yyyy", cultureInfo)}") +
+                    $" |access-date={accessDate.ToString("d MMMM yyyy", cultureInfo)}" +
+                   "}}</ref>";
+        }
+
+        public void GenerateReferenceNYT()
         {
             try
             {
-                Console.WriteLine("Article title:");
-                string articleTitle = Console.ReadLine();
+                UI.Console.WriteLine("Article title:");
+                string articleTitle = UI.Console.ReadLine();
 
                 IEnumerable<Reference> references = GetReferencesByArticleTitle(articleTitle);
 
                 references.ToList().ForEach(r =>
-                    {
-                        var reference = MapDtoToModel(r);
+                {
+                    var reference = MapDtoToModel(r);
 
-                        UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());
-                    });
-
-
+                    UI.Console.WriteLine(ConsoleColor.Green, reference.GetNewsReference());
+                });
             }
             catch (WikipediaReferencesException e)
             {
@@ -96,11 +188,11 @@ namespace WikipediaConsole.Services
         {
             UpdateDeathDate updateDeathDate = new UpdateDeathDate() { SourceCode = "NYT" };
 
-            Console.WriteLine("New date of death: (yyyy-m-d)");
-            updateDeathDate.DeathDate = DateTime.Parse(Console.ReadLine());
+            UI.Console.WriteLine("New date of death: (yyyy-m-d)");
+            updateDeathDate.DeathDate = DateTime.Parse(UI.Console.ReadLine());
 
-            Console.WriteLine("Article title:");
-            updateDeathDate.ArticleTitle = Console.ReadLine();
+            UI.Console.WriteLine("Article title:");
+            updateDeathDate.ArticleTitle = UI.Console.ReadLine();
 
             return updateDeathDate;
         }
@@ -139,8 +231,8 @@ namespace WikipediaConsole.Services
 
             if (apiKey == null || apiKey == "TOSET")
             {
-                Console.WriteLine(ApiKey + ":");
-                apiKey = Console.ReadLine();
+                UI.Console.WriteLine(ApiKey + ":");
+                apiKey = UI.Console.ReadLine();
             }
 
             return $"nytimes/addobits/{year}/{monthId}/{apiKey}";

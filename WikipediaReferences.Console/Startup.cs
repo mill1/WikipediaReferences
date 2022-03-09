@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net.Http;
 using Wikimedia.Utilities.Interfaces;
 using Wikimedia.Utilities.Services;
-using WikipediaConsole.Services;
-using WikipediaConsole.UI;
+using WikipediaReferences.Console.Services;
+using WikipediaReferences.Console.UI;
 
-namespace WikipediaConsole
+namespace WikipediaReferences.Console
 {
     public class Startup
     {
@@ -22,7 +21,8 @@ namespace WikipediaConsole
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton(Configuration);
-            services.AddSingleton<HttpClient>();
+            services.AddSingleton<System.Net.Http.HttpClient>();
+            services.AddSingleton<System.Net.WebClient>();
             services.AddSingleton<Util>();
             services.AddSingleton<Runner>();
             services.AddScoped<ListArticleGenerator>();
