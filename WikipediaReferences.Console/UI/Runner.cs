@@ -3,10 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using WikipediaConsole.Services;
+using WikipediaReferences.Console.Services;
 using WikipediaReferences;
 
-namespace WikipediaConsole.UI
+namespace WikipediaReferences.Console.UI
 {
     public class Runner
     {
@@ -14,6 +14,7 @@ namespace WikipediaConsole.UI
         private const string UpdateNYTDeathDate = "u";
         private const string ShowNYTUrl = "s";
         private const string DayCheck = "d";
+        private const string OlympediaRef = "o";
         private const string Test = "t";
         private const string AddNYTObitRefs = "a";
         private const string NumberOfNettoChars = "n";
@@ -22,17 +23,14 @@ namespace WikipediaConsole.UI
 
         private readonly Util util;
         private readonly ListArticleGenerator listArticleGenerator;
-        private readonly ReferencesEditor referencesEditor;
-        private readonly ArticleAnalyzer articleAnalyzer;
+        private readonly NytReferencesEditor referencesEditor;
 
-        public Runner(ListArticleGenerator listArticleGenerator, ReferencesEditor referencesEditor, ArticleAnalyzer articleAnalyzer,
+        public Runner(ListArticleGenerator listArticleGenerator, NytReferencesEditor referencesEditor,
                       Util util, AssemblyInfo assemblyInfo)
         {
             this.util = util;
             this.listArticleGenerator = listArticleGenerator;
             this.referencesEditor = referencesEditor;
-            this.articleAnalyzer = articleAnalyzer;
-
             quit = false;
 
             var assemblyName = assemblyInfo.GetAssemblyName();
@@ -68,6 +66,7 @@ namespace WikipediaConsole.UI
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
                 $"{ShowNYTUrl}:\tShow NYT Url of article",
                 $"{DayCheck}:\tDay name of date",
+                $"{OlympediaRef}:\tGenerate Olympedia ref",
                 $"{Test}:\tTest stuff",
                 $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
                 $"{NumberOfNettoChars}:\tNumber of netto chars of article",
@@ -94,8 +93,10 @@ namespace WikipediaConsole.UI
                 case DayCheck:
                     GetDaynameFromDate();
                     break;
+                case OlympediaRef:
+                    
+                    break;
                 case Test:
-                    //articleAnalyzer.ShowRawArticleText(false);
                     TestGetDeceasedFromWikipedia();
                     break;
                 case AddNYTObitRefs:
@@ -131,7 +132,7 @@ namespace WikipediaConsole.UI
             var refs = entries.Where(e => e.Reference != null);
 
             int maxLength = entries.Max(e => e.Information.Length);
-            Entry entry = entries.Where(e => e.Information.Length == maxLength).First();
+            Entry entry = entries.First(e => e.Information.Length == maxLength);
 
             Console.WriteLine($"Nr of entries: {entries.Count()}");
             Console.WriteLine($"Nr of entries with references: {refs.Count()}");

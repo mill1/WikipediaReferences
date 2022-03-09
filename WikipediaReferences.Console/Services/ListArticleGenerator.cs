@@ -12,7 +12,7 @@ using Wikimedia.Utilities.Interfaces;
 using WikipediaReferences;
 using WikipediaReferences.Models;
 
-namespace WikipediaConsole.Services
+namespace WikipediaReferences.Console.Services
 {
     public class ListArticleGenerator
     {        
@@ -156,8 +156,8 @@ namespace WikipediaConsole.Services
             try
             {
                 //Determine netto nr of chars of article
-                Console.WriteLine("Article title:");
-                string articleTitle = Console.ReadLine();
+                UI.Console.WriteLine("Article title:");
+                string articleTitle = UI.Console.ReadLine();
 
                 int numberOfChars = GetNumberOfCharactersBiography(articleTitle, netto: true);
 

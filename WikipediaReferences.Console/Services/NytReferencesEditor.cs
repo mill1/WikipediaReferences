@@ -6,14 +6,14 @@ using System.Linq;
 using System.Net.Http;
 using WikipediaReferences.Dtos;
 
-namespace WikipediaConsole.Services
+namespace WikipediaReferences.Console.Services
 {
-    public class ReferencesEditor
+    public class NytReferencesEditor
     {
         private readonly IConfiguration configuration;
         private readonly Util util;
 
-        public ReferencesEditor(IConfiguration configuration, Util util)
+        public NytReferencesEditor(IConfiguration configuration, Util util)
         {
             this.configuration = configuration;
             this.util = util;
@@ -23,8 +23,8 @@ namespace WikipediaConsole.Services
         {
             try
             {
-                Console.WriteLine("Article title:");
-                string articleTitle = Console.ReadLine();
+                UI.Console.WriteLine("Article title:");
+                string articleTitle = UI.Console.ReadLine();
 
                 IEnumerable<Reference> references = GetReferencesByArticleTitle(articleTitle);
 
@@ -96,11 +96,11 @@ namespace WikipediaConsole.Services
         {
             UpdateDeathDate updateDeathDate = new UpdateDeathDate() { SourceCode = "NYT" };
 
-            Console.WriteLine("New date of death: (yyyy-m-d)");
-            updateDeathDate.DeathDate = DateTime.Parse(Console.ReadLine());
+            UI.Console.WriteLine("New date of death: (yyyy-m-d)");
+            updateDeathDate.DeathDate = DateTime.Parse(UI.Console.ReadLine());
 
-            Console.WriteLine("Article title:");
-            updateDeathDate.ArticleTitle = Console.ReadLine();
+            UI.Console.WriteLine("Article title:");
+            updateDeathDate.ArticleTitle = UI.Console.ReadLine();
 
             return updateDeathDate;
         }
@@ -139,8 +139,8 @@ namespace WikipediaConsole.Services
 
             if (apiKey == null || apiKey == "TOSET")
             {
-                Console.WriteLine(ApiKey + ":");
-                apiKey = Console.ReadLine();
+                UI.Console.WriteLine(ApiKey + ":");
+                apiKey = UI.Console.ReadLine();
             }
 
             return $"nytimes/addobits/{year}/{monthId}/{apiKey}";

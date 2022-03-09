@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace WikipediaConsole
+namespace WikipediaReferences.Console
 {
     public class AssemblyInfo
     {

@@ -1,18 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30523.141
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WikipediaReferences", "WikipediaReferences\WikipediaReferences.csproj", "{B343737F-FB2D-468E-B2FA-15F440D6C678}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WikipediaConsole", "WikipediaConsole\WikipediaConsole.csproj", "{D8D476ED-CF72-461B-A824-19563CF53310}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WikipediaReferences.Console", "WikipediaReferences.Console\WikipediaReferences.Console.csproj", "{D8D476ED-CF72-461B-A824-19563CF53310}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E72146C8-7320-4B0D-B4A8-C24111F94357}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WikipediaReferences.Tests", "WikipediaReferences.Tests\WikipediaReferences.Tests.csproj", "{0D6D97A1-D8AB-4992-9231-FFF50B69A154}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WikipediaReferences.Tests", "WikipediaReferences.Tests\WikipediaReferences.Tests.csproj", "{8BD23835-21C0-4AF8-9D25-897B254DC65F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,16 +28,13 @@ Global
 		{D8D476ED-CF72-461B-A824-19563CF53310}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8D476ED-CF72-461B-A824-19563CF53310}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8D476ED-CF72-461B-A824-19563CF53310}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0D6D97A1-D8AB-4992-9231-FFF50B69A154}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0D6D97A1-D8AB-4992-9231-FFF50B69A154}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0D6D97A1-D8AB-4992-9231-FFF50B69A154}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0D6D97A1-D8AB-4992-9231-FFF50B69A154}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{0D6D97A1-D8AB-4992-9231-FFF50B69A154} = {E72146C8-7320-4B0D-B4A8-C24111F94357}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {449C49E2-9645-4EA5-B070-B640907E6B08}

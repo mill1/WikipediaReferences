@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace WikipediaConsole
+namespace WikipediaReferences.Console
 {
     public class WikipediaReferencesException : Exception
     {

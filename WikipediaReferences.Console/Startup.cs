@@ -3,10 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Net.Http;
 using Wikimedia.Utilities.Interfaces;
 using Wikimedia.Utilities.Services;
-using WikipediaConsole.Services;
-using WikipediaConsole.UI;
+using WikipediaReferences.Console.Services;
+using WikipediaReferences.Console.UI;
 
-namespace WikipediaConsole
+namespace WikipediaReferences.Console
 {
     public class Startup
     {
@@ -26,7 +26,7 @@ namespace WikipediaConsole
             services.AddSingleton<Util>();
             services.AddSingleton<Runner>();
             services.AddScoped<ListArticleGenerator>();
-            services.AddScoped<ReferencesEditor>();
+            services.AddScoped<NytReferencesEditor>();
             services.AddScoped<ArticleAnalyzer>();
             services.AddScoped<AssemblyInfo>();            
             services.AddScoped<IToolforgeService, ToolforgeService>();

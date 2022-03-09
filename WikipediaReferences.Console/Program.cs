@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
-using WikipediaConsole.UI;
+using WikipediaReferences.Console.UI;
 
-namespace WikipediaConsole
+namespace WikipediaReferences.Console
 {
     public class Program
     {
