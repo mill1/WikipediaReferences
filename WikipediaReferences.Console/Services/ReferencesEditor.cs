@@ -45,7 +45,7 @@ namespace WikipediaReferences.Console.Services
             UI.Console.WriteLine(ConsoleColor.Green, reference);
         } 
 
-        private static string GetReferenceUrl(string urlBase, string message)
+        private string GetReferenceUrl(string urlBase, string message)
         {
             UI.Console.WriteLine(message);
             string id = UI.Console.ReadLine();
@@ -61,15 +61,36 @@ namespace WikipediaReferences.Console.Services
             return doc.DocumentNode;
         }
 
+        public void GenerateBaseballReference()
+        {
+            GenerateSportsReference("baseball-reference.com", "b/bellbu01", ".shtml");
+        }
+
         public void GenerateBasketballReference()
         {
-            string url = GetReferenceUrl("https://www.basketball-reference.com/players/", "Basketball Id: (f.i.: 'h/hamilda01' )") + ".html";
+            GenerateSportsReference("basketball-reference.com", "b/bellra01", ".html");
+        }
+
+        public void GenerateFootballReference()
+        {
+            GenerateSportsReference("pro-football-reference.com", "B/BellBi21", ".htm");
+        }
+
+        public void GenerateHockeyReference()
+        {
+            GenerateSportsReference("hockey-reference.com", "b/bellbr01", ".html");
+        }
+
+        public void GenerateSportsReference(string domain, string playerIdExample, string urlSuffix)
+        {
+            string urlBase = "https://www." + domain + "/players/";
+            string url = GetReferenceUrl(urlBase, $"Player id: (f.i.: '{playerIdExample}' )") + urlSuffix;
             var rootNode = GetHtmlDocRootNode(url);
 
             var title = rootNode.SelectSingleNode("//head/title").InnerText;
             title = title.Replace("|", "&ndash;");
 
-            var reference = GenerateWebReference(title, url, "basketball-reference.com", DateTime.Today, DateTime.MinValue);
+            var reference = GenerateWebReference(title, url, domain, DateTime.Today, DateTime.MinValue);
 
             UI.Console.WriteLine(ConsoleColor.Green, reference);
         }

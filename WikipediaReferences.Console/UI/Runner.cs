@@ -20,7 +20,10 @@ namespace WikipediaReferences.Console.UI
         private const string Quit = "q";
         private const string GenerateRefNYT = "n";
         private const string GenerateRefOlympedia = "o";
-        private const string GenerateRefBasketball = "b";
+        private const string GenerateRefBaseball = "b";
+        private const string GenerateRefBasketball = "a";
+        private const string GenerateRefFootball = "f";
+        private const string GenerateRefHockey = "h";
 
         private bool quit;
 
@@ -134,7 +137,10 @@ namespace WikipediaReferences.Console.UI
             {
                 $"{GenerateRefNYT}:\tGenerate NYT reference",
                 $"{GenerateRefOlympedia}:\tGenerate Olympedia ref",
+                $"{GenerateRefBaseball}:\tGenerate Baseball ref",
                 $"{GenerateRefBasketball}:\tGenerate Basketball ref",
+                $"{GenerateRefFootball}:\tGenerate Football ref",
+                $"{GenerateRefHockey}:\tGenerate Hockey ref",
                 $"{Quit}:\tExit"
             };
         }
@@ -149,8 +155,17 @@ namespace WikipediaReferences.Console.UI
                 case GenerateRefOlympedia:
                     referencesEditor.GenerateOlympediaReference();
                     break;
+                case GenerateRefBaseball:
+                    referencesEditor.GenerateBaseballReference();
+                    break;
                 case GenerateRefBasketball:
                     referencesEditor.GenerateBasketballReference();
+                    break;
+                case GenerateRefFootball:
+                    referencesEditor.GenerateFootballReference();
+                    break;
+                case GenerateRefHockey:
+                    referencesEditor.GenerateHockeyReference();
                     break;
                 case Quit:
                     System.Console.WriteLine();
