@@ -90,7 +90,11 @@ namespace WikipediaReferences.Controllers
         {
             try
             {
-                string message = nyTimesService.AddObituaryReferences(year, monthId, apikey);
+                string message = "";
+                //for (monthId = 1; monthId <= 12; monthId++){
+                    message = nyTimesService.AddObituaryReferences(year, monthId, apikey);
+                //    Console.WriteLine($"~~~~~~ month {monthId}: {message}");
+                //}
                 return Ok(message);
             }
             catch (Exception e)

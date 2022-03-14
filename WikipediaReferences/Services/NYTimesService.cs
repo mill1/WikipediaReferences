@@ -96,7 +96,7 @@ namespace WikipediaReferences.Services
         {
             try
             {
-                return articleDocs.Where(d => d.type_of_material.StartsWith("Obituary;")).AsEnumerable().OrderBy(d => d.pub_date);
+                return articleDocs.Where(d => d.type_of_material.Contains("Obituary")).AsEnumerable().OrderBy(d => d.pub_date);
             }
             catch (Exception) // Not every articleDoc has a property type_of_material
             {
@@ -112,7 +112,7 @@ namespace WikipediaReferences.Services
             {
                 try
                 {
-                    if (doc.type_of_material.StartsWith("Obituary;"))
+                    if (doc.type_of_material.Contains("Obituary"))
                         obituaryDocs.Add(doc);
                 }
                 catch (Exception)
@@ -436,10 +436,8 @@ namespace WikipediaReferences.Services
             // Do not use 'death' as one of the regex expressions. Not utilized in obits +:
             // https://www.nytimes.com/2018/03/27/obituaries/delores-taylor-85-dies-writer-and-star-in-billy-jack-films.html
             // - do not look in doc.snippet: is identical to doc.abstract or is empty.
-
-            DateTime dateOfDeath = DateTime.MinValue;
-
-            // if (obituaryDoc.)
+            
+            DateTime dateOfDeath = DateTime.MinValue;            
 
             dateOfDeath = GetDateOfDeathFromMonthInformation(obituaryDoc, monthId, year, dateOfDeath);
 
@@ -542,9 +540,13 @@ namespace WikipediaReferences.Services
         }
 
         private DateTime GetDateOfDeathFromMonth(string excerpt, string monthName, int year, string matchedValue, DateTime publicationDate)
-        {
+        {            
             int pos = excerpt.IndexOf(matchedValue);
             string dayString = GetValueInBetweenSeparators(excerpt, " ", pos + matchedValue.Length);
+
+            // bugfix: https://www.nytimes.com/1990/12/18/obituaries/a-gardiner-creel-80-island-s-co-owner-dies.html : 'died yesterday' AND 'died in July.' (the husband)
+            if (dayString == null)
+                return DateTime.MinValue;
 
             // f.i.: "died in early July when he lost his way in blizzard" [Error: parse 'when']
             if (!int.TryParse(dayString, out int day))
@@ -571,7 +573,7 @@ namespace WikipediaReferences.Services
             int pos1 = text.IndexOf(separator, startIndex);
 
             if (pos1 == -1)
-                throw new ArgumentException($"pos1; value not found: '{separator}'");
+                return null;
 
             int pos2 = text.IndexOf(separator, pos1 + 1);
 
