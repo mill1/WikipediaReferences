@@ -49,7 +49,6 @@ namespace WikipediaReferences.Tests
             };
 
             var deathDate = service.ResolveDateOfDeath(doc, publicationDate.Month, publicationDate.Year);
-
             var expected = publicationDate.AddDays(-1).Date;  // 'yesterday'
 
             Assert.Equal(expected, deathDate);

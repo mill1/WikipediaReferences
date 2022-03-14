@@ -95,7 +95,7 @@ namespace WikipediaReferences.Services
         private IEnumerable<Doc> GetObituaryDocs(int year, int monthId, IEnumerable<Doc> articleDocs)
         {
             try
-            {                
+            {
                 return articleDocs.Where(d => d.type_of_material.Contains("Obituary")).AsEnumerable().OrderBy(d => d.pub_date);
             }
             catch (Exception) // Not every articleDoc has a property type_of_material
