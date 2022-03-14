@@ -401,6 +401,9 @@ namespace WikipediaReferences.Services
                 {
                     author = author.Substring(3);
 
+                    if (author.Length < 3)
+                        return author;
+
                     string suffix = author.Substring(author.Length - 3);
                     if (suffix == " Jr" || suffix == " Sr")
                         author += ".";
