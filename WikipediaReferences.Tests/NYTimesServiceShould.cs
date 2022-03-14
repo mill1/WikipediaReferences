@@ -34,6 +34,27 @@ namespace WikipediaReferences.Tests
             Assert.Equal(DateTime.Parse(expected), deathDate);
         }
 
+        [Fact (DisplayName = "resolve DoD Alexandra Gardiner Creel")]
+        // issue: https://www.nytimes.com/1990/12/18/obituaries/a-gardiner-creel-80-island-s-co-owner-dies.html : yesterday AND 'died in July' (the husband)
+        public void ResolveDateOfDeathFromExcerptX()
+        {
+            INYTimesService service = new NYTimesService(null, null);
+            DateTime publicationDate = DateTime.Parse("1990-12-18T05:00:00+0000");
+
+            var doc = new Doc
+            {
+                pub_date = publicationDate,
+                @abstract = "  Alexandra Gardiner Creel, the co-owner of Gardiners Island, believed to be the largest privately owned island in America, died yesterday at North Shore University Hospital in Glen Cove, L.I. She was 80 years old and lived in Mill Creek, L.I.   She died of lung disease, said her brother, Robert David Lion Gardiner of Palm Beach, Fla.    Mrs. Creel and her brother inherited the 3,300-acre island on the eastern end of Long Island, which was bestowed on her family by King Charles I in 1639. She was involved in many social and charitable organizations, including the Colonial Dames of America.    Her death may send Gardiners Island back into the courts. Mr. Gardiner, the island's other owner, and Mrs. Creel's daughter, Alexandra Gardiner Creel Goelet of Manhattan, have been arguing for the past decade over zoning and other environmental issues on the island.   In addition to her brother and her daughter, Mrs. Creel is survived by four grandchildren. Her husband, James Randall Creel, a retired judge of the New York City Criminal Court, died in July.",
+                lead_paragraph = "Alexandra Gardiner Creel, the co-owner of Gardiners Island, believed to be the largest privately owned island in America, died yesterday at North Shore University Hospital in Glen Cove, L.I. She was 80 years old and lived in Mill Creek, L.I."
+            };
+
+            var deathDate = service.ResolveDateOfDeath(doc, publicationDate.Month, publicationDate.Year);
+
+            var expected = publicationDate.AddDays(-1).Date;  // 'yesterday'
+
+            Assert.Equal(expected, deathDate);
+        }
+
         private Doc CreateDoc(DateTime publicationDate, string excerpt)
         {
             return new Doc()
