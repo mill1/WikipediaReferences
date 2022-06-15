@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using WikipediaReferences.Console.Services;
-using WikipediaReferences;
 
 namespace WikipediaReferences.Console.UI
 {

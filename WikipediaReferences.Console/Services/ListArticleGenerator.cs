@@ -9,25 +9,24 @@ using System.Net.Http;
 using System.Reflection;
 using Wikimedia.Utilities.Exceptions;
 using Wikimedia.Utilities.Interfaces;
-using WikipediaReferences;
 using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Console.Services
 {
     public class ListArticleGenerator
-    {        
+    {
         private readonly IConfiguration configuration;
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
         private readonly IToolforgeService toolforgeService;
-        private IEnumerable<Entry> entries;        
+        // TODO private IEnumerable<Entry> entries;        
 
         public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer, IToolforgeService toolforgeService)
         {
             this.configuration = configuration;
             this.util = util;
             this.articleAnalyzer = articleAnalyzer;
-            this.toolforgeService = toolforgeService;           
+            this.toolforgeService = toolforgeService;
         }
 
         public void PrintDeathsPerMonthArticle(int year, int monthId)
@@ -40,17 +39,26 @@ namespace WikipediaReferences.Console.Services
                 if (newArticle.Equals("q", StringComparison.OrdinalIgnoreCase))
                     return;
 
-                string articleTitle = GetArticleSource(year, monthId, newArticle);
+                string articleTitle = GetArticleTitle(year, monthId, newArticle);
 
-                EvaluateDeathsPerMonthArticle(year, monthId, articleTitle);
+                UI.Console.WriteLine($"Fetching the entries from article {articleTitle}...");
+                var entries = GetEntriesPermonth(year, monthId, articleTitle);
+
+                if (ArticleContainsDuplicates(entries, out string duplicateLinkedName))
+                {
+                    UI.Console.WriteLine($"Article contains duplicate entry: {duplicateLinkedName}. Address it.");
+                    return;
+                }
+
+                EvaluateDeathsPerMonthArticle(year, monthId, entries);
                 CheckIfArticleContainsSublist(articleTitle);
 
                 UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
 
-                if (UI.Console.ReadLine().Equals("y", StringComparison.OrdinalIgnoreCase))
+                if (UI.Console.ReadLine().Equals("n", StringComparison.OrdinalIgnoreCase))
                     return;
 
-                PrintOutput(year, monthId);
+                PrintOutput(year, monthId, entries);
 
                 UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
             }
@@ -64,21 +72,21 @@ namespace WikipediaReferences.Console.Services
             }
         }
 
-        private string GetArticleSource(int year, int monthId, string newArticle)
+        private string GetArticleTitle(int year, int monthId, string newArticle)
         {
-            string newArticleSource;
-            
+            string ArticleTitle;
+
             if (newArticle == "y")
             {
-                newArticleSource = configuration.GetValue<string>("New list article source");
-                newArticleSource = newArticleSource.Replace(":", "%3A");
-                newArticleSource = newArticleSource.Replace("/", "%2F");
+                ArticleTitle = configuration.GetValue<string>("New list article source");
+                ArticleTitle = ArticleTitle.Replace(":", "%3A");
+                ArticleTitle = ArticleTitle.Replace("/", "%2F");
             }
             else
             {
-                newArticleSource = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+                ArticleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
             }
-            return newArticleSource;
+            return ArticleTitle;
         }
 
         private void CheckIfArticleContainsSublist(string articleTitle)
@@ -90,11 +98,30 @@ namespace WikipediaReferences.Console.Services
                 UI.Console.Write(ConsoleColor.Red, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
         }
 
-        private void EvaluateDeathsPerMonthArticle(int year, int monthId, string newArticleSource)
+        private bool ArticleContainsDuplicates(IEnumerable<Entry> entries, out string duplicateLinkedName)
         {
-            UI.Console.WriteLine("Getting things ready. This may take a minute..");
+            var duplicates = entries.GroupBy(x => x.LinkedName)
+              .Where(g => g.Count() > 1)
+              .Select(y => y.Key);
+            //.ToList();
 
-            entries = GetEntriesPermonth(year, monthId, newArticleSource);
+            if (duplicates.Any())
+            {
+                duplicateLinkedName = duplicates.First();
+                return true;
+            }
+            else
+            {
+                duplicateLinkedName = null;
+                return false;
+            }
+
+        }
+
+        private void EvaluateDeathsPerMonthArticle(int year, int monthId, IEnumerable<Entry> entries)
+        {
+            UI.Console.WriteLine("Evaluating the entries...");
+
             var references = GetReferencesPermonth(year, monthId);
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
@@ -108,7 +135,7 @@ namespace WikipediaReferences.Console.Services
             }
         }
 
-        private void PrintOutput(int year, int monthId)
+        private void PrintOutput(int year, int monthId, IEnumerable<Entry> entries)
         {
             string month = GetMonthNames().ElementAt(monthId - 1);
 
@@ -254,7 +281,7 @@ namespace WikipediaReferences.Console.Services
                 UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
             else
                 if (entry.Reference.Contains("New York Times"))
-                    UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
+                UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: Update NYT reference! {message}");
         }
 
         private DateTime GetAccessDateFromEntryReference(string entryReference, DateTime defaultAccessDate)
@@ -299,10 +326,10 @@ namespace WikipediaReferences.Console.Services
             return rawArticleText.Length;
         }
 
-        private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId, string newArticleSource)
+        private IEnumerable<Entry> GetEntriesPermonth(int year, int monthId, string articleTitle)
         {
             IEnumerable<Entry> entriesPerMonth;
-            string uri = $"wikipedia/deceased/{year}/{monthId}/{newArticleSource}";
+            string uri = $"wikipedia/deceased/{year}/{monthId}/{articleTitle}";
             HttpResponseMessage response = util.SendGetRequest(uri);
 
             string result = response.Content.ReadAsStringAsync().Result;

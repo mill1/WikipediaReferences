@@ -34,7 +34,7 @@ namespace WikipediaReferences.Tests
             Assert.Equal(DateTime.Parse(expected), deathDate);
         }
 
-        [Fact (DisplayName = "resolve DoD Alexandra Gardiner Creel")]
+        [Fact(DisplayName = "resolve DoD Alexandra Gardiner Creel")]
         // issue: https://www.nytimes.com/1990/12/18/obituaries/a-gardiner-creel-80-island-s-co-owner-dies.html : yesterday AND 'died in July' (the husband)
         public void ResolveDateOfDeathFromExcerptX()
         {

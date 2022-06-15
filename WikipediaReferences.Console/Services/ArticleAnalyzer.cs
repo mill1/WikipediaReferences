@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-
-namespace WikipediaReferences.Console.Services
+﻿namespace WikipediaReferences.Console.Services
 {
     public class ArticleAnalyzer
     {

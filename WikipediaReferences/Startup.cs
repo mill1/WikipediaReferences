@@ -5,11 +5,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using Wikimedia.Utilities.Interfaces;
+using Wikimedia.Utilities.Services;
 using WikipediaReferences.Data;
 using WikipediaReferences.Interfaces;
 using WikipediaReferences.Services;
-using Wikimedia.Utilities.Interfaces;
-using Wikimedia.Utilities.Services;
 
 namespace WikipediaReferences
 {

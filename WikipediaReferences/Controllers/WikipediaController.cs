@@ -39,7 +39,7 @@ namespace WikipediaReferences.Controllers
         public IActionResult GetDeceasedByDate(DateTime date, string articleTitle)
         {
             try
-            {                
+            {
                 return Ok(wikipediaService.GetDeceased(date, articleTitle));
             }
             catch (Exception e)
