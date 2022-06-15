@@ -19,6 +19,7 @@ namespace WikipediaReferences.Console.UI
         private const string Quit = "q";
         private const string GenerateRefNYT = "n";
         private const string GenerateRefOlympedia = "o";
+        private const string GenerateRefLibaryOfCongress = "l";
         private const string GenerateRefBaseball = "b";
         private const string GenerateRefBasketball = "a";
         private const string GenerateRefFootball = "f";
@@ -96,10 +97,7 @@ namespace WikipediaReferences.Console.UI
                     break;
                 case DayCheck:
                     GetDayNameFromDate();
-                    break;
-                case GenerateRefOlympedia:
-                    referencesEditor.GenerateOlympediaReference();
-                    break;
+                    break;                
                 case Test:
                     TestGetDeceasedFromWikipedia();
                     break;
@@ -136,6 +134,7 @@ namespace WikipediaReferences.Console.UI
             {
                 $"{GenerateRefNYT}:\tGenerate NYT reference",
                 $"{GenerateRefOlympedia}:\tGenerate Olympedia ref",
+                $"{GenerateRefLibaryOfCongress}:\tGenerate Libary Of Congress ref",
                 $"{GenerateRefBaseball}:\tGenerate Baseball ref",
                 $"{GenerateRefBasketball}:\tGenerate Basketball ref",
                 $"{GenerateRefFootball}:\tGenerate Football ref",
@@ -153,6 +152,9 @@ namespace WikipediaReferences.Console.UI
                     break;
                 case GenerateRefOlympedia:
                     referencesEditor.GenerateOlympediaReference();
+                    break;
+                case GenerateRefLibaryOfCongress:
+                    referencesEditor.GenerateLoCReference();
                     break;
                 case GenerateRefBaseball:
                     referencesEditor.GenerateBaseballReference();

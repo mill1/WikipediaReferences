@@ -21,6 +21,8 @@ namespace WikipediaReferences.Console.Services
         {
             this.configuration = configuration;
             this.webClient = webClient;
+            this.webClient.Headers.Clear();
+            this.webClient.Headers.Add("User-Agent", "C# application");
             this.util = util;
         }
 
@@ -59,6 +61,19 @@ namespace WikipediaReferences.Console.Services
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(response);
             return doc.DocumentNode;
+        }
+        public void GenerateLoCReference()
+        {            
+            // https://id.loc.gov/authorities/names/no98081061.html
+            var url = GetReferenceUrl("https://id.loc.gov/authorities/names/", $"LoC id: (f.i.: 'no98081061' )") + ".html";
+            var rootNode = GetHtmlDocRootNode(url);
+            // <h1><span property="madsrdf:authoritativeLabel skos:prefLabel">Root Boy Slim</span></h1>
+            var title = rootNode.SelectSingleNode("//h1").ChildNodes.First().InnerText;
+            title += " - Library of Congress";
+
+            var reference = GenerateWebReference(title, url, "id.loc.gov", DateTime.Today, DateTime.MinValue);
+
+            UI.Console.WriteLine(ConsoleColor.Green, reference);
         }
 
         public void GenerateBaseballReference()
