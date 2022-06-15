@@ -1,17 +1,15 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Net;
-using Wikimedia.Utilities.Interfaces;
 using Wikimedia.Utilities.Exceptions;
+using Wikimedia.Utilities.Interfaces;
 using WikipediaReferences.Interfaces;
 
 namespace WikipediaReferences.Services
 {
     public class WikipediaService : IWikipediaService
-    {        
+    {
         private const int NoInfobox = -1;
         private readonly IWikiTextService wikiTextService;
         private readonly IWikipediaWebClient wikipediaWebClient;

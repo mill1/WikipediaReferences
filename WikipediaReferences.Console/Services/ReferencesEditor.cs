@@ -43,7 +43,7 @@ namespace WikipediaReferences.Console.Services
             var reference = GenerateWebReference($"Olympedia – {usedName}", url, "olympedia.org", DateTime.Today, DateTime.MinValue, publisher: "[[OlyMADMen]]");
 
             UI.Console.WriteLine(ConsoleColor.Green, reference);
-        } 
+        }
 
         private string GetReferenceUrl(string urlBase, string message)
         {

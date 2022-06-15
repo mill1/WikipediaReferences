@@ -436,8 +436,8 @@ namespace WikipediaReferences.Services
             // Do not use 'death' as one of the regex expressions. Not utilized in obits +:
             // https://www.nytimes.com/2018/03/27/obituaries/delores-taylor-85-dies-writer-and-star-in-billy-jack-films.html
             // - do not look in doc.snippet: is identical to doc.abstract or is empty.
-            
-            DateTime dateOfDeath = DateTime.MinValue;            
+
+            DateTime dateOfDeath = DateTime.MinValue;
 
             dateOfDeath = GetDateOfDeathFromMonthInformation(obituaryDoc, monthId, year, dateOfDeath);
 
@@ -540,7 +540,7 @@ namespace WikipediaReferences.Services
         }
 
         private DateTime GetDateOfDeathFromMonth(string excerpt, string monthName, int year, string matchedValue, DateTime publicationDate)
-        {            
+        {
             int pos = excerpt.IndexOf(matchedValue);
             string dayString = GetValueInBetweenSeparators(excerpt, " ", pos + matchedValue.Length);
 
