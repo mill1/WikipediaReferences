@@ -39,7 +39,7 @@ namespace WikipediaReferences.Services
 
         public IEnumerable<Reference> GetReferencesByArticleTitle(string articleTitle)
         {
-            return context.References.Where(r => r.SourceCode == "NYT" && r.ArticleTitle == articleTitle);
+            return context.References.Where(r => r.SourceCode == "NYT" && r.ArticleTitle.StartsWith(articleTitle));
         }
 
         public Reference UpdateDeathDate(IEnumerable<Reference> references, Dtos.UpdateDeathDate updateDeathDateDto)
