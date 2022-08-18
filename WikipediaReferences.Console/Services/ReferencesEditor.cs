@@ -96,6 +96,46 @@ namespace WikipediaReferences.Console.Services
             GenerateSportsReference("hockey-reference.com", "b/bellbr01", ".html");
         }
 
+        public void GenerateCricketReference()
+        {
+            string urlBase = "https://www.espncricinfo.com/player/";
+            string playerIdExample = "pochiah-krishnamurthy-30135";
+            string url = GetReferenceUrl(urlBase, $"Player id: (f.i.: '{playerIdExample}' )");
+            string playerId = url.Replace(urlBase, string.Empty);
+            string title = GenerateTitle(playerId);
+
+            var reference = GenerateWebReference(title, url, "[[ESPNcricinfo]]", DateTime.Today, DateTime.MinValue);
+
+            UI.Console.WriteLine(ConsoleColor.Green, reference);
+        }
+
+        private string GenerateTitle(string playerIdExample)
+        {
+            string title = string.Empty;
+            string[] nameParts = playerIdExample.Split('-');
+
+            if (nameParts.Length == 1)
+                throw new ArgumentException("id should contain at least one '-' chartacter");
+
+            for (int i = 0; i < nameParts.Length-1; i++)
+                title += FirstLetterToUpper(nameParts[i]) + " ";
+
+            title += "profile and biography, stats, records, averages, photos and videos";
+
+            return title;
+        }
+
+        private string FirstLetterToUpper(string str)
+        {
+            if (string.IsNullOrEmpty(str))
+                return string.Empty;
+
+            if (str.Length > 1)
+                return char.ToUpper(str[0]) + str.Substring(1);
+
+            return str.ToUpper();
+        }
+
         public void GenerateSportsReference(string domain, string playerIdExample, string urlSuffix)
         {
             string urlBase = "https://www." + domain + "/players/";
