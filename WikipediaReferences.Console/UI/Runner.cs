@@ -24,6 +24,7 @@ namespace WikipediaReferences.Console.UI
         private const string GenerateRefBasketball = "a";
         private const string GenerateRefFootball = "f";
         private const string GenerateRefHockey = "h";
+        private const string GenerateRefCricket = "c";
 
         private bool quit;
 
@@ -139,6 +140,7 @@ namespace WikipediaReferences.Console.UI
                 $"{GenerateRefBasketball}:\tGenerate Basketball ref",
                 $"{GenerateRefFootball}:\tGenerate Football ref",
                 $"{GenerateRefHockey}:\tGenerate Hockey ref",
+                $"{GenerateRefCricket}:\tGenerate Cricket ref",
                 $"{Quit}:\tExit"
             };
         }
@@ -167,6 +169,9 @@ namespace WikipediaReferences.Console.UI
                     break;
                 case GenerateRefHockey:
                     referencesEditor.GenerateHockeyReference();
+                    break;
+                case GenerateRefCricket:
+                    referencesEditor.GenerateCricketReference();
                     break;
                 case Quit:
                     System.Console.WriteLine();
