@@ -113,6 +113,9 @@ namespace WikipediaReferences.Controllers
             if (updateDeathDateDto == null)
                 return BadRequest("Dto object cannot be null.");
 
+            if (string.IsNullOrEmpty(updateDeathDateDto.ArticleTitle))
+                return BadRequest("articleTitle cannot be null or empty.");
+
             IEnumerable<Models.Reference> references = nyTimesService.GetReferencesByArticleTitle(updateDeathDateDto.ArticleTitle);
 
             if (!references.Any())
