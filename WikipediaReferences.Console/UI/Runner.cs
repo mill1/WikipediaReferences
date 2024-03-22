@@ -9,12 +9,12 @@ namespace WikipediaReferences.Console.UI
 {
     public class Runner
     {
-        private const string PrintDeathMonth = "p";
+        private const string PrintDpm = "p";
         private const string GenerateRef = "r";
         private const string UpdateNYTDeathDate = "u";
         private const string DayCheck = "d";
         private const string AddNYTObitRefs = "a";
-        private const string NumberOfNettoChars = "n";
+        private const string PrintDpmFromDpy = "m";
         private const string Test = "t";
         private const string Quit = "q";
         private const string GenerateRefNYT = "n";
@@ -69,12 +69,12 @@ namespace WikipediaReferences.Console.UI
         {
             return new List<string>
             {
-                $"{PrintDeathMonth}:\tPrint month of death",
+                $"{PrintDpm}:\tPrint month of death",
+                $"{PrintDpmFromDpy}:\tPrint dpm from dpy",
                 $"{GenerateRef}:\tGenerate reference",
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
                 $"{DayCheck}:\tDay name of date",
-                $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",
-                $"{NumberOfNettoChars}:\tNumber of netto chars of article",
+                $"{AddNYTObitRefs}:\tAdd NYT obituaries to db",                
                 $"{Test}:\tTest stuff",
                 $"{Quit}:\tQuit"
             };
@@ -86,9 +86,13 @@ namespace WikipediaReferences.Console.UI
 
             switch (answer)
             {
-                case PrintDeathMonth:
+                case PrintDpm:
                     util.GetDeathMontArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
+                    break;
+                case PrintDpmFromDpy:
+                    util.GetDeathMontArgs(out year, out monthId);
+                    listArticleGenerator.PrintDpmFromDpy(year, monthId);
                     break;
                 case UpdateNYTDeathDate:
                     referencesEditor.UpdateNYTDeathDateOfReference();
@@ -104,10 +108,7 @@ namespace WikipediaReferences.Console.UI
                     break;
                 case AddNYTObitRefs:
                     referencesEditor.AddNYTimesObituaryReferences();
-                    break;
-                case NumberOfNettoChars:
-                    listArticleGenerator.DetermineNumberOfCharactersBiography();
-                    break;
+                    break;                
                 case Quit:
                     quit = true;
                     break;

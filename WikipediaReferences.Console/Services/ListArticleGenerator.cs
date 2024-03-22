@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -70,6 +71,97 @@ namespace WikipediaReferences.Console.Services
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        public void PrintDpmFromDpy(int year, int monthId)
+        {
+            try
+            {
+                string articleTitle = $"Deaths in {year}";
+
+                UI.Console.WriteLine($"Fetching the entries from article {articleTitle}...");
+
+                string uri = $"wikipedia/rawarticle/{articleTitle}/netto/false";
+                HttpResponseMessage response = util.SendGetRequest(uri);
+
+                string rawArticleText = util.HandleResponse(response, articleTitle);
+
+                string monthSection = GetMonthSectionFromRawText(rawArticleText, monthId);
+
+                //Sanitize
+                monthSection = monthSection.Replace("* [", "*[");
+                monthSection = monthSection.Replace("*  [", "*[");
+
+                // TODO loose files
+
+                string monthName = GetMonthNames().ElementAt(monthId - 1);
+
+                monthSection = LooseFiles(monthName, monthSection);
+
+                for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
+                {
+                    string oldValue = $"*[[{monthName} {day}]]";
+                    monthSection = monthSection.Replace(oldValue, $"\r\n==={day}===");
+                }
+
+                monthSection = monthSection.Replace($"*[[{monthName}]] (unknown date)", "\r\n===Unknown date===");
+
+                // line feeds
+                monthSection = monthSection.Replace(@"\n", "\n");
+                // no sublist
+                monthSection = monthSection.Replace("**[[", "*[[");
+
+                PrintOutput(year, monthName, monthSection);
+
+                UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+            }
+            catch (Exception e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private string LooseFiles(string monthName, string monthSection)
+        {
+            var firstDay = $"*[[{monthName} 1]]";
+
+            int pos = monthSection.IndexOf(firstDay);
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"First day part not found: '{firstDay}'");
+
+            return monthSection.Substring(pos);
+        }
+
+        private void PrintOutput(int year, string monthName, string monthSection)
+        {
+            string fileName = $"Deaths in {monthName} {year}.txt";
+            string file = Path.Combine("output", fileName);
+
+            using (var writer = File.CreateText(file))
+            {
+                writer.WriteLine($"=={monthName} {year}==");
+                writer.Write(monthSection);
+            }
+        }        
+
+        private string GetMonthSectionFromRawText(string rawArticleText, int monthId)
+        {
+            string currentMonthName = GetMonthNames().ElementAt(monthId - 1);
+
+            int posStart = rawArticleText.IndexOf($"==={currentMonthName}===");
+
+            if (posStart == -1)
+                throw new InvalidWikipediaPageException($"Month section not found: '==={currentMonthName}==='");
+
+            string nextSection = monthId == 12 ? "==References==" : $"==={GetMonthNames().ElementAt(monthId)}===";
+
+            int posEnd = rawArticleText.IndexOf(nextSection);
+
+            if (posEnd == -1)
+                throw new InvalidWikipediaPageException($"Next section not found: '{nextSection}'");
+
+            return rawArticleText.Substring(posStart, posEnd - posStart).Trim();
         }
 
         private string GetArticleTitle(int year, int monthId, string newArticle)
