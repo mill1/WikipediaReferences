@@ -92,8 +92,6 @@ namespace WikipediaReferences.Console.Services
                 monthSection = monthSection.Replace("* [", "*[");
                 monthSection = monthSection.Replace("*  [", "*[");
 
-                // TODO loose files
-
                 string monthName = GetMonthNames().ElementAt(monthId - 1);
 
                 monthSection = LooseFiles(monthName, monthSection);
@@ -166,19 +164,21 @@ namespace WikipediaReferences.Console.Services
 
         private string GetArticleTitle(int year, int monthId, string newArticle)
         {
-            string ArticleTitle;
+            string articleTitle;
 
             if (newArticle == "y")
             {
-                ArticleTitle = configuration.GetValue<string>("New list article source");
-                ArticleTitle = ArticleTitle.Replace(":", "%3A");
-                ArticleTitle = ArticleTitle.Replace("/", "%2F");
+                articleTitle = configuration.GetValue<string>("New list article source");
+                // TODO uitzoeken waarom configuration.GetValue niet meer werkt..
+                articleTitle = articleTitle ?? "User:Mill_1/Months/December";
+                articleTitle = articleTitle.Replace(":", "%3A");
+                articleTitle = articleTitle.Replace("/", "%2F");
             }
             else
             {
-                ArticleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+                articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
             }
-            return ArticleTitle;
+            return articleTitle;
         }
 
         private void CheckIfArticleContainsSublist(string articleTitle)
@@ -261,7 +261,9 @@ namespace WikipediaReferences.Console.Services
             if (entry == null)
             {
                 var directLinks = toolforgeService.GetWikilinksInfo(reference.ArticleTitle).direct;
-                int minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article"));
+                // TODO uitzoeken waarom configuration.GetValue niet meer werkt
+                int minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article") ?? "24");
+
 
                 if (directLinks >= minimumNumberOfLinksToArticle)
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (# of links: {directLinks})");

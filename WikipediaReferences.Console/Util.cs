@@ -14,7 +14,9 @@ namespace WikipediaReferences.Console
         public Util(IConfiguration configuration, HttpClient client)
         {
             this.client = client;
+            // TODO: uitzoeken
             var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
+            uri = uri ?? "https://localhost:44385";
             this.client.BaseAddress = new Uri(uri);
             this.client.DefaultRequestHeaders.Accept.Clear();
             this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
