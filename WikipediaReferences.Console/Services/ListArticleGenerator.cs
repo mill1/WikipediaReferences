@@ -142,7 +142,7 @@ namespace WikipediaReferences.Console.Services
             int pos = monthSection.IndexOf(firstDay);
 
             if (pos == -1)
-                throw new InvalidWikipediaPageException($"First day part not found: '{firstDay}'");
+                throw new InvalidWikipediaPageException($"\r\nFirst day part not found: '{firstDay}'");
 
             return monthSection.Substring(pos);
         }
@@ -166,14 +166,14 @@ namespace WikipediaReferences.Console.Services
             int posStart = rawArticleText.IndexOf($"==={currentMonthName}===");
 
             if (posStart == -1)
-                throw new InvalidWikipediaPageException($"Month section not found: '==={currentMonthName}==='");
+                throw new InvalidWikipediaPageException($"\r\nMonth section not found: '==={currentMonthName}==='");
 
             string nextSection = monthId == 12 ? "==References==" : $"==={GetMonthNames().ElementAt(monthId)}===";
 
             int posEnd = rawArticleText.IndexOf(nextSection);
 
             if (posEnd == -1)
-                throw new InvalidWikipediaPageException($"Next section not found: '{nextSection}'");
+                throw new InvalidWikipediaPageException($"\r\nNext section not found: '{nextSection}'");
 
             return rawArticleText.Substring(posStart, posEnd - posStart).Trim();
         }
@@ -457,7 +457,7 @@ namespace WikipediaReferences.Console.Services
             else
             {
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
+                    throw new WikipediaReferencesException($"\r\nRedlink entry in the deaths per month article. Remove it.");
                 else
                 {
                     if (result.Contains(typeof(InvalidWikipediaPageException).Name))

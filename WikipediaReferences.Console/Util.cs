@@ -43,9 +43,9 @@ namespace WikipediaReferences.Console
             else
             {
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaReferencesException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
+                    throw new WikipediaReferencesException($"\r\nArticle '{articleTitle}' does not exist (anymore) on Wikipedia.");
                 else
-                    throw new HttpRequestException($"Article: {articleTitle} result: '{result}'");
+                    throw new HttpRequestException($"\r\nArticle: {articleTitle} result: '{result}'");
             }
         }
 
