@@ -123,6 +123,15 @@ namespace WikipediaReferences.Console.Services
             // no sublist
             monthSection = monthSection.Replace("**[[", "*[[");
 
+            int posStart = monthSection.IndexOf("**");
+            if (posStart != -1) 
+            {
+                // wiki link is preceded by 'Sir', 'Madam' et cetera. Fix it by including it in the wiki link: [[Elton John|Sir Elton John]].
+                int posEnd = monthSection.IndexOf("]]", posStart);
+                string invalidEntry = monthSection.Substring(posStart + 2, posEnd - posStart).Trim();
+                throw new InvalidWikipediaPageException($"\r\nInvalid entry encountered: {invalidEntry}. Correct it.");
+            }; 
+
             return monthSection;
         }
 
