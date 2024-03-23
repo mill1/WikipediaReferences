@@ -53,6 +53,7 @@ namespace WikipediaReferences.Console.Services
 
                 EvaluateDeathsPerMonthArticle(year, monthId, entries);
                 CheckIfArticleContainsSublist(articleTitle);
+                CheckIfArticleContainsUnknownDateSection(entries);
 
                 UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
 
@@ -91,23 +92,10 @@ namespace WikipediaReferences.Console.Services
                 //Sanitize
                 monthSection = monthSection.Replace("* [", "*[");
                 monthSection = monthSection.Replace("*  [", "*[");
+                monthSection = monthSection.Replace("-born " , "-");
 
                 string monthName = GetMonthNames().ElementAt(monthId - 1);
-
-                monthSection = LooseFiles(monthName, monthSection);
-
-                for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
-                {
-                    string oldValue = $"*[[{monthName} {day}]]";
-                    monthSection = monthSection.Replace(oldValue, $"\r\n==={day}===");
-                }
-
-                monthSection = monthSection.Replace($"*[[{monthName}]] (unknown date)", "\r\n===Unknown date===");
-
-                // line feeds
-                monthSection = monthSection.Replace(@"\n", "\n");
-                // no sublist
-                monthSection = monthSection.Replace("**[[", "*[[");
+                monthSection = TranformToFormatDpm(year, monthId, monthSection, monthName);
 
                 PrintOutput(year, monthName, monthSection);
 
@@ -117,6 +105,25 @@ namespace WikipediaReferences.Console.Services
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        private string TranformToFormatDpm(int year, int monthId, string monthSection, string monthName)
+        {
+            monthSection = LooseFiles(monthName, monthSection);
+
+            for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
+            {
+                string oldValue = $"*[[{monthName} {day}]]";
+                monthSection = monthSection.Replace(oldValue, $"\r\n==={day}===");
+            }
+
+            monthSection = monthSection.Replace($"*[[{monthName}]] (unknown date)", "\r\n===Unknown date===");
+            // line feeds
+            monthSection = monthSection.Replace(@"\n", "\n");
+            // no sublist
+            monthSection = monthSection.Replace("**[[", "*[[");
+
+            return monthSection;
         }
 
         private string LooseFiles(string monthName, string monthSection)
@@ -187,7 +194,16 @@ namespace WikipediaReferences.Console.Services
             bool articleContainsSublist = articleAnalyzer.ArticleContainsSublist(articleTitle);
 
             if (articleContainsSublist)
-                UI.Console.Write(ConsoleColor.Red, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
+                UI.Console.Write(ConsoleColor.Magenta, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
+        }
+
+        private void CheckIfArticleContainsUnknownDateSection(IEnumerable<Entry> entries)
+        {
+
+            bool articleContainsUnknownDateSection = entries.Where(e => e.Information.Contains("===Unknown date===")).Any();
+
+            if (articleContainsUnknownDateSection)
+                UI.Console.Write(ConsoleColor.Magenta, "\r\nATTENTION! Unknown date section present. Check bottom entries!");
         }
 
         private bool ArticleContainsDuplicates(IEnumerable<Entry> entries, out string duplicateLinkedName)
@@ -195,7 +211,6 @@ namespace WikipediaReferences.Console.Services
             var duplicates = entries.GroupBy(x => x.LinkedName)
               .Where(g => g.Count() > 1)
               .Select(y => y.Key);
-            //.ToList();
 
             if (duplicates.Any())
             {
@@ -369,7 +384,7 @@ namespace WikipediaReferences.Console.Services
 
         private void PrintMismatchDateOfDeaths(Reference reference, Entry entry)
         {
-            string message = $"Death date entry: {entry.DeathDate.ToShortDateString()} Url:\r\n{reference.Url}";
+            string message = $"Death date entry: {entry.DeathDate.ToString("dd-MM-yyyy")} Url:\r\n{reference.Url}";
 
             if (entry.Reference == null)
                 UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
