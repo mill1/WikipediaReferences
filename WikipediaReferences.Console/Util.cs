@@ -14,7 +14,9 @@ namespace WikipediaReferences.Console
         public Util(IConfiguration configuration, HttpClient client)
         {
             this.client = client;
+            // TODO: uitzoeken waarom configuration.GetValue niet meer werkt.
             var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
+            uri = uri ?? "https://localhost:44385";
             this.client.BaseAddress = new Uri(uri);
             this.client.DefaultRequestHeaders.Accept.Clear();
             this.client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -41,9 +43,9 @@ namespace WikipediaReferences.Console
             else
             {
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaReferencesException($"Article '{articleTitle}' does not exist (anymore) on Wikipedia.");
+                    throw new WikipediaReferencesException($"\r\nArticle '{articleTitle}' does not exist (anymore) on Wikipedia.");
                 else
-                    throw new HttpRequestException($"Article: {articleTitle} result: '{result}'");
+                    throw new HttpRequestException($"\r\nArticle: {articleTitle} result: '{result}'");
             }
         }
 

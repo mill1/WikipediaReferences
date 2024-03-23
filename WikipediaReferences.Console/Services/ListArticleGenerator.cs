@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,8 +19,7 @@ namespace WikipediaReferences.Console.Services
         private readonly IConfiguration configuration;
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
-        private readonly IToolforgeService toolforgeService;
-        // TODO private IEnumerable<Entry> entries;        
+        private readonly IToolforgeService toolforgeService;               
 
         public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer, IToolforgeService toolforgeService)
         {
@@ -52,6 +52,7 @@ namespace WikipediaReferences.Console.Services
 
                 EvaluateDeathsPerMonthArticle(year, monthId, entries);
                 CheckIfArticleContainsSublist(articleTitle);
+                CheckIfArticleContainsUnknownDateSection(entries);
 
                 UI.Console.WriteLine("\r\nEvaluation complete. Continue? (y/n)");
 
@@ -72,21 +73,127 @@ namespace WikipediaReferences.Console.Services
             }
         }
 
+        public void PrintDpmFromDpy(int year, int monthId)
+        {
+            try
+            {
+                string articleTitle = $"Deaths in {year}";
+
+                UI.Console.WriteLine($"Fetching the entries from article {articleTitle}...");
+
+                string uri = $"wikipedia/rawarticle/{articleTitle}/netto/false";
+                HttpResponseMessage response = util.SendGetRequest(uri);
+
+                string rawArticleText = util.HandleResponse(response, articleTitle);
+
+                string monthSection = GetMonthSectionFromRawText(rawArticleText, monthId);
+
+                //Sanitize
+                monthSection = monthSection.Replace("* [", "*[");
+                monthSection = monthSection.Replace("*  [", "*[");
+                monthSection = monthSection.Replace("-born " , "-");
+
+                string monthName = GetMonthNames().ElementAt(monthId - 1);
+                monthSection = TranformToFormatDpm(year, monthId, monthSection, monthName);
+
+                PrintOutput(year, monthName, monthSection);
+
+                UI.Console.WriteLine($"List generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+            }
+            catch (Exception e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        private string TranformToFormatDpm(int year, int monthId, string monthSection, string monthName)
+        {
+            monthSection = LooseFiles(monthName, monthSection);
+
+            for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
+            {
+                string oldValue = $"*[[{monthName} {day}]]";
+                monthSection = monthSection.Replace(oldValue, $"\r\n==={day}===");
+            }
+
+            monthSection = monthSection.Replace($"*[[{monthName}]] (unknown date)", "\r\n===Unknown date===");
+            // line feeds
+            monthSection = monthSection.Replace(@"\n", "\n");
+            // no sublist
+            monthSection = monthSection.Replace("**[[", "*[[");
+
+            int posStart = monthSection.IndexOf("**");
+            if (posStart != -1) 
+            {
+                // wiki link is preceded by 'Sir', 'Madam' et cetera. Fix it by including it in the wiki link: [[Elton John|Sir Elton John]].
+                int posEnd = monthSection.IndexOf("]]", posStart);
+                string invalidEntry = monthSection.Substring(posStart + 2, posEnd - posStart).Trim();
+                throw new InvalidWikipediaPageException($"\r\nInvalid entry encountered: {invalidEntry}. Correct it.");
+            }; 
+
+            return monthSection;
+        }
+
+        private string LooseFiles(string monthName, string monthSection)
+        {
+            var firstDay = $"*[[{monthName} 1]]";
+
+            int pos = monthSection.IndexOf(firstDay);
+
+            if (pos == -1)
+                throw new InvalidWikipediaPageException($"\r\nFirst day part not found: '{firstDay}'");
+
+            return monthSection.Substring(pos);
+        }
+
+        private void PrintOutput(int year, string monthName, string monthSection)
+        {
+            string fileName = $"Deaths in {monthName} {year}.txt";
+            string file = Path.Combine("output", fileName);
+
+            using (var writer = File.CreateText(file))
+            {
+                writer.WriteLine($"=={monthName} {year}==");
+                writer.Write(monthSection);
+            }
+        }        
+
+        private string GetMonthSectionFromRawText(string rawArticleText, int monthId)
+        {
+            string currentMonthName = GetMonthNames().ElementAt(monthId - 1);
+
+            int posStart = rawArticleText.IndexOf($"==={currentMonthName}===");
+
+            if (posStart == -1)
+                throw new InvalidWikipediaPageException($"\r\nMonth section not found: '==={currentMonthName}==='");
+
+            string nextSection = monthId == 12 ? "==References==" : $"==={GetMonthNames().ElementAt(monthId)}===";
+
+            int posEnd = rawArticleText.IndexOf(nextSection);
+
+            if (posEnd == -1)
+                throw new InvalidWikipediaPageException($"\r\nNext section not found: '{nextSection}'");
+
+            return rawArticleText.Substring(posStart, posEnd - posStart).Trim();
+        }
+
         private string GetArticleTitle(int year, int monthId, string newArticle)
         {
-            string ArticleTitle;
+            string articleTitle;
 
             if (newArticle == "y")
             {
-                ArticleTitle = configuration.GetValue<string>("New list article source");
-                ArticleTitle = ArticleTitle.Replace(":", "%3A");
-                ArticleTitle = ArticleTitle.Replace("/", "%2F");
+                articleTitle = configuration.GetValue<string>("New list article source");
+                // TODO uitzoeken waarom configuration.GetValue niet meer werkt..
+                articleTitle = articleTitle ?? "User:Mill_1/Months/December";
+                articleTitle = articleTitle.Replace(":", "%3A");
+                articleTitle = articleTitle.Replace("/", "%2F");
             }
             else
             {
-                ArticleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
+                articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
             }
-            return ArticleTitle;
+            return articleTitle;
         }
 
         private void CheckIfArticleContainsSublist(string articleTitle)
@@ -95,7 +202,16 @@ namespace WikipediaReferences.Console.Services
             bool articleContainsSublist = articleAnalyzer.ArticleContainsSublist(articleTitle);
 
             if (articleContainsSublist)
-                UI.Console.Write(ConsoleColor.Red, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
+                UI.Console.Write(ConsoleColor.Magenta, "\r\nATTENTION! Sublist(s) in article are not processed (yet)!");
+        }
+
+        private void CheckIfArticleContainsUnknownDateSection(IEnumerable<Entry> entries)
+        {
+
+            bool articleContainsUnknownDateSection = entries.Where(e => e.Information.Contains("===Unknown date===")).Any();
+
+            if (articleContainsUnknownDateSection)
+                UI.Console.Write(ConsoleColor.Magenta, "\r\nATTENTION! Unknown date section present. Check bottom entries!");
         }
 
         private bool ArticleContainsDuplicates(IEnumerable<Entry> entries, out string duplicateLinkedName)
@@ -103,7 +219,6 @@ namespace WikipediaReferences.Console.Services
             var duplicates = entries.GroupBy(x => x.LinkedName)
               .Where(g => g.Count() > 1)
               .Select(y => y.Key);
-            //.ToList();
 
             if (duplicates.Any())
             {
@@ -169,7 +284,9 @@ namespace WikipediaReferences.Console.Services
             if (entry == null)
             {
                 var directLinks = toolforgeService.GetWikilinksInfo(reference.ArticleTitle).direct;
-                int minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article"));
+                // TODO uitzoeken waarom configuration.GetValue niet meer werkt
+                int minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article") ?? "24");
+
 
                 if (directLinks >= minimumNumberOfLinksToArticle)
                     UI.Console.WriteLine(ConsoleColor.Magenta, $"{reference.ArticleTitle} not in day subsection. (# of links: {directLinks})");
@@ -275,7 +392,7 @@ namespace WikipediaReferences.Console.Services
 
         private void PrintMismatchDateOfDeaths(Reference reference, Entry entry)
         {
-            string message = $"Death date entry: {entry.DeathDate.ToShortDateString()} Url:\r\n{reference.Url}";
+            string message = $"Death date entry: {entry.DeathDate.ToString("dd-MM-yyyy")} Url:\r\n{reference.Url}";
 
             if (entry.Reference == null)
                 UI.Console.WriteLine(ConsoleColor.Red, $"{entry.LinkedName}: New NYT reference! {message}");
@@ -339,7 +456,7 @@ namespace WikipediaReferences.Console.Services
             else
             {
                 if (result.Contains(typeof(WikipediaPageNotFoundException).Name))
-                    throw new WikipediaReferencesException($"Redlink entry in the deaths per month article. Remove it.");
+                    throw new WikipediaReferencesException($"\r\nRedlink entry in the deaths per month article. Remove it.");
                 else
                 {
                     if (result.Contains(typeof(InvalidWikipediaPageException).Name))

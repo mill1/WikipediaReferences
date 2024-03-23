@@ -59,7 +59,7 @@ namespace WikipediaReferences.Services
             IEnumerable<Reference> references = GetReferencesPerArchiveMonth(year, monthId);
 
             if (references.Any())
-                throw new ArgumentException($"NYT archive month has already been added; {references.Count()} refs found. " +
+                throw new ArgumentException($"\r\nNYT archive month has already been added; {references.Count()} refs found. " +
                                     $"Month: {GetMonthNames(false).ElementAt(monthId - 1)} {year}");
 
             string json = GetJSONFromUrl(year, monthId, apiKey);
@@ -532,7 +532,7 @@ namespace WikipediaReferences.Services
                         case "this evening":
                             return obituaryDoc.pub_date.Date;
                         default:
-                            throw new ArgumentException($"Expression not implemented: {dayExpression}");
+                            throw new ArgumentException($"\r\nExpression not implemented: {dayExpression}");
                     }
                 }
             }
@@ -599,7 +599,7 @@ namespace WikipediaReferences.Services
                 // Sanity check to prevent endless loop.
                 i++;
                 if (i > 7)
-                    throw new ArgumentException($"Day name not found: {dayName}");
+                    throw new ArgumentException($"\r\nDay name not found: {dayName}");
             }
 
             return dateOfDeath;

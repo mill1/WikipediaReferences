@@ -41,7 +41,7 @@ namespace WikipediaReferences.Console.Services
                 }
                 ).ToList();
 
-            string usedName = table.First(kvp => kvp.Key == "Used name").Value;
+            string usedName = table.First(kvp => kvp.Key == "Used name").Value.Replace("•", " ");
             var reference = GenerateWebReference($"Olympedia – {usedName}", url, "olympedia.org", DateTime.Today, DateTime.MinValue, publisher: "[[OlyMADMen]]");
 
             UI.Console.WriteLine(ConsoleColor.Green, reference);
@@ -243,8 +243,9 @@ namespace WikipediaReferences.Console.Services
         {
             UpdateDeathDate updateDeathDate = new UpdateDeathDate() { SourceCode = "NYT" };
 
-            UI.Console.WriteLine("New date of death: (yyyy-m-d)");
-            updateDeathDate.DeathDate = DateTime.Parse(UI.Console.ReadLine());
+            UI.Console.WriteLine("New date of death: (dd-MM-yyyy)");
+            
+            updateDeathDate.DeathDate = DateTime.ParseExact(UI.Console.ReadLine(), "dd-MM-yyyy", CultureInfo.InvariantCulture);
 
             UI.Console.WriteLine("Article title:");
             updateDeathDate.ArticleTitle = UI.Console.ReadLine();

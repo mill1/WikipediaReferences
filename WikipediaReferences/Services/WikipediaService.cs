@@ -199,14 +199,14 @@ namespace WikipediaReferences.Services
                 int pos = rawText.IndexOf("''' may refer to");
 
                 if (pos == -1)
-                    throw new InvalidWikipediaPageException("Invalid article end. Edit the article");
+                    throw new InvalidWikipediaPageException("\r\nInvalid article end. Edit the article");
                 else
                 {
                     // If rawText points to disambiguation page then next situation probably occurred:
                     // the disambiguation page was created aftr the NYT-json was processed. Fix:
                     // Update the db. Example: Gary Jennings (author) or Bob Flanagan (author)
                     var disambiguation = rawText.Substring(0, pos + 3); // = '''
-                    throw new WikipediaPageNotFoundException($"Matched article name is now part of a disambiguation page: {disambiguation}... Update the db with the new WP name");
+                    throw new WikipediaPageNotFoundException($"\r\nMatched article name is now part of a disambiguation page: {disambiguation}... Update the db with the new WP name");
                 }
 
             }
