@@ -14,7 +14,7 @@ namespace WikipediaReferences.Console
         public Util(IConfiguration configuration, HttpClient client)
         {
             this.client = client;
-            // TODO: uitzoeken
+            // TODO: uitzoeken waarom configuration.GetValue niet meer werkt.
             var uri = configuration.GetValue<string>("WRWebApi:SchemeAndHost");
             uri = uri ?? "https://localhost:44385";
             this.client.BaseAddress = new Uri(uri);

@@ -41,7 +41,7 @@ namespace WikipediaReferences.Console.Services
                 }
                 ).ToList();
 
-            string usedName = table.First(kvp => kvp.Key == "Used name").Value;
+            string usedName = table.First(kvp => kvp.Key == "Used name").Value.Replace("•", " ");
             var reference = GenerateWebReference($"Olympedia – {usedName}", url, "olympedia.org", DateTime.Today, DateTime.MinValue, publisher: "[[OlyMADMen]]");
 
             UI.Console.WriteLine(ConsoleColor.Green, reference);

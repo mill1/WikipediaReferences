@@ -19,8 +19,7 @@ namespace WikipediaReferences.Console.Services
         private readonly IConfiguration configuration;
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
-        private readonly IToolforgeService toolforgeService;
-        // TODO private IEnumerable<Entry> entries;        
+        private readonly IToolforgeService toolforgeService;               
 
         public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer, IToolforgeService toolforgeService)
         {
