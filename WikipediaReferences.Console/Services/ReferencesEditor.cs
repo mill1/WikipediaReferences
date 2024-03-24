@@ -257,14 +257,29 @@ namespace WikipediaReferences.Console.Services
         {
             try
             {
-                string uri = GetAddObitsApiUri();
-                HttpResponseMessage response = util.SendGetRequest(uri);
-                string result = response.Content.ReadAsStringAsync().Result;
+                int year = 0, monthId = 0;
 
-                if (response.IsSuccessStatusCode)
-                    UI.Console.WriteLine(ConsoleColor.Green, result);
+                UI.Console.WriteLine("Process entire year? (y/n)");
+
+                bool processEntireYear = UI.Console.ReadLine() == "y";
+
+                string apiKey = GetNYTimesApiKey();
+
+                if (processEntireYear)
+                {
+                    year = util.GetDeathYearArg();
+
+                    for (monthId = 1; monthId <= 12; monthId++)
+                    {
+                        UI.Console.WriteLine(ConsoleColor.Green, $"Processing month {monthId}...");
+                        AddNYTimesObituaryReferencesOfMonth(year, monthId, apiKey);
+                    }                        
+                }
                 else
-                    throw new WikipediaReferencesException(result);
+                {
+                    util.GetDeathYearMonthArgs(out year, out monthId);
+                    AddNYTimesObituaryReferencesOfMonth(year, monthId, apiKey);
+                }
             }
             catch (WikipediaReferencesException e)
             {
@@ -276,12 +291,26 @@ namespace WikipediaReferences.Console.Services
             }
         }
 
-        private string GetAddObitsApiUri()
+        private void AddNYTimesObituaryReferencesOfMonth(int year, int monthId, string apiKey)
+        {
+            string uri = GetAddObitsApiUri(year, monthId, apiKey);
+            HttpResponseMessage response = util.SendGetRequest(uri);
+            string result = response.Content.ReadAsStringAsync().Result;
+
+            if (response.IsSuccessStatusCode)
+                UI.Console.WriteLine(ConsoleColor.Green, result);
+            else
+                throw new WikipediaReferencesException(result);
+        }
+
+        private string GetAddObitsApiUri(int year, int monthId, string apiKey)
+        {            
+            return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+        }
+
+        private string GetNYTimesApiKey()
         {
             const string ApiKey = "NYTimes Archive API key";
-
-            int year, monthId;
-            util.GetDeathMontArgs(out year, out monthId);
 
             string apiKey = configuration.GetValue<string>(ApiKey);
 
@@ -291,7 +320,7 @@ namespace WikipediaReferences.Console.Services
                 apiKey = UI.Console.ReadLine();
             }
 
-            return $"nytimes/addobits/{year}/{monthId}/{apiKey}";
+            return apiKey;
         }
 
         private WikipediaReferences.Models.Reference MapDtoToModel(Reference referenceDto)

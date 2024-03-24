@@ -49,12 +49,18 @@ namespace WikipediaReferences.Console
             }
         }
 
-        public void GetDeathMontArgs(out int year, out int monthId)
+        public void GetDeathYearMonthArgs(out int year, out int monthId)
         {
-            UI.Console.WriteLine("Death year:");
-            year = int.Parse(UI.Console.ReadLine());
+            year = GetDeathYearArg();
+
             UI.Console.WriteLine("Death month id:");
             monthId = int.Parse(UI.Console.ReadLine());
+        }
+
+        public int GetDeathYearArg()
+        {
+            UI.Console.WriteLine("Death year:");
+            return int.Parse(UI.Console.ReadLine());
         }
 
         public HttpResponseMessage SendGetRequest(string uri)
