@@ -87,11 +87,11 @@ namespace WikipediaReferences.Console.UI
             switch (answer)
             {
                 case PrintDpm:
-                    util.GetDeathMontArgs(out year, out monthId);
+                    util.GetDeathYearMonthArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
                     break;
                 case PrintDpmFromDpy:
-                    util.GetDeathMontArgs(out year, out monthId);
+                    util.GetDeathYearMonthArgs(out year, out monthId);
                     listArticleGenerator.PrintDpmFromDpy(year, monthId);
                     break;
                 case UpdateNYTDeathDate:

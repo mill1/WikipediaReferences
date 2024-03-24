@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -178,6 +179,13 @@ namespace WikipediaReferences.Services
 
             if (i == -1) // Just one name
                 return new string[] { Capitalize(name) };
+
+            // "BAUMFELD," in request March 1988
+            if (!name.Contains(" "))
+            {
+                return new string[] { Capitalize(name.Replace(",", ""))};
+            }
+
 
             string surnames = Capitalize(name.Substring(0, i));
 
