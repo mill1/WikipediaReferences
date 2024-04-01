@@ -77,7 +77,7 @@ namespace WikipediaReferences.Console.Services
         {
             try
             {
-                string articleTitle = $"Deaths in {year}";
+                string articleTitle = year >= 1988 ? $"Deaths in {year}" : EscapeCharacters( $"User:Braintic/Deaths in {year}");
 
                 UI.Console.WriteLine($"Fetching the entries from article {articleTitle}...");
 
@@ -185,15 +185,22 @@ namespace WikipediaReferences.Console.Services
             {
                 articleTitle = configuration.GetValue<string>("New list article source");
                 // TODO uitzoeken waarom configuration.GetValue niet meer werkt..
-                articleTitle = articleTitle ?? "User:Mill_1/Months/December";
-                articleTitle = articleTitle.Replace(":", "%3A");
-                articleTitle = articleTitle.Replace("/", "%2F");
+                articleTitle = articleTitle ?? "User:Mill 1/Months/December";
+                articleTitle = EscapeCharacters(articleTitle);
             }
             else
             {
                 articleTitle = $"Deaths in {GetMonthNames().ElementAt(monthId - 1)} {year}";
             }
             return articleTitle;
+        }
+
+        private static string EscapeCharacters(string text)
+        {
+            text = text.Replace(" ", "_");
+            text = text.Replace(":", "%3A");
+            text = text.Replace("/", "%2F");
+            return text;
         }
 
         private void CheckIfArticleContainsSublist(string articleTitle)
