@@ -98,7 +98,7 @@ namespace WikipediaReferences.Console.Services
 
         public void GenerateCricketReference()
         {
-            string urlBase = "https://www.espncricinfo.com/player/";
+            string urlBase = "https://www.espncricinfo.com/cricketers/";
             string playerIdExample = "pochiah-krishnamurthy-30135";
             string url = GetReferenceUrl(urlBase, $"Player id: (f.i.: '{playerIdExample}' )");
             string playerId = url.Replace(urlBase, string.Empty);
