@@ -13,7 +13,7 @@ namespace WikipediaReferences.Console
         public Startup()
         {
             var builder = new ConfigurationBuilder()
-                .AddJsonFile($"appsettings.json", true, true);
+                .AddJsonFile($"appsettingsConsole.json", true, true);
 
             Configuration = builder.Build();
         }
