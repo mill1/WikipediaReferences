@@ -109,6 +109,7 @@ namespace WikipediaReferences.Console.Services
         private string TranformToFormatDpm(int year, int monthId, string monthSection, string monthName)
         {
             monthSection = LooseFiles(monthName, monthSection);
+            monthSection = LooseComments(monthSection);
 
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
@@ -117,6 +118,7 @@ namespace WikipediaReferences.Console.Services
             }
 
             monthSection = monthSection.Replace($"*[[{monthName}]] (unknown date)", "\r\n===Unknown date===");
+            monthSection = monthSection.Replace($"*[[{monthName}]] (date unknown)", "\r\n===Unknown date===");
             // line feeds
             monthSection = monthSection.Replace(@"\n", "\n");
             // no sublist
@@ -132,7 +134,7 @@ namespace WikipediaReferences.Console.Services
             }; 
 
             return monthSection;
-        }
+        }        
 
         private string LooseFiles(string monthName, string monthSection)
         {
@@ -144,6 +146,28 @@ namespace WikipediaReferences.Console.Services
                 throw new InvalidWikipediaPageException($"\r\nFirst day part not found: '{firstDay}'");
 
             return monthSection.Substring(pos);
+        }
+
+        private string LooseComments(string wikiText)
+        {
+            while (true)
+            {
+                int posStart = wikiText.IndexOf("<!--");
+
+                if (posStart == -1)
+                    break;
+
+                int posEnd = wikiText.IndexOf("-->", posStart);
+
+                if (posEnd == -1)
+                    throw new Exception("No matching end tag '-->' found!");
+
+                string remove = wikiText.Substring(posStart, posEnd - posStart + "-->".Length);
+
+                wikiText = wikiText.Replace(remove, string.Empty);
+            };
+
+            return wikiText;
         }
 
         private void PrintOutput(int year, string monthName, string monthSection)
