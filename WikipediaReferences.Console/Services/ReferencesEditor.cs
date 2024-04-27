@@ -271,13 +271,14 @@ namespace WikipediaReferences.Console.Services
 
                     for (monthId = 1; monthId <= 12; monthId++)
                     {
-                        UI.Console.WriteLine(ConsoleColor.Green, $"Processing month {monthId}...");
+                        DisplayStatus(monthId);
                         AddNYTimesObituaryReferencesOfMonth(year, monthId, apiKey);
-                    }                        
+                    }
                 }
                 else
-                {
+                {                    
                     util.GetDeathYearMonthArgs(out year, out monthId);
+                    DisplayStatus(monthId);
                     AddNYTimesObituaryReferencesOfMonth(year, monthId, apiKey);
                 }
             }
@@ -289,6 +290,11 @@ namespace WikipediaReferences.Console.Services
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        private static void DisplayStatus(int monthId)
+        {
+            UI.Console.WriteLine(ConsoleColor.Green, $"Processing month {monthId}...");
         }
 
         private void AddNYTimesObituaryReferencesOfMonth(int year, int monthId, string apiKey)
