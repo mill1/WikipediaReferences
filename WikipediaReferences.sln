@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WikipediaReferences.Tests", "WikipediaReferences.Tests\WikipediaReferences.Tests.csproj", "{8BD23835-21C0-4AF8-9D25-897B254DC65F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wikimedia.Utilities", "..\Wikimedia.Utilities\Wikimedia.Utilities\Wikimedia.Utilities.csproj", "{C4E39818-91BB-4A9F-9D23-94856C460D6B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8BD23835-21C0-4AF8-9D25-897B254DC65F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4E39818-91BB-4A9F-9D23-94856C460D6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4E39818-91BB-4A9F-9D23-94856C460D6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4E39818-91BB-4A9F-9D23-94856C460D6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4E39818-91BB-4A9F-9D23-94856C460D6B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

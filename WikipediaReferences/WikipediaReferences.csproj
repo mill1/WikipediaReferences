@@ -20,7 +20,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Wikimedia.Utilities" Version="1.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Wikimedia.Utilities\Wikimedia.Utilities\Wikimedia.Utilities.csproj" />
   </ItemGroup>
 
 

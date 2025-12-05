@@ -1,15 +1,17 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using Wikimedia.Utilities.Exceptions;
-using Wikimedia.Utilities.Interfaces;
+using Wikimedia.Utilities.ExtensionMethods;
 using WikipediaReferences.Models;
 
 namespace WikipediaReferences.Console.Services
@@ -19,14 +21,14 @@ namespace WikipediaReferences.Console.Services
         private readonly IConfiguration configuration;
         private readonly Util util;
         private readonly ArticleAnalyzer articleAnalyzer;
-        private readonly IToolforgeService toolforgeService;               
+        private readonly HttpClient httpClient;
 
-        public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer, IToolforgeService toolforgeService)
+        public ListArticleGenerator(IConfiguration configuration, Util util, ArticleAnalyzer articleAnalyzer)
         {
             this.configuration = configuration;
             this.util = util;
             this.articleAnalyzer = articleAnalyzer;
-            this.toolforgeService = toolforgeService;
+            httpClient = new HttpClient();
         }
 
         public void PrintDeathsPerMonthArticle(int year, int monthId)
@@ -71,6 +73,637 @@ namespace WikipediaReferences.Console.Services
             {
                 UI.Console.WriteLine(ConsoleColor.Red, e);
             }
+        }
+
+        public void GenerateStatisticsPerYear(int y)
+        {
+            string fileName = $"Sublists 1990-2005.txt";
+            string file = Path.Combine("output", fileName);
+            using (var writer = File.AppendText(file))
+            {
+                for (int year = 1990; year <= 2005; year++)
+                {
+                    for (int monthId = 1; monthId <= 12; monthId++)
+                    {
+                        string monthName = GetMonthNames().ElementAt(monthId - 1);
+                        UI.Console.WriteLine(ConsoleColor.Blue, $"Processing {monthName} {year}...");
+
+                        var articleTitle = $"Deaths in {monthName} {year}";
+
+                        if (articleAnalyzer.ArticleContainsSublist(articleTitle))
+                        {
+                            UI.Console.WriteLine(ConsoleColor.DarkGreen, "Sublist found!");
+                            writer.WriteLine(articleTitle);
+                        }
+                    }
+                }
+            }
+
+            UI.Console.WriteLine($"Pages with sublists in 1990-2005 generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+        }
+
+        public void GenerateStatisticsPerYearOrig(int y)
+        {
+            string fileName = $"Entries 1990-2005.txt";
+            string file = Path.Combine("output", fileName);
+            using (var writer = File.AppendText(file))
+            {
+                writer.Write($"Year;MonthId;Day;Name;Age;Nationality;Occupation;CoD;InformationPart\r\n");
+
+                for (int year = 1990; year <= 2005; year++)
+                {
+                    for (int monthId = 1; monthId <= 12; monthId++)
+                    {
+                        string monthName = GetMonthNames().ElementAt(monthId - 1);
+                        UI.Console.WriteLine(ConsoleColor.Blue, $"Processing {monthName} {year}...");
+                        GenerateStatisticsPerMonth(year, monthId, writer);
+                    }
+                }
+            }
+
+            UI.Console.WriteLine($"Entries for 1990-2005 generated. See folder:\r\n{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "output")}");
+        }        
+
+        private void GenerateStatisticsPerMonth(int year, int monthId, StreamWriter writer)
+        {
+            try
+            {
+                string monthName = GetMonthNames().ElementAt(monthId - 1);
+                string articleTitle = $"Deaths in {monthName} {year}";
+
+                long revisionId = GetRevisionID(articleTitle, new DateTime(2024, 11, 7));
+                
+                articleTitle += $"&oldid={revisionId}";
+
+                UI.Console.WriteLine($"Fetching the entries from article {articleTitle}...");
+                var entries = GetEntriesPermonth(year, monthId, articleTitle);
+
+                foreach (var entry in entries)
+                {                        
+                    var entryDetails = ResolveEntryDetails(entry);
+                    writer.Write($"{entryDetails}\r\n");
+                }
+            }
+            catch (WikipediaReferencesException e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Magenta, e.Message);
+            }
+            catch (Exception e)
+            {
+                UI.Console.WriteLine(ConsoleColor.Red, e);
+            }
+        }
+
+        public EntryDetails ResolveEntryDetails(Entry entry)
+        {
+            switch (entry.Name)
+            {
+                case "Pete Abele":
+                    entry.Information = "83, American politician ([[United States House of Representatives|U.S. Representative]] for [[Ohio's 10th congressional district]]), [[Alzheimer's disease]]";
+                    break;
+                case "Howard Earl Johnston":
+                    entry.Information = "72, Canadian member of [[Parliament of Canada|Parliament]] ([[House of Commons of Canada|House of Commons]])";
+                    break;
+                case "Eudora Welty":
+                    entry.Information = "92, American short story writer and [[novelist]] ([[Pulitzer Prize]] for ''[[The Optimist's Daughter]])'', [[pneumonia]]";
+                    break;
+                case "Donald Hume":
+                    entry.Information = "86, American Olympic [[Rowing (sport)|rower]] ([[Rowing at the 1936 Summer Olympics|gold medal winner]] in [[Rowing at the 1936 Summer Olympics – Men's eight|men's rowing eight]] at the [[1936 Summer Olympics]]).";
+                    break;
+                case "Christabel Bielenberg":
+                    entry.Information = "94, British writer (''The Past is Myself'', ''[[Christabel (1988 TV drama)|Christabel]]'').";
+                    break;
+                case "Arthur Miller":
+                    entry.Information = "89, American playwright (''[[Death of a Salesman]]'', ''[[A View from the Bridge]]'', ''[[The Crucible]]''), congestive heart failure.";
+                    break;
+                case "Manuel Mejía Vallejo":
+                    entry.Information = "75, Colombian writer.";
+                    break;
+                case "Roberto Matta":
+                    entry.Information = "91, Chilean artist.";
+                    break;
+                case "Kell Areskoug":
+                    entry.Information = "90, Swedish Olympic sprinter.";
+                    break;
+                case "Marie Jahoda":
+                    entry.Information = "94, Austrian-British [[social psychology|social psychologist]].";
+                    break;
+                case "Harald Bergström":
+                    entry.Information = "93, Swedish [[mathematician]].";
+                    break;
+                case "Gérard Séty":
+                    entry.Information = "75, French actor.";
+                    break;
+                case "Paul Baize":
+                    entry.Information = "94, French pediatrician and amateur astronomer.";
+                    break;
+                case "Agenore Incrocci":
+                    entry.Information = "86, Italian screenwriter, heart attack.";
+                    break;
+                case "Mary Bunting":
+                    entry.Information = "87, American academic and college president.";
+                    break;
+                case "Bodacious":
+                    entry.Information = "11–12, American [[bucking bull]] and [[ProRodeo Hall of Fame]] inductee.";
+                    break;
+                case "Cassie Bernall":
+                    entry.Information = "17, American school shooting victim, shot.";
+                    break;
+                case "Eric Harris":
+                    entry.Information = "18, American school shooting perpetrator, suicide by gunshot.";
+                    break;
+                case "Dylan Klebold":
+                    entry.Information = "17, American school shooting perpetrator, suicide by gunshot.";
+                    break;
+                case "Rachel Scott":
+                    entry.Information = "17, American school shooting victim, shot.";
+                    break;
+                case "Ameer Hamza Shinwari":
+                    entry.Information = "87, Afghan [[Pashto]]-language poet.";
+                    break;
+                case "Herbert Heilpern":
+                    entry.Information = "80, Austrian-American [[association football]] executive.";
+                    break;
+                case "Danielle de St. Jorre":
+                    entry.Information = "55, Seychellois politician, cancer.";
+                    break;
+                case "Sopubek Begaliev":
+                    entry.Information = "71, Soviet-Kyrgyz economist and politician.";
+                    break;
+                case "Babatunde Olatunji":
+                    entry.Information = "75, Nigerian drummer, recorded ''Drums of Passion'', [[diabetes]].";
+                    break;
+                case "Ken Meyr":
+                    entry.Information = "71, American-Australian businessman, diplomat, and philanthropist.";
+                    break;
+                case "Susi Jeans":
+                    entry.Information = "81, Austrian-British organist, teacher and musicologist.";
+                    break;
+                case "Ranasinghe Premadasa":
+                    entry.Information = "68, [[President of Sri Lanka]] (1989-1993), assassination by suicide bomber.";
+                    break;
+                case "Mehrdad Bahar":
+                    entry.Information = "64, Iranian [[Iranist]], linguist, mythologist and Persian historian.";
+                    break;
+                case "Marie Epstein":
+                    entry.Information = "95, French actress, film director, and film preservationist.";
+                    break;
+                case "Frank Chacksfield":
+                    entry.Information = "English pianist, arranger and orchestra leader, [[Parkinson's disease]].";
+                    break;
+                case "Country Dick Montana":
+                    entry.Information = "40, American singer, [[aneurysm]].";
+                    break;
+                case "Yuri Neprintsev":
+                    entry.Information = "87, Soviet/Russian painter, graphic artist and art teacher.";
+                    break;
+                case "Sándor Végh":
+                    entry.Information = "84, Hungarian-French violinist and conductor.";
+                    break;
+                case "Amasa Stone Bishop":
+                    entry.Information = "76, American nuclear physicist, [[pneumonia]].";
+                    break;
+                case "Elizabeth Bauer Mock":
+                    entry.Information = "86–87, American professor, curator, author and journalist.";
+                    break;
+                case "Oleg Prokofiev":
+                    entry.Information = "69, Soviet and Russian artist, sculptor and poet.";
+                    break;
+                case "Freaky Tah":
+                    entry.Information = "27, American [[rapping|MC]], [[hype man]] and [[hip hop music|hip hop]] promoter, shot.";
+                    break;
+                case "Wynona Lipman":
+                    entry.Information = "75–76, American politician, cancer.";
+                    break;
+                case "Thomas Ypsilantis":
+                    entry.Information = "72, Greek-American physicist, heart attack.";
+                    break;
+                case "John Ardoin":
+                    entry.Information = "66, American music critic and author.";
+                    break;
+                case "Hüseyin Hilmi Işık":
+                    entry.Information = "90, Turkish [[Sunni Islamic]] scholar.";
+                    break;
+                case "Nicolas Ruwet":
+                    entry.Information = "Belgian linguist, literary critic and musical analyst.";
+                    break;
+                case "Lor Tok":
+                    entry.Information = "88, Thai comedian and actor.";
+                    break;
+                case "Dorle Soria":
+                    entry.Information = "101, American publicist, music producer and journalist.";
+                    break;
+                case "Stan Rice":
+                    entry.Information = "60, American painter, educator, poet, husband of author [[Anne Rice]], cancer.";
+                    break;
+                case "Nell Carter":
+                    entry.Information = "54, American singer, actress (''[[Gimme a Break!]]'', ''[[Hangin' with Mr. Cooper]]'', ''[[The Grass Harp (film)|The Grass Harp]]''), [[diabetes]].";
+                    break;
+                case "Stacy Keach, Sr.":
+                    entry.Information = "88, American actor (''[[Pretty Woman]]'', ''[[Teen Wolf (1986 TV series)|Teen Wolf]]'', ''[[The Parallax View]]'').";
+                    break;
+                case "Izhak Graziani":
+                    entry.Information = "78, Israeli conductor.";
+                    break;
+                case "Kimal Akishev":
+                    entry.Information = "79, Kazakhstani scientist, archeologist, and historian.";
+                    break;
+                case "Vittore Branca":
+                    entry.Information = "90, Italian [[Philology|philologist]], [[Literary criticism|literary critic]], and academic.";
+                    break;
+                case "Asen Kisimov":
+                    entry.Information = "69, Bulgarian actor, singer and radio presenter.";
+                    break;
+                case "Arman":
+                    entry.Information = "76, French-American sculptor, cancer.";
+                    break;
+                case "name1":
+                    entry.Information = "";
+                    break;
+            }
+
+            string informationPart = entry.Information.Replace("  ", " ");
+            informationPart = informationPart.Replace(", ", ",");
+            informationPart = informationPart.Replace("-born ", "");
+            informationPart = informationPart.Replace("U.S.", "American");
+            informationPart = informationPart.Replace("US Army", "American Army");
+            informationPart = informationPart.Replace("US Air", "American Air");
+            informationPart = informationPart.Replace("US Marine", "American Marine");
+            informationPart = informationPart.Replace("African-American", "American");
+            informationPart = informationPart.Replace("African American", "American");
+            informationPart = informationPart.Replace("Afrikaans", "South African");
+            informationPart = informationPart.Replace("Aboriginal Australian", "Australian");
+            informationPart = informationPart.Replace("Kosovar Albanian", "Albanian");
+            informationPart = informationPart.Replace("Kosovo Albanian", "Albanian");
+            informationPart = informationPart.Replace("Kosovo-Albanian", "Albanian");
+            informationPart = informationPart.Replace("Kosovan", "Albanian");
+            informationPart = informationPart.Replace("Soviet and ", "");
+            informationPart = informationPart.Replace("Soviet/", "");
+            informationPart = informationPart.Replace("Soviet-", "");
+            informationPart = informationPart.Replace("Suriname ", "Surinamese ");
+            informationPart = informationPart.Replace("Tajikistan", "Tajik");
+            informationPart = informationPart.Replace("Tajikistani", "Tajik");
+            informationPart = informationPart.Replace("Trinidad and Tobago", "Trinidadian");
+            informationPart = informationPart.Replace("Trinidad and Tobagian", "Trinidadian");
+            informationPart = informationPart.Replace("Trinidad", "Trinidadian");
+
+            informationPart = informationPart.Replace("British Virgin Islan", "British-Virgin-Islands");
+            informationPart = informationPart.Replace("British Virgin Islander", "British-Virgin-Islands");
+            informationPart = informationPart.Replace("British Virgin Island", "British-Virgin-Islands");
+            informationPart = informationPart.Replace("United States Virgin Islands", "United-States-Virgin-Islands");
+            informationPart = informationPart.Replace("American Virgin Islander", "United-States-Virgin-Islands");
+            informationPart = informationPart.Replace("Papua New Guinean", "Papua-New-Guinean");
+
+            informationPart = informationPart.Replace("Central African Republic", "Central African");
+            informationPart = informationPart.Replace("Salvadorian", "Salvadoran");
+            informationPart = informationPart.Replace("El Salvador", "Salvadoran");
+
+            informationPart = informationPart.Replace("New Zealand-", "");
+            informationPart = informationPart.Replace("United States-", "");
+            informationPart = informationPart.Replace("South African-", "");
+            informationPart = informationPart.Replace("South Korean-", "");
+            informationPart = informationPart.Replace("North Korean-", "");
+            informationPart = informationPart.Replace("Hong Kong-", "");
+            informationPart = informationPart.Replace("Costa Rican-", "");
+            informationPart = informationPart.Replace("Puerto Rican-", "");
+            informationPart = informationPart.Replace("Saudi Arabian-", "");
+            informationPart = informationPart.Replace("Sri Lankan-", "");
+
+            informationPart = informationPart.Replace("New Zealand/", "");
+            informationPart = informationPart.Replace("United States/", "");
+            informationPart = informationPart.Replace("South African/", "");
+            informationPart = informationPart.Replace("South Korean/", "");
+            informationPart = informationPart.Replace("North Korean/", "");
+            informationPart = informationPart.Replace("Hong Kong/", "");
+            informationPart = informationPart.Replace("Costa Rican/", "");
+            informationPart = informationPart.Replace("Puerto Rican/", "");
+            informationPart = informationPart.Replace("Saudi Arabian/", "");
+            informationPart = informationPart.Replace("Sri Lankan/", "");
+
+            int pos = informationPart.IndexOf("<ref");  // named refs
+            if(pos != -1)
+                informationPart = informationPart.Substring(0, pos);
+
+            // Deze volgorde vanwege geneste '(':   76, American film editor (''[[Cabaret (1972 film)|Cabaret]]'', ..
+            informationPart = RemoveWikiLinks(informationPart);
+            informationPart = RemoveParentheses(informationPart);
+
+            if (informationPart.StartsWith(",")) // ",84,Argentine football player."
+                informationPart = informationPart.Substring(1);
+
+            informationPart = informationPart.Replace("  ", " ");
+            informationPart = informationPart.Replace(" .", ".");
+
+            Debug.WriteLine(informationPart);
+
+            switch (entry.Name)
+            {
+                case "Joey Ramone":
+                    informationPart = "49,American musician,lead singer for The Ramones,lymphoma.";
+                    break;
+                case "Rishikesh Shah":
+                    informationPart = "77,Nepalese writer,politician and human rights activist.";
+                    break;
+                case "Yoram Ben-Porat":
+                    informationPart = "55,Israeli academic and economist,traffic collision.";
+                    break;
+                case "Mehmed Orhan":
+                    informationPart = "86,Ottoman prince and head of the Ottoman dynasty.";
+                    break;
+                case "Sooranad Kunjan Pillai":
+                    informationPart = "83, Indian writer, literary critic, and scholar of the Malayalam language.";
+                    break;
+                case "Dr.Rajkumar":
+                    informationPart = "80,Indian film actor.";
+                    break;
+                case "Pete Abele":
+                    informationPart = "83,American politician,Alzheimer's disease.";
+                    break;
+            }
+
+            List<string> infoParts = informationPart.Split(",", StringSplitOptions.None).ToList();
+
+            if (infoParts.Count == 1)
+            {
+                infoParts = new List<string>
+                {
+                    "?",         // age
+                    infoParts[0] // the rest
+                };
+            }
+
+            var age = infoParts[0];
+
+            var notabilityParts = infoParts[1].Split(" ", StringSplitOptions.None).ToList();
+
+
+            string nationality;
+
+            if (notabilityParts.Count == 1)
+            {
+                nationality = notabilityParts[0]; // Very rare
+            }
+            else
+            {
+                // Dual nationality: 2nd one
+                if (notabilityParts[0].Contains("-") || notabilityParts[0].Contains("/"))
+                {
+                    int pos1 = notabilityParts[0].IndexOf("-");
+                    int pos2 = notabilityParts[0].IndexOf("/");
+
+                    notabilityParts[0] = notabilityParts[0].Substring(Math.Max(pos1, pos2) + 1);
+                }
+
+                switch ($"{notabilityParts[0]} {notabilityParts[1]}")
+                {
+                    case "Saint Lucian":
+                        nationality = "Saint Lucian";
+                        break;
+                    case "Saint Vincentian":
+                        nationality = "Saint Vincentian";
+                        break;
+                    case "Saint Kitts":
+                        nationality = "Saint Kitts";
+                        break;
+                    case "Solomon Islands":
+                        nationality = "Solomon Islands";
+                        break;
+                    case "New Zealand":
+                        nationality = "New Zealand";
+                        break;
+                    case "New Caledonian":
+                        nationality = "New Caledonian";
+                        break;
+                    case "United States":
+                        nationality = "United States";
+                        break;
+                    case "South African":
+                        nationality = "South African";
+                        break;
+                    case "South Korean":
+                        nationality = "South Korean";
+                        break;
+                    case "South Ossetian":
+                        nationality = "South Ossetian";
+                        break;
+                    case "South Vietnamese":
+                        nationality = "South Vietnamese";
+                        break;
+                    case "North Korean":
+                        nationality = "North Korean";
+                        break;
+                    case "Northern Irish":
+                        nationality = "Northern Irish";
+                        break;
+                    case "West German":
+                        nationality = "West German";
+                        break;
+                    case "West Indian":
+                        nationality = "West Indian";
+                        break;
+                    case "East German":
+                        nationality = "East German";
+                        break;
+                    case "East Timorese":
+                        nationality = "East Timorese";
+                        break;
+                    case "Hong Kong":
+                        nationality = "";
+                        break;
+                    case "Costa Rican":
+                        nationality = "Costa Rican";
+                        break;
+                    case "Central African":
+                        nationality = "Central African";
+                        break;
+                    case "Prime Minister":
+                        nationality = "Prime Minister";
+                        break;
+                    case "Puerto Rican":
+                        nationality = "Puerto Rican";
+                        break;
+                    case "Saudi Arabian":
+                        nationality = "Saudi Arabian";
+                        break;
+                    case "Sierra Leonean":
+                        nationality = "Sierra Leonean";
+                        break;
+                    case "Sri Lankan":
+                        nationality = "Sri Lankan";
+                        break;
+                    default:
+                        nationality = notabilityParts[0];
+                        break;                        
+                }
+            }                            
+
+            // notabilityInfo = informationPart minus age and nationality
+            string notabilityInfo = informationPart.Replace($"{age},{nationality} ", "");
+
+            var cod = infoParts[infoParts.Count - 1];
+            if (cod.Last() == '.')
+                cod = cod.Substring(0, cod.Count() - 1);
+
+            if (cod == string.Empty)
+            {
+                // All fixed. System.Console.WriteLine($"#########\r\n######### {entry.Name}: CoD is empty; fix it\r\n#########");
+                cod = " ";
+            }
+
+            return new EntryDetails
+            {
+                DeathDate = entry.DeathDate,
+                Name = entry.Name.Replace(",", ""),
+                Age = age,
+                Nationality = nationality,
+                Occupation = ResolveOccupation(notabilityInfo),
+                CauseOfDeath = cod.CapitalizeFirstLetter(),
+                InformationPart = informationPart
+            };
+        }
+
+        private string ResolveOccupation(string notabilityInfo)
+        {
+
+            int pos1 = notabilityInfo.IndexOf(" and ");
+            int pos2 = notabilityInfo.IndexOf(",");
+            
+            string occupation;
+
+            if (pos1 == -1 && pos2 == -1)
+            {
+                occupation =  notabilityInfo.Replace(".", "");
+            }
+            else if (pos1 != -1 && pos2 != -1)
+            {
+                occupation =  notabilityInfo.Substring(0, Math.Min(pos1, pos2));
+            }
+            else
+            {
+                occupation =  notabilityInfo.Substring(0, Math.Max(pos1, pos2));
+            }
+
+            int pos = occupation.IndexOf("(");
+
+            if(pos >= 0)
+            {
+                occupation = occupation.Substring(0, pos);
+            }
+
+            return occupation.Trim().CapitalizeFirstLetter();
+        }
+
+        private string RemoveWikiLinks(string informationPart)
+        {
+
+            while (informationPart.Contains("[["))
+            {
+                informationPart = RemoveFirstWikiLink(informationPart);
+            }
+
+            return informationPart;
+        }
+
+        private string RemoveFirstWikiLink(string informationPart)
+        {
+            if (!informationPart.Contains("[["))
+                return informationPart;
+
+            string text = informationPart.Substring("[[".Length, informationPart.IndexOf("]]") - "]]".Length);
+            int posStart = informationPart.IndexOf("[[");
+            
+
+            int posEnd = informationPart.IndexOf("]]");
+            int posPipe = informationPart.IndexOf("|");
+
+            if(posPipe == -1 || posPipe > posEnd)  // f.i. "... [[My name]] the [[Link|Show]]"
+            {
+                text = informationPart.Substring(0, posStart);
+                text += informationPart.Substring(posStart + 2, posEnd - posStart - 2);
+                text += informationPart.Substring(posEnd + 2);
+                return text;
+            }
+
+            if (posPipe < posStart)
+                throw new WikipediaReferencesException($"Pipe before '[['?? Info part: {informationPart}");
+
+            text = informationPart.Substring(0, posStart);
+            text += informationPart.Substring(posPipe + 1, posEnd - posPipe - 1);
+            text += informationPart.Substring(posEnd + 2);
+
+            return text;
+        }
+
+        private string RemoveParentheses(string informationPart)
+        {
+            var text = informationPart;
+
+            int i  = 0;
+
+            while (text.Contains("("))
+            {
+                i++;
+                text = RemoveFirstParenthesesPair(text);
+
+                if (i > 5)
+                    throw new WikipediaReferencesException($"Paranthese check. InformationPart = {informationPart}");
+            }            
+            return text;
+        }
+
+        private string RemoveFirstParenthesesPair(string informationPart)
+        {
+            if (!informationPart.Contains("("))
+                return informationPart;
+
+            int posStart = informationPart.IndexOf("(");
+            int posEnd = informationPart.IndexOf(")");
+
+            if (posEnd == -1)
+                throw new WikipediaReferencesException("No matching ')' found!");
+
+            string text = informationPart.Substring(0, posStart);          
+            text += informationPart.Substring(posEnd + 1);
+
+            return text;
+        }
+
+        private long GetRevisionID(string article, DateTime revisionDate)
+        {
+            // https://stackoverflow.com/questions/27376133/c-httpclient-with-post-parameters
+
+            var parameters = new Dictionary<string, string>
+            {
+                { "action", "query" },
+                { "format", "json" },
+                { "prop", "revisions" },
+                { "titles", article },
+                { "rvprop", "ids" },
+                { "rvlimit", "1" },
+                { "rvstart", $"{revisionDate:yyyy-MM-dd}T00:00:00.000Z" }
+            };
+
+            HttpResponseMessage response = PostRequest(parameters);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var contents = response.Content.ReadAsStringAsync().Result;
+                JObject json = JObject.Parse(contents);
+                var x = json["query"]["pages"].First().First()["revisions"].First()["revid"];
+
+                return (long)((JValue)x).Value;
+            }
+
+            throw new ArgumentException("Something went wrong (GetRevisionID)");
+        }
+
+        private HttpResponseMessage PostRequest(Dictionary<string, string> parameters)
+        {
+            string url = "https://en.wikipedia.org/w/api.php";
+
+            var encodedContent = new FormUrlEncodedContent(parameters);
+            var response = httpClient.PostAsync(url, encodedContent).Result;
+            return response;
         }
 
         public void PrintDpmFromDpy(int year, int monthId)
@@ -314,7 +947,7 @@ namespace WikipediaReferences.Console.Services
 
             if (entry == null)
             {
-                var directLinks = toolforgeService.GetWikilinksInfo(reference.ArticleTitle).direct;
+                var directLinks = 24;
                 // TODO uitzoeken waarom configuration.GetValue niet meer werkt
                 int minimumNumberOfLinksToArticle = int.Parse(configuration.GetValue<string>("Minimum number of links to article") ?? "24");
 

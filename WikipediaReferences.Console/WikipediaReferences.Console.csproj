@@ -9,10 +9,11 @@
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" Version="5.2.7" />
-    <PackageReference Include="Wikimedia.Utilities" Version="1.0.8" />
+    <PackageReference Include="Wikimedia.Utilities" Version="1.0.12" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Wikimedia.Utilities\Wikimedia.Utilities\Wikimedia.Utilities.csproj" />
     <ProjectReference Include="..\WikipediaReferences\WikipediaReferences.csproj" />
   </ItemGroup>
 

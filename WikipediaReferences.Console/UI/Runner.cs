@@ -10,6 +10,7 @@ namespace WikipediaReferences.Console.UI
     public class Runner
     {
         private const string PrintDpm = "p";
+        private const string GenerateStats = "s";
         private const string GenerateRef = "r";
         private const string UpdateNYTDeathDate = "u";
         private const string DayCheck = "d";
@@ -70,6 +71,7 @@ namespace WikipediaReferences.Console.UI
             return new List<string>
             {
                 $"{PrintDpm}:\tPrint month of death",
+                $"{GenerateStats}:\tGenerate statistics",
                 $"{PrintDpmFromDpy}:\tPrint dpm from dpy",
                 $"{GenerateRef}:\tGenerate reference",
                 $"{UpdateNYTDeathDate}:\tUpdate date of death",
@@ -89,6 +91,9 @@ namespace WikipediaReferences.Console.UI
                 case PrintDpm:
                     util.GetDeathYearMonthArgs(out year, out monthId);
                     listArticleGenerator.PrintDeathsPerMonthArticle(year, monthId);
+                    break;
+                case GenerateStats:                    
+                    listArticleGenerator.GenerateStatisticsPerYear(util.GetDeathYearArg());
                     break;
                 case PrintDpmFromDpy:
                     util.GetDeathYearMonthArgs(out year, out monthId);

@@ -29,7 +29,6 @@ namespace WikipediaReferences.Console
             services.AddScoped<ReferencesEditor>();
             services.AddScoped<ArticleAnalyzer>();
             services.AddScoped<AssemblyInfo>();
-            services.AddScoped<IToolforgeService, ToolforgeService>();
         }
     }
 }

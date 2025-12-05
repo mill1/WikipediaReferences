@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Wikimedia.Utilities.Exceptions;
 using Wikimedia.Utilities.Interfaces;
@@ -29,7 +30,7 @@ namespace WikipediaReferences.Services
             text = wikiTextService.GetDaySectionOfMonthList(text, deathDate.Day);
 
             IEnumerable<string> rawDeceased = wikiTextService.GetDeceasedTextAsList(text);
-            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate));
+            IEnumerable<Entry> deceased = rawDeceased.Select(e => ParseEntry(e, deathDate, false));
 
             return deceased;
         }
@@ -39,14 +40,14 @@ namespace WikipediaReferences.Services
             DateTime deathDate = new DateTime(year, monthId, 1);
             List<Entry> deceased = new List<Entry>();
 
-            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, true, articleTitle);
-
+            string text = wikiTextService.GetWikiTextDeathsPerMonth(deathDate, false, articleTitle);
+            
             for (int day = 1; day <= DateTime.DaysInMonth(year, monthId); day++)
             {
                 string deathsPerDayText = wikiTextService.GetDaySectionOfMonthList(text, day);
 
                 IEnumerable<string> rawDeceased = wikiTextService.GetDeceasedTextAsList(deathsPerDayText);
-                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, monthId, day)));
+                IEnumerable<Entry> deceasedPerDay = rawDeceased.Select(e => ParseEntry(e, new DateTime(year, monthId, day), true)).ToList();
 
                 deceased.AddRange(deceasedPerDay);
             }
@@ -54,8 +55,21 @@ namespace WikipediaReferences.Services
             return deceased;
         }
 
-        private Entry ParseEntry(string entryText, DateTime deathDate)
+        private Entry ParseEntry(string entryText, DateTime deathDate, bool infoOnly)
         {
+            if (infoOnly)
+            {
+                var info = wikiTextService.GetInformationFromEntryText(entryText);                
+
+                return new Entry 
+                { 
+                    Name = wikiTextService.GetNameFromEntryText(entryText, false, false), 
+                    LinkedName = Guid.NewGuid().ToString(),  
+                    Information = info,
+                    DeathDate = deathDate
+                };
+            }                
+
             return new Entry
             {
                 LinkedName = wikiTextService.GetNameFromEntryText(entryText, true),
